@@ -16,7 +16,7 @@ In order to use it:
 - The Bridge.sol must be deployed and must be whitelisted for the Safe contract.
 @dev The deposits are requested by the Bridge, and in order to save gas spent by the relayers
 they will be batched either by time (batchTimeLimit) or size (batchSize).
-There can only be one pending Batch. 
+There can only be one pending Batch.
  */
 contract ERC20Safe is BridgeRole {
     using SafeERC20 for IERC20;
@@ -24,7 +24,7 @@ contract ERC20Safe is BridgeRole {
     uint256 public depositsCount;
     uint256 public batchesCount;
     uint256 public batchTimeLimit = 10 minutes;
-    uint256 public batchSettleBlockCount = 40; // 10 minutes (time limit) / 15 seconds (ethereum block time)
+    uint256 public batchSettleBlockCount = 40;
     // Maximum number of transactions within a batch
     uint256 public batchSize = 10;
     uint256 private constant maxBatchSize = 20;
@@ -41,7 +41,7 @@ contract ERC20Safe is BridgeRole {
     event ERC20Deposited(uint256 depositNonce);
 
     /**
-      @notice Whitelist a token. Only whitelisted tokens can be bridged through the bridge. 
+      @notice Whitelist a token. Only whitelisted tokens can be bridged through the bridge.
       @param token Address of the contract for the ERC20 token that will be used by the bridge
       @param minimumAmount Number that specifies the minimum number of tokens that the user has to deposit (this is to prevent transactions that are too small)
       @notice emits {TokenWhitelisted} event
