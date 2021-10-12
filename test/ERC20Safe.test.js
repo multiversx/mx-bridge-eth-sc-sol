@@ -7,8 +7,8 @@ const ERC20Safe = require("../artifacts/contracts/ERC20Safe.sol/ERC20Safe.json")
 const Bridge = require("../artifacts/contracts/Bridge.sol/Bridge.json");
 
 describe("ERC20Safe", async function () {
-  const [adminWallet, otherWallet] = provider.getWallets();
-  const boardMembers = [adminWallet];
+  const [adminWallet, otherWallet, simpleBoardMember] = provider.getWallets();
+  const boardMembers = [adminWallet, otherWallet, simpleBoardMember];
 
   beforeEach(async function () {
     afc = await deployContract(adminWallet, AFC, [1000]);
