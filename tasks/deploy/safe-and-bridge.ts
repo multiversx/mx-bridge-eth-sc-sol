@@ -10,6 +10,7 @@ task("Contracts", "Deploys ERC20Safe and the Bridge contract")
     const relayerAddresses: string[] = JSON.parse(taskArgs.relayerAddresses);
     const quorum = taskArgs.quorum;
     console.log("Relayers used for deploy", relayerAddresses);
+    console.log("Queorum used for relay", quorum);
     const [adminWallet] = await hre.ethers.getSigners();
     console.log("Admin Public Address:", adminWallet.address);
 

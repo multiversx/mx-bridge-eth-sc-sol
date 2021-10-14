@@ -12,6 +12,8 @@ import "./tasks/clean";
 import "./tasks/add-to-whitelist";
 import "./tasks/mint-test-tokens";
 import "./tasks/set-quorum";
+import "./tasks/approve";
+import "./tasks/deposit";
 
 import "./tasks/deploy";
 
