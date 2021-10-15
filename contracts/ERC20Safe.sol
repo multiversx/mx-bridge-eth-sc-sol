@@ -6,6 +6,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "./SharedStructs.sol";
 import "./access/BridgeRole.sol";
+import "./lib/BoolTokenTransfer.sol";
 
 /**
 @title ERC20 Safe for bridging tokens
@@ -20,6 +21,7 @@ There can only be one pending Batch.
  */
 contract ERC20Safe is BridgeRole {
     using SafeERC20 for IERC20;
+    using BoolTokenTransfer for IERC20;
 
     uint256 public depositsCount;
     uint256 public batchesCount;
@@ -31,6 +33,7 @@ contract ERC20Safe is BridgeRole {
     mapping(uint256 => Batch) public batches;
     mapping(address => bool) public whitelistedTokens;
     mapping(address => uint256) public tokenLimits;
+    mapping(address => RefundItem[]) public refundItems;
     uint256 private currentPendingBatch;
 
     event BatchTimeLimitChanged(uint256 newTimeLimitInSeconds);
@@ -118,9 +121,9 @@ contract ERC20Safe is BridgeRole {
         address tokenAddress,
         uint256 amount,
         address recipientAddress
-    ) external onlyBridge {
+    ) external onlyBridge returns (bool) {
         IERC20 erc20 = IERC20(tokenAddress);
-        erc20.safeTransfer(recipientAddress, amount);
+        return erc20.boolTransfer(recipientAddress, amount);
     }
 
     /**
@@ -150,7 +153,7 @@ contract ERC20Safe is BridgeRole {
         if ((batch.lastUpdatedBlockNumber + batchSettleBlockCount) <= block.number) {
             return batch;
         }
-        return Batch(0, 0, 0, new Deposit[](0));
+        return Batch(0, 0, 0, new Deposit[](0), BatchStatus.None);
     }
 
     /**
@@ -171,6 +174,44 @@ contract ERC20Safe is BridgeRole {
         for (uint256 i = 0; i < batchDepositsCount; i++) {
             batch.deposits[i].status = statuses[i];
             emit UpdatedDepositStatus(batch.deposits[i].nonce, batch.deposits[i].status);
+            if (statuses[i] == DepositStatus.Rejected) {
+                _addRefundItem(batch.deposits[i]);
+            }
+        }
+
+        batch.status = BatchStatus.Executed;
+    }
+
+    function claimRefund(IERC20 token) public {
+        RefundItem[] memory rf = refundItems[msg.sender];
+        require(rf.length > 0, "Nothing to refund");
+
+        for (uint256 i = 0; i < rf.length; i++) {
+            if (rf[i].tokenAddress != address(token)) {
+                continue;
+            }
+
+            uint256 valueToTransfer = rf[i].value;
+            require(valueToTransfer > 0, "Nothing to refund");
+            rf[i].value = 0;
+
+            token.safeTransfer(msg.sender, valueToTransfer);
+            break;
+        }
+    }
+
+    // getRefundAmount
+
+    function _addRefundItem(Deposit memory dep) private {
+        RefundItem[] storage rf = refundItems[msg.sender];
+        for (uint256 i = 0; i < rf.length; i++) {
+            if (rf[i].tokenAddress != dep.tokenAddress) {
+                continue;
+            }
+
+            rf[i].value += dep.amount;
+            rf[i].lastUpdatedBlockNumber = block.number;
+            break;
         }
     }
 }

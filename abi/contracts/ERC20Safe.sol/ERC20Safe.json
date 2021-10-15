@@ -203,6 +203,11 @@
         "internalType": "uint256",
         "name": "lastUpdatedBlockNumber",
         "type": "uint256"
+      },
+      {
+        "internalType": "enum BatchStatus",
+        "name": "status",
+        "type": "uint8"
       }
     ],
     "stateMutability": "view",
@@ -346,6 +351,11 @@
             "internalType": "struct Deposit[]",
             "name": "deposits",
             "type": "tuple[]"
+          },
+          {
+            "internalType": "enum BatchStatus",
+            "name": "status",
+            "type": "uint8"
           }
         ],
         "internalType": "struct Batch",
@@ -413,11 +423,63 @@
             "internalType": "struct Deposit[]",
             "name": "deposits",
             "type": "tuple[]"
+          },
+          {
+            "internalType": "enum BatchStatus",
+            "name": "status",
+            "type": "uint8"
           }
         ],
         "internalType": "struct Batch",
         "name": "",
         "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "contract IERC20",
+        "name": "token",
+        "type": "address"
+      }
+    ],
+    "name": "refund",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "name": "refundItems",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "tokenAddress",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "value",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "lastUpdatedBlockNumber",
+        "type": "uint256"
       }
     ],
     "stateMutability": "view",
@@ -520,7 +582,13 @@
       }
     ],
     "name": "transfer",
-    "outputs": [],
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
     "stateMutability": "nonpayable",
     "type": "function"
   },

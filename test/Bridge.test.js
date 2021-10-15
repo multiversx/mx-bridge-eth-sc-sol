@@ -1,6 +1,7 @@
 const { waffle, ethers, network } = require("hardhat");
 const { expect } = require("chai");
 const { provider, deployContract } = waffle;
+const { smockit } = require("@eth-optimism/smock");
 
 const BridgeContract = require("../artifacts/contracts/Bridge.sol/Bridge.json");
 const ERC20SafeContract = require("../artifacts/contracts/ERC20Safe.sol/ERC20Safe.json");
@@ -528,6 +529,23 @@ describe("Bridge", async function () {
         await expect(
           bridge.executeTransfer([afc.address], [otherWallet.address], [amount], batchNonce, signatures),
         ).to.be.revertedWith("Batch already executed");
+      });
+    });
+
+    describe("check execute transfer saves correct statuses", async function () {
+      it("returns correct statuses", async function () {
+        const newSafeFactory = await ethers.getContractFactory("ERC20Safe");
+        const newSafe = await newSafeFactory.deploy();
+        const mockedSafe = await smockit(newSafe);
+
+        const newBridgeFactory = await ethers.getContractFactory("Bridge");
+        const newBridge = newBridgeFactory.deploy(boardMembers, quorum, mockedSafe.address);
+        // mockedSafe.connect(adminWallet);
+        // await mockedSafe.setBridge(adminWallet, newBridge.address);
+
+        //await afc.connect(adminWallet);
+        // await afc.approve(mockedSafe.address, 1000);
+        //await mockedSafe.whitelistToken(afc.address, 0);
       });
     });
 

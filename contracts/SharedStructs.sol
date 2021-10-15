@@ -10,6 +10,12 @@ enum DepositStatus {
     Rejected
 }
 
+enum BatchStatus {
+    None,
+    Pending,
+    Executed
+}
+
 struct Deposit {
     uint256 nonce;
     address tokenAddress;
@@ -19,9 +25,21 @@ struct Deposit {
     DepositStatus status;
 }
 
+struct CrossTransferStatus {
+    DepositStatus[] statuses;
+    uint256 createdBlockNumber;
+}
+
 struct Batch {
     uint256 nonce;
     uint256 timestamp;
     uint256 lastUpdatedBlockNumber;
     Deposit[] deposits;
+    BatchStatus status;
+}
+
+struct RefundItem {
+    address tokenAddress;
+    uint256 value;
+    uint256 lastUpdatedBlockNumber;
 }
