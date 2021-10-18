@@ -539,13 +539,20 @@ describe("Bridge", async function () {
         const mockedSafe = await smockit(newSafe);
 
         const newBridgeFactory = await ethers.getContractFactory("Bridge");
-        const newBridge = newBridgeFactory.deploy(boardMembers, quorum, mockedSafe.address);
-        // mockedSafe.connect(adminWallet);
-        // await mockedSafe.setBridge(adminWallet, newBridge.address);
+        const newBridge = await newBridgeFactory.deploy(boardMembers, quorum, mockedSafe.address);
+        mockedSafe.smocked.transfer.will.return.with(true);
 
-        //await afc.connect(adminWallet);
-        // await afc.approve(mockedSafe.address, 1000);
-        //await mockedSafe.whitelistToken(afc.address, 0);
+        await newBridge.executeTransfer([afc.address], [otherWallet.address], [amount], batchNonce, signatures);
+        const settleBlockCount = await newBridge.batchSettleBlockCount();
+        for (let i = 0; i < settleBlockCount - 1; i++) {
+          await network.provider.send("evm_mine");
+        }
+
+        await expect(newBridge.getStatusesAfterExecution(batchNonce)).to.be.revertedWith("Statuses not final yet");
+
+        await network.provider.send("evm_mine");
+
+        expect(await newBridge.getStatusesAfterExecution(batchNonce)).to.eql([3]);
       });
     });
 
