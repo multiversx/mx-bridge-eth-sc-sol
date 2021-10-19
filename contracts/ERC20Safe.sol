@@ -182,8 +182,32 @@ contract ERC20Safe is BridgeRole {
         batch.status = BatchStatus.Executed;
     }
 
+    /**
+        @notice Endpoint that allows a user to get a refund if a transaction on the other chain has been rejected
+        @param token Token address for which the user wants a refund
+    */
     function claimRefund(IERC20 token) public {
-        RefundItem[] memory rf = refundItems[msg.sender];
+        RefundItem storage rf = _getRefundItem(token);
+        require(rf.value > 0, "Nothing to refund");
+
+        uint256 valueToTransfer = rf.value;
+        rf.value = 0;
+        token.safeTransfer(msg.sender, valueToTransfer);
+    }
+
+    /**
+        @notice Endpoint that allows a user to query the value that can be refunded for a specified token
+        @param token Token address for which the user wants a refund
+    */
+    function getRefundAmount(IERC20 token) public view returns (uint256) {
+        RefundItem memory rf = _getRefundItem(token);
+        require(rf.value > 0, "Nothing to refund");
+
+        return rf.value;
+    }
+
+    function _getRefundItem(IERC20 token) private view returns (RefundItem storage) {
+        RefundItem[] storage rf = refundItems[msg.sender];
         require(rf.length > 0, "Nothing to refund");
 
         for (uint256 i = 0; i < rf.length; i++) {
@@ -191,16 +215,11 @@ contract ERC20Safe is BridgeRole {
                 continue;
             }
 
-            uint256 valueToTransfer = rf[i].value;
-            require(valueToTransfer > 0, "Nothing to refund");
-            rf[i].value = 0;
-
-            token.safeTransfer(msg.sender, valueToTransfer);
-            break;
+            return rf[i];
         }
-    }
 
-    // getRefundAmount
+        revert("Nothing to refund");
+    }
 
     function _addRefundItem(Deposit memory dep) private {
         RefundItem[] storage rf = refundItems[msg.sender];
