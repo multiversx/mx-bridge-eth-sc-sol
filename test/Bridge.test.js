@@ -1,6 +1,7 @@
 const { waffle, ethers, network } = require("hardhat");
 const { expect } = require("chai");
 const { provider, deployContract } = waffle;
+const { smockit } = require("@eth-optimism/smock");
 
 const BridgeContract = require("../artifacts/contracts/Bridge.sol/Bridge.json");
 const ERC20SafeContract = require("../artifacts/contracts/ERC20Safe.sol/ERC20Safe.json");
@@ -528,6 +529,30 @@ describe("Bridge", async function () {
         await expect(
           bridge.executeTransfer([afc.address], [otherWallet.address], [amount], batchNonce, signatures),
         ).to.be.revertedWith("Batch already executed");
+      });
+    });
+
+    describe("check execute transfer saves correct statuses", async function () {
+      it("returns correct statuses", async function () {
+        const newSafeFactory = await ethers.getContractFactory("ERC20Safe");
+        const newSafe = await newSafeFactory.deploy();
+        const mockedSafe = await smockit(newSafe);
+
+        const newBridgeFactory = await ethers.getContractFactory("Bridge");
+        const newBridge = await newBridgeFactory.deploy(boardMembers, quorum, mockedSafe.address);
+        mockedSafe.smocked.transfer.will.return.with(true);
+
+        await newBridge.executeTransfer([afc.address], [otherWallet.address], [amount], batchNonce, signatures);
+        const settleBlockCount = await newBridge.batchSettleBlockCount();
+        for (let i = 0; i < settleBlockCount - 1; i++) {
+          await network.provider.send("evm_mine");
+        }
+
+        await expect(newBridge.getStatusesAfterExecution(batchNonce)).to.be.revertedWith("Statuses not final yet");
+
+        await network.provider.send("evm_mine");
+
+        expect(await newBridge.getStatusesAfterExecution(batchNonce)).to.eql([3]);
       });
     });
 

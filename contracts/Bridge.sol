@@ -30,11 +30,13 @@ contract Bridge is RelayerRole {
     string private constant executeTransferAction = "ExecuteBatchedTransfer";
     string private constant prefix = "\x19Ethereum Signed Message:\n32";
     uint256 private constant minimumQuorum = 3;
+    uint256 public batchSettleBlockCount = 40;
 
     uint256 public quorum;
     ERC20Safe private immutable safe;
 
     mapping(uint256 => bool) public executedBatches;
+    mapping(uint256 => CrossTransferStatus) public crossTransferStatuses;
 
     /*========================= PUBLIC API =========================*/
 
@@ -136,9 +138,16 @@ contract Bridge is RelayerRole {
             _getHashedDepositData(abi.encode(recipients, tokens, amounts, batchNonceElrondETH, executeTransferAction))
         );
 
+        DepositStatus[] memory statuses = new DepositStatus[](tokens.length);
         for (uint256 j = 0; j < tokens.length; j++) {
-            safe.transfer(tokens[j], amounts[j], recipients[j]);
+            statuses[j] = safe.transfer(tokens[j], amounts[j], recipients[j])
+                ? DepositStatus.Executed
+                : DepositStatus.Rejected;
         }
+
+        CrossTransferStatus storage crossStatus = crossTransferStatuses[batchNonceElrondETH];
+        crossStatus.statuses = statuses;
+        crossStatus.createdBlockNumber = block.number;
     }
 
     /**
@@ -162,6 +171,18 @@ contract Bridge is RelayerRole {
         }
 
         return true;
+    }
+
+    /**
+        @notice Only returns values if the cross transfers were executed some predefined time ago to ensure finality
+        @param batchNonceElrondETH Nonce for the batch
+        @return a list of statuses for each transfer in the batch provided
+     */
+    function getStatusesAfterExecution(uint256 batchNonceElrondETH) external view returns (DepositStatus[] memory) {
+        CrossTransferStatus memory crossStatus = crossTransferStatuses[batchNonceElrondETH];
+        require((crossStatus.createdBlockNumber + batchSettleBlockCount) <= block.number, "Statuses not final yet");
+
+        return crossStatus.statuses;
     }
 
     function wasBatchExecuted(uint256 batchNonceElrondETH) external view returns (bool) {
