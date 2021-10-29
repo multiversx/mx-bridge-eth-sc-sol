@@ -29,7 +29,7 @@ contract Bridge is RelayerRole {
     string private constant action = "CurrentPendingBatch";
     string private constant executeTransferAction = "ExecuteBatchedTransfer";
     string private constant prefix = "\x19Ethereum Signed Message:\n32";
-    uint256 private constant minimumQuorum = 3;
+    uint256 private constant minimumQuorum = 1;
     uint256 public batchSettleBlockCount = 40;
 
     uint256 public quorum;
@@ -200,26 +200,23 @@ contract Bridge is RelayerRole {
 
         for (uint256 i = 0; i < signatures.length; i++) {
             address publicKey = _recover(signatures[i], data);
-
-            require(isRelayer(publicKey), "Not a recognized relayer");
+            if (!isRelayer(publicKey)) {
+                continue;
+            }
 
             // Determine if we have multiple signatures from the same relayer
-            uint256 si;
-            for (si = 0; si < validSigners.length; si++) {
-                if (validSigners[si] == address(0)) {
-                    // We reached the end of the loop.
-                    // This preserves the value of `si` which is used below
-                    // as the first open position.
+            bool signerExists = false;
+            for (uint256 si = 0; si < validSigners.length; si++) {
+                if (validSigners[si] == publicKey) {
+                    signerExists = true;
                     break;
                 }
-
-                require(publicKey != validSigners[si], "Multiple signatures from the same relayer");
             }
-            // We save this signer in the first open position.
-            validSigners[si] = publicKey;
-            // END: Determine if we have multiple signatures from the same relayer
 
-            signersCount++;
+            if (!signerExists) {
+                signersCount++;
+                validSigners[i] = publicKey;
+            }
         }
 
         require(signersCount >= quorum, "Quorum was not met");

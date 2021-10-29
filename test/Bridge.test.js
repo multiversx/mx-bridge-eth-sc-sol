@@ -374,7 +374,7 @@ describe("Bridge", async function () {
         it("reverts", async function () {
           await expect(
             bridge.finishCurrentPendingBatch(batch.nonce, newDepositStatuses, signatures),
-          ).to.be.revertedWith("Multiple signatures from the same relayer");
+          ).to.be.revertedWith("Quorum was not met");
         });
       });
     });
@@ -496,7 +496,38 @@ describe("Bridge", async function () {
         it("reverts", async function () {
           await expect(
             bridge.executeTransfer([afc.address], [otherWallet.address], [amount], batchNonce, signatures),
-          ).to.be.revertedWith("Multiple signatures from the same relayer");
+          ).to.be.revertedWith("Quorum was not met");
+        });
+      });
+
+      describe("but some signatures are from the same relayer", async function () {
+        beforeEach(async function () {
+          dataToSign = await getExecuteTransferData([afc.address], [otherWallet.address], [amount], batchNonce);
+          signature1 = await adminWallet.signMessage(dataToSign);
+          signature2 = await relayer1.signMessage(dataToSign);
+          signature3 = await relayer2.signMessage(dataToSign);
+          signature4 = await relayer3.signMessage(dataToSign);
+          signature5 = await relayer5.signMessage(dataToSign);
+          signature6 = await relayer6.signMessage(dataToSign);
+          signature7 = await relayer7.signMessage(dataToSign);
+          signaturesInvalid = [signature1, signature1, signature1, signature1, signature1, signature1, signature1];
+          signaturesInvalid2 = [signature1, signature1, signature2, signature3, signature4, signature5, signature6];
+          signaturesValid = [signature1, signature2, signature3, signature4, signature5, signature6, signature7];
+        });
+
+        it("reverts", async function () {
+          await expect(
+            bridge.executeTransfer([afc.address], [otherWallet.address], [amount], batchNonce, signaturesInvalid),
+          ).to.be.revertedWith("Quorum was not met");
+          await expect(
+            bridge.executeTransfer([afc.address], [otherWallet.address], [amount], batchNonce, signaturesInvalid2),
+          ).to.be.revertedWith("Quorum was not met");
+        });
+
+        it("does not revert", async function () {
+          await expect(() =>
+            bridge.executeTransfer([afc.address], [otherWallet.address], [amount], batchNonce, signaturesValid),
+          ).to.changeTokenBalance(afc, otherWallet, amount);
         });
       });
     });
@@ -534,6 +565,28 @@ describe("Bridge", async function () {
 
     describe("check execute transfer saves correct statuses", async function () {
       it("returns correct statuses", async function () {
+        const newSafeFactory = await ethers.getContractFactory("ERC20Safe");
+        const newSafe = await newSafeFactory.deploy();
+        const mockedSafe = await smockit(newSafe);
+
+        const newBridgeFactory = await ethers.getContractFactory("Bridge");
+        const newBridge = await newBridgeFactory.deploy(boardMembers, quorum, mockedSafe.address);
+        mockedSafe.smocked.transfer.will.return.with(true);
+
+        await newBridge.executeTransfer([afc.address], [otherWallet.address], [amount], batchNonce, signatures);
+        const settleBlockCount = await newBridge.batchSettleBlockCount();
+        for (let i = 0; i < settleBlockCount - 1; i++) {
+          await network.provider.send("evm_mine");
+        }
+
+        await expect(newBridge.getStatusesAfterExecution(batchNonce)).to.be.revertedWith("Statuses not final yet");
+
+        await network.provider.send("evm_mine");
+
+        expect(await newBridge.getStatusesAfterExecution(batchNonce)).to.eql([3]);
+      });
+
+      it("saves refund items", async function () {
         const newSafeFactory = await ethers.getContractFactory("ERC20Safe");
         const newSafe = await newSafeFactory.deploy();
         const mockedSafe = await smockit(newSafe);

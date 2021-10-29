@@ -1,4 +1,5 @@
 import { task, types } from "hardhat/config";
+import { ethers } from "ethers";
 
 task("Contracts", "Deploys ERC20Safe and the Bridge contract")
   .addParam(
@@ -10,20 +11,24 @@ task("Contracts", "Deploys ERC20Safe and the Bridge contract")
     const relayerAddresses: string[] = JSON.parse(taskArgs.relayerAddresses);
     const quorum = taskArgs.quorum;
     console.log("Relayers used for deploy", relayerAddresses);
-    console.log("Queorum used for relay", quorum);
+    console.log("Quorum used for relay", quorum);
     const [adminWallet] = await hre.ethers.getSigners();
     console.log("Admin Public Address:", adminWallet.address);
 
     const ERC20Safe = await hre.ethers.getContractFactory("ERC20Safe");
-    const safeContract = await ERC20Safe.deploy();
+    const safeContract = await ERC20Safe.deploy({ gasPrice: ethers.utils.parseUnits("30", "gwei") });
     await safeContract.deployed();
     console.log("ERC20Safe deployed to:", safeContract.address);
 
     const Bridge = await hre.ethers.getContractFactory("Bridge");
-    const bridgeContract = await Bridge.deploy(relayerAddresses, quorum, safeContract.address);
+    const bridgeContract = await Bridge.deploy(relayerAddresses, quorum, safeContract.address, {
+      gasPrice: ethers.utils.parseUnits("30", "gwei"),
+    });
     await bridgeContract.deployed();
     console.log("Bridge deployed to:", bridgeContract.address);
-    await safeContract.setBridge(bridgeContract.address);
+    await safeContract.setBridge(bridgeContract.address, {
+      gasPrice: ethers.utils.parseUnits("30", "gwei"),
+    });
 
     const fs = require("fs");
     const filename = "setup.config.json";

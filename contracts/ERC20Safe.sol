@@ -88,6 +88,8 @@ contract ERC20Safe is BridgeRole {
     ) public {
         require(whitelistedTokens[tokenAddress], "Unsupported token");
         require(amount >= tokenLimits[tokenAddress], "Tried to deposit an amount below the specified limit");
+        require(recipientAddress.length == 32, "Invalid length provided for Elrond recipient address");
+
         uint256 currentTimestamp = block.timestamp;
 
         Batch storage batch;
@@ -230,7 +232,9 @@ contract ERC20Safe is BridgeRole {
 
             rf[i].value += dep.amount;
             rf[i].lastUpdatedBlockNumber = block.number;
-            break;
+            return;
         }
+
+        rf.push(RefundItem(dep.tokenAddress, dep.amount, block.number));
     }
 }
