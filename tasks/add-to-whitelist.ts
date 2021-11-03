@@ -1,4 +1,5 @@
 import { task } from "hardhat/config";
+import { ethers } from "ethers";
 
 task(
   "add-to-whitelist",
@@ -13,6 +14,6 @@ task(
     const safeAddress = config["erc20Safe"];
     const safeContractFactory = await hre.ethers.getContractFactory("ERC20Safe");
     const safe = safeContractFactory.attach(safeAddress).connect(adminWallet);
-    await safe.whitelistToken(tokenAddress, 0);
+    await safe.whitelistToken(tokenAddress, 0, { gasPrice: ethers.utils.parseUnits("30", "gwei") });
     console.log("Token whitelisted: ", tokenAddress);
   });
