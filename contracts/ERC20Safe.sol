@@ -37,11 +37,9 @@ contract ERC20Safe is BridgeRole {
     uint256 private currentPendingBatch;
 
     event BatchTimeLimitChanged(uint256 newTimeLimitInSeconds);
-    event UpdatedDepositStatus(uint256 depositNonce, DepositStatus newDepositStatus);
     event BatchSizeChanged(uint256 newBatchSize);
     event TokenWhitelisted(address tokenAddress, uint256 minimumAmount);
     event TokenRemovedFromWhitelist(address tokenAddress);
-    event ERC20Deposited(uint256 depositNonce);
 
     /**
       @notice Whitelist a token. Only whitelisted tokens can be bridged through the bridge.
@@ -111,8 +109,6 @@ contract ERC20Safe is BridgeRole {
         batch.lastUpdatedBlockNumber = block.number;
         depositsCount++;
 
-        emit ERC20Deposited(depositNonce);
-
         IERC20 erc20 = IERC20(tokenAddress);
         erc20.safeTransferFrom(msg.sender, address(this), amount);
     }
@@ -173,7 +169,6 @@ contract ERC20Safe is BridgeRole {
         uint256 batchDepositsCount = batch.deposits.length;
         for (uint256 i = 0; i < batchDepositsCount; i++) {
             batch.deposits[i].status = statuses[i];
-            emit UpdatedDepositStatus(batch.deposits[i].nonce, batch.deposits[i].status);
             if (statuses[i] == DepositStatus.Rejected) {
                 _addRefundItem(batch.deposits[i]);
             }
