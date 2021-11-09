@@ -177,7 +177,7 @@ describe("ERC20Safe", async function () {
             safe.deposit(
               afc.address,
               amount - 1,
-              ethers.utils.toUtf8Bytes("erd13kgks9km5ky8vj2dfty79v769ej433k5xmyhzunk7fv4pndh7z2s8depqq"),
+              Buffer.from("c0f0058cea88a2bc1240b60361efb965957038d05f916c42b3f23a2c38ced81e", "hex"),
             ),
           ).to.be.revertedWith("Tried to deposit an amount below the specified limit");
         });
@@ -188,23 +188,11 @@ describe("ERC20Safe", async function () {
           await safe.whitelistToken(afc.address, amount - 1);
         });
 
-        it("emits Deposited event", async () => {
-          await expect(
-            safe.deposit(
-              afc.address,
-              amount,
-              ethers.utils.toUtf8Bytes("erd13kgks9km5ky8vj2dfty79v769ej433k5xmyhzunk7fv4pndh7z2s8depqq"),
-            ),
-          )
-            .to.emit(safe, "ERC20Deposited")
-            .withArgs(1);
-        });
-
         it("increments depositsCount", async () => {
           await safe.deposit(
             afc.address,
             amount,
-            ethers.utils.toUtf8Bytes("erd13kgks9km5ky8vj2dfty79v769ej433k5xmyhzunk7fv4pndh7z2s8depqq"),
+            Buffer.from("c0f0058cea88a2bc1240b60361efb965957038d05f916c42b3f23a2c38ced81e", "hex"),
           );
 
           expect(await safe.depositsCount.call()).to.equal(1);
@@ -214,7 +202,7 @@ describe("ERC20Safe", async function () {
           await safe.deposit(
             afc.address,
             amount,
-            ethers.utils.toUtf8Bytes("erd13kgks9km5ky8vj2dfty79v769ej433k5xmyhzunk7fv4pndh7z2s8depqq"),
+            Buffer.from("c0f0058cea88a2bc1240b60361efb965957038d05f916c42b3f23a2c38ced81e", "hex"),
           );
           batchNonce = await await safe.batchesCount.call();
           batchAfterFirstTx = await safe.getBatch(batchNonce);
@@ -222,7 +210,7 @@ describe("ERC20Safe", async function () {
           await safe.deposit(
             afc.address,
             amount,
-            ethers.utils.toUtf8Bytes("erd13kgks9km5ky8vj2dfty79v769ej433k5xmyhzunk7fv4pndh7z2s8depqq"),
+            Buffer.from("c0f0058cea88a2bc1240b60361efb965957038d05f916c42b3f23a2c38ced81e", "hex"),
           );
           batchAfterSecondTx = await safe.getBatch(batchNonce);
 
@@ -231,23 +219,11 @@ describe("ERC20Safe", async function () {
       });
 
       describe("when amount is equal to the limit", async function () {
-        it("emits Deposited event", async () => {
-          await expect(
-            safe.deposit(
-              afc.address,
-              amount,
-              ethers.utils.toUtf8Bytes("erd13kgks9km5ky8vj2dfty79v769ej433k5xmyhzunk7fv4pndh7z2s8depqq"),
-            ),
-          )
-            .to.emit(safe, "ERC20Deposited")
-            .withArgs(1);
-        });
-
         it("increments depositsCount", async () => {
           await safe.deposit(
             afc.address,
             amount,
-            ethers.utils.toUtf8Bytes("erd13kgks9km5ky8vj2dfty79v769ej433k5xmyhzunk7fv4pndh7z2s8depqq"),
+            Buffer.from("c0f0058cea88a2bc1240b60361efb965957038d05f916c42b3f23a2c38ced81e", "hex"),
           );
 
           expect(await safe.depositsCount.call()).to.equal(1);
@@ -257,7 +233,7 @@ describe("ERC20Safe", async function () {
           await safe.deposit(
             afc.address,
             amount,
-            ethers.utils.toUtf8Bytes("erd13kgks9km5ky8vj2dfty79v769ej433k5xmyhzunk7fv4pndh7z2s8depqq"),
+            Buffer.from("c0f0058cea88a2bc1240b60361efb965957038d05f916c42b3f23a2c38ced81e", "hex"),
           );
           batchNonce = await await safe.batchesCount.call();
           batchAfterFirstTx = await safe.getBatch(batchNonce);
@@ -265,7 +241,7 @@ describe("ERC20Safe", async function () {
           await safe.deposit(
             afc.address,
             amount,
-            ethers.utils.toUtf8Bytes("erd13kgks9km5ky8vj2dfty79v769ej433k5xmyhzunk7fv4pndh7z2s8depqq"),
+            Buffer.from("c0f0058cea88a2bc1240b60361efb965957038d05f916c42b3f23a2c38ced81e", "hex"),
           );
           batchAfterSecondTx = await safe.getBatch(batchNonce);
 
@@ -280,7 +256,7 @@ describe("ERC20Safe", async function () {
           safe.deposit(
             afc.address,
             amount,
-            ethers.utils.toUtf8Bytes("erd13kgks9km5ky8vj2dfty79v769ej433k5xmyhzunk7fv4pndh7z2s8depqq"),
+            Buffer.from("c0f0058cea88a2bc1240b60361efb965957038d05f916c42b3f23a2c38ced81e", "hex"),
           ),
         ).to.be.revertedWith("Unsupported token");
       });

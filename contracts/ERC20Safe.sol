@@ -40,6 +40,7 @@ contract ERC20Safe is BridgeRole {
     event BatchSizeChanged(uint256 newBatchSize);
     event TokenWhitelisted(address tokenAddress, uint256 minimumAmount);
     event TokenRemovedFromWhitelist(address tokenAddress);
+    event TokenLimitChanged(address token, uint256 amount);
 
     /**
       @notice Whitelist a token. Only whitelisted tokens can be bridged through the bridge.
@@ -71,14 +72,18 @@ contract ERC20Safe is BridgeRole {
         emit BatchSizeChanged(batchSize);
     }
 
+    function setTokenLimit(address token, uint256 amount) external onlyAdmin {
+        tokenLimits[token] = amount;
+        emit TokenLimitChanged(token, amount);
+    }
+
     /**
       @notice It assumes that tokenAddress is a corect address for an ERC20 token. No checks whatsoever for this (yet)
       @param tokenAddress Address of the contract for the ERC20 token that will be deposited
       @param amount number of tokens that need to be deposited
       @param recipientAddress address of the receiver of tokens on Elrond Network
       @notice emits {ERC20Deposited} event
-      TODO: Check why recipientAddress is bytes and not address
-   */
+\   */
     function deposit(
         address tokenAddress,
         uint256 amount,
@@ -163,20 +168,19 @@ contract ERC20Safe is BridgeRole {
         Allows the next batch to be processed
     */
     function finishCurrentPendingBatch(DepositStatus[] calldata statuses) public onlyBridge {
-        Batch storage batch = batches[currentPendingBatch++];
+        Batch memory batch = batches[currentPendingBatch++];
         require(
             batch.deposits.length == statuses.length,
             "Number of deposit statuses must match the number of deposits in the batch"
         );
         uint256 batchDepositsCount = batch.deposits.length;
         for (uint256 i = 0; i < batchDepositsCount; i++) {
-            batch.deposits[i].status = statuses[i];
             if (statuses[i] == DepositStatus.Rejected) {
                 _addRefundItem(batch.deposits[i]);
             }
         }
 
-        batch.status = BatchStatus.Executed;
+        delete batches[currentPendingBatch];
     }
 
     /**

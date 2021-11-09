@@ -29,7 +29,7 @@ contract Bridge is RelayerRole {
     string private constant action = "CurrentPendingBatch";
     string private constant executeTransferAction = "ExecuteBatchedTransfer";
     string private constant prefix = "\x19Ethereum Signed Message:\n32";
-    uint256 private constant minimumQuorum = 1;
+    uint256 private constant minimumQuorum = 3;
     uint256 public batchSettleBlockCount = 40;
 
     uint256 public quorum;
@@ -95,17 +95,19 @@ contract Bridge is RelayerRole {
         DepositStatus[] calldata newDepositStatuses,
         bytes[] calldata signatures
     ) public onlyRelayer {
+        // Moved this check first because of the relayers who happen to call the bridge with invalid nonce.
+        //  Saves us some gas for the follow-up computation.
+        Batch memory batch = safe.getNextPendingBatch();
+        require(batch.nonce == batchNonceETHElrond, "Invalid batch nonce");
+
+        require(signatures.length >= quorum, "Not enough signatures to achieve quorum");
+
         for (uint256 i = 0; i < newDepositStatuses.length; i++) {
             require(
                 newDepositStatuses[i] == DepositStatus.Executed || newDepositStatuses[i] == DepositStatus.Rejected,
                 "Non-final state. Can only be Executed or Rejected"
             );
         }
-
-        require(signatures.length >= quorum, "Not enough signatures to achieve quorum");
-
-        Batch memory batch = safe.getNextPendingBatch();
-        require(batch.nonce == batchNonceETHElrond, "Invalid batch nonce");
 
         _validateQuorum(signatures, _getHashedDepositData(abi.encode(batchNonceETHElrond, newDepositStatuses, action)));
 
@@ -148,29 +150,6 @@ contract Bridge is RelayerRole {
         CrossTransferStatus storage crossStatus = crossTransferStatuses[batchNonceElrondETH];
         crossStatus.statuses = statuses;
         crossStatus.createdBlockNumber = block.number;
-    }
-
-    /**
-        @notice Verifies if all the deposits within a batch are finalized (Executed or Rejected)
-        @param batchNonceETHElrond Nonce for the batch.
-        @return status for the batch. true - executed, false - pending (not executed yet)
-    */
-    function wasBatchFinished(uint256 batchNonceETHElrond) external view returns (bool) {
-        Batch memory batch = safe.getBatch(batchNonceETHElrond);
-
-        if (batch.deposits.length == 0) {
-            return false;
-        }
-
-        for (uint256 i = 0; i < batch.deposits.length; i++) {
-            if (
-                batch.deposits[i].status != DepositStatus.Executed && batch.deposits[i].status != DepositStatus.Rejected
-            ) {
-                return false;
-            }
-        }
-
-        return true;
     }
 
     /**
