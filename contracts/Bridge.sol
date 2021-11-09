@@ -153,6 +153,29 @@ contract Bridge is RelayerRole {
     }
 
     /**
+        @notice Verifies if all the deposits within a batch are finalized (Executed or Rejected)
+        @param batchNonceETHElrond Nonce for the batch.
+        @return status for the batch. true - executed, false - pending (not executed yet)
+    */
+    function wasBatchFinished(uint256 batchNonceETHElrond) external view returns (bool) {
+        Batch memory batch = safe.getBatch(batchNonceETHElrond);
+
+        if (batch.deposits.length == 0) {
+            return false;
+        }
+
+        for (uint256 i = 0; i < batch.deposits.length; i++) {
+            if (
+                batch.deposits[i].status != DepositStatus.Executed && batch.deposits[i].status != DepositStatus.Rejected
+            ) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
         @notice Only returns values if the cross transfers were executed some predefined time ago to ensure finality
         @param batchNonceElrondETH Nonce for the batch
         @return a list of statuses for each transfer in the batch provided

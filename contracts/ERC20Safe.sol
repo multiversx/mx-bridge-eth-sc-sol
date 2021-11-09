@@ -87,11 +87,10 @@ contract ERC20Safe is BridgeRole {
     function deposit(
         address tokenAddress,
         uint256 amount,
-        bytes calldata recipientAddress
+        bytes32 recipientAddress
     ) public {
         require(whitelistedTokens[tokenAddress], "Unsupported token");
         require(amount >= tokenLimits[tokenAddress], "Tried to deposit an amount below the specified limit");
-        require(recipientAddress.length == 32, "Invalid length provided for Elrond recipient address");
 
         uint256 currentTimestamp = block.timestamp;
 
@@ -156,7 +155,8 @@ contract ERC20Safe is BridgeRole {
         if ((batch.lastUpdatedBlockNumber + batchSettleBlockCount) <= block.number) {
             return batch;
         }
-        return Batch(0, 0, 0, new Deposit[](0), BatchStatus.None);
+
+        return Batch(0, 0, 0, new Deposit[](0));
     }
 
     /**
@@ -168,19 +168,18 @@ contract ERC20Safe is BridgeRole {
         Allows the next batch to be processed
     */
     function finishCurrentPendingBatch(DepositStatus[] calldata statuses) public onlyBridge {
-        Batch memory batch = batches[currentPendingBatch++];
+        Batch storage batch = batches[currentPendingBatch++];
         require(
             batch.deposits.length == statuses.length,
             "Number of deposit statuses must match the number of deposits in the batch"
         );
         uint256 batchDepositsCount = batch.deposits.length;
         for (uint256 i = 0; i < batchDepositsCount; i++) {
+            batch.deposits[i].status = statuses[i];
             if (statuses[i] == DepositStatus.Rejected) {
                 _addRefundItem(batch.deposits[i]);
             }
         }
-
-        delete batches[currentPendingBatch];
     }
 
     /**

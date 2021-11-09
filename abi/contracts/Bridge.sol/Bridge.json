@@ -267,9 +267,9 @@
                 "type": "address"
               },
               {
-                "internalType": "bytes",
+                "internalType": "bytes32",
                 "name": "recipient",
-                "type": "bytes"
+                "type": "bytes32"
               },
               {
                 "internalType": "enum DepositStatus",
@@ -280,11 +280,6 @@
             "internalType": "struct Deposit[]",
             "name": "deposits",
             "type": "tuple[]"
-          },
-          {
-            "internalType": "enum BatchStatus",
-            "name": "status",
-            "type": "uint8"
           }
         ],
         "internalType": "struct Batch",

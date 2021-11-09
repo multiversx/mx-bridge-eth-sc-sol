@@ -190,11 +190,6 @@
         "internalType": "uint256",
         "name": "lastUpdatedBlockNumber",
         "type": "uint256"
-      },
-      {
-        "internalType": "enum BatchStatus",
-        "name": "status",
-        "type": "uint8"
       }
     ],
     "stateMutability": "view",
@@ -252,12 +247,35 @@
         "type": "uint256"
       },
       {
-        "internalType": "bytes",
+        "internalType": "bytes32",
         "name": "recipientAddress",
-        "type": "bytes"
+        "type": "bytes32"
       }
     ],
     "name": "deposit",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "tokenAddress",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      },
+      {
+        "internalType": "bytes32",
+        "name": "recipientAddress",
+        "type": "bytes32"
+      }
+    ],
+    "name": "depositTest",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -284,6 +302,19 @@
       }
     ],
     "name": "finishCurrentPendingBatch",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "enum DepositStatus[]",
+        "name": "statuses",
+        "type": "uint8[]"
+      }
+    ],
+    "name": "finishCurrentPendingBatchOld",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -338,9 +369,9 @@
                 "type": "address"
               },
               {
-                "internalType": "bytes",
+                "internalType": "bytes32",
                 "name": "recipient",
-                "type": "bytes"
+                "type": "bytes32"
               },
               {
                 "internalType": "enum DepositStatus",
@@ -351,11 +382,6 @@
             "internalType": "struct Deposit[]",
             "name": "deposits",
             "type": "tuple[]"
-          },
-          {
-            "internalType": "enum BatchStatus",
-            "name": "status",
-            "type": "uint8"
           }
         ],
         "internalType": "struct Batch",
@@ -410,9 +436,9 @@
                 "type": "address"
               },
               {
-                "internalType": "bytes",
+                "internalType": "bytes32",
                 "name": "recipient",
-                "type": "bytes"
+                "type": "bytes32"
               },
               {
                 "internalType": "enum DepositStatus",
@@ -423,11 +449,6 @@
             "internalType": "struct Deposit[]",
             "name": "deposits",
             "type": "tuple[]"
-          },
-          {
-            "internalType": "enum BatchStatus",
-            "name": "status",
-            "type": "uint8"
           }
         ],
         "internalType": "struct Batch",
