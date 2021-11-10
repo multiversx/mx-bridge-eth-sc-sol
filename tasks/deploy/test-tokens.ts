@@ -13,25 +13,25 @@ task("deploy-test-tokens", "Deploys ERC20 contracts to use to test the bridge").
   //deploy contracts
   const genericERC20Factory = await hre.ethers.getContractFactory("GenericERC20");
 
-  const usdcContract = await genericERC20Factory.deploy("Dummy USDC", "dUSDC");
+  const usdcContract = await genericERC20Factory.deploy("USDC", "USDC");
   await usdcContract.deployed();
-  console.log("Deployed dummy USDC: ", usdcContract.address);
-  const daiContract = await genericERC20Factory.deploy("Dummy DAI", "dDAI");
-  await daiContract.deployed();
-  console.log("Deployed dummy DAI: ", daiContract.address);
-  const egldContract = await genericERC20Factory.deploy("Dummy EGLD", "dEGLD");
-  await egldContract.deployed();
-  console.log("Deployed dummy EGLD: ", egldContract.address);
+  console.log("Deployed USDC: ", usdcContract.address);
+  // const daiContract = await genericERC20Factory.deploy("Dummy DAI", "dDAI");
+  // await daiContract.deployed();
+  // console.log("Deployed dummy DAI: ", daiContract.address);
+  // const egldContract = await genericERC20Factory.deploy("Dummy EGLD", "dEGLD");
+  // await egldContract.deployed();
+  // console.log("Deployed dummy EGLD: ", egldContract.address);
 
   //whitelist tokens in safe
   console.log("Whitelisting token ", usdcContract.address);
   await safe.whitelistToken(usdcContract.address, 1);
-  console.log("Whitelisting token ", daiContract.address);
-  await safe.whitelistToken(daiContract.address, 1);
-  console.log("Whitelisting token ", egldContract.address);
-  await safe.whitelistToken(egldContract.address, 1);
+  // console.log("Whitelisting token ", daiContract.address);
+  // await safe.whitelistToken(daiContract.address, 1);
+  // console.log("Whitelisting token ", egldContract.address);
+  // await safe.whitelistToken(egldContract.address, 1);
 
   //save in configuration file
-  config.tokens = [usdcContract.address, daiContract.address, egldContract.address];
+  config.tokens = [usdcContract.address];
   fs.writeFileSync(filename, JSON.stringify(config));
 });

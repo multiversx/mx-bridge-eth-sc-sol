@@ -258,29 +258,6 @@
     "type": "function"
   },
   {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "tokenAddress",
-        "type": "address"
-      },
-      {
-        "internalType": "uint256",
-        "name": "amount",
-        "type": "uint256"
-      },
-      {
-        "internalType": "bytes32",
-        "name": "recipientAddress",
-        "type": "bytes32"
-      }
-    ],
-    "name": "depositTest",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
     "inputs": [],
     "name": "depositsCount",
     "outputs": [
@@ -302,19 +279,6 @@
       }
     ],
     "name": "finishCurrentPendingBatch",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "enum DepositStatus[]",
-        "name": "statuses",
-        "type": "uint8[]"
-      }
-    ],
-    "name": "finishCurrentPendingBatchOld",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

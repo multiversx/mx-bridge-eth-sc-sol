@@ -19,7 +19,7 @@ task("deposit", "Deposits token and sends to safe").setAction(async (taskArgs, h
   console.log(await safe.getNextPendingBatch());
 
   // await safe.deposit(
-  //   "0x64a8bfab8e7ac5d5a3561d95b504542e9e29ce24",
+  //   "0xFDaB99347AF193F2e9e4dB4cD4f8DF9F2Bf86917",
   //   "50000000000000000000",
   //   Buffer.from("c0f0058cea88a2bc1240b60361efb965957038d05f916c42b3f23a2c38ced81e", "hex"),
   // );
