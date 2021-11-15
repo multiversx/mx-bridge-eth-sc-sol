@@ -25,7 +25,7 @@ task("deploy-test-tokens", "Deploys ERC20 contracts to use to test the bridge").
 
   //whitelist tokens in safe
   console.log("Whitelisting token ", usdcContract.address);
-  await safe.whitelistToken(usdcContract.address, 1);
+  await safe.whitelistToken(usdcContract.address, "50000000000000000000");
   // console.log("Whitelisting token ", daiContract.address);
   // await safe.whitelistToken(daiContract.address, 1);
   // console.log("Whitelisting token ", egldContract.address);

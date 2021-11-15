@@ -14,6 +14,7 @@ import "./tasks/mint-test-tokens";
 import "./tasks/set-quorum";
 import "./tasks/approve";
 import "./tasks/deposit";
+import "./tasks/set-min-amount";
 
 import "./tasks/deploy";
 

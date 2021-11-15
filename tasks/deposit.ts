@@ -16,11 +16,11 @@ task("deposit", "Deposits token and sends to safe").setAction(async (taskArgs, h
   //   await adminWallet.sendTransaction({to: relayer, value: ethers.utils.parseUnits("10", "ether")});
   // }
 
-  console.log(await safe.getNextPendingBatch());
+  // console.log(await safe.getNextPendingBatch());
 
-  // await safe.deposit(
-  //   "0xFDaB99347AF193F2e9e4dB4cD4f8DF9F2Bf86917",
-  //   "50000000000000000000",
-  //   Buffer.from("c0f0058cea88a2bc1240b60361efb965957038d05f916c42b3f23a2c38ced81e", "hex"),
-  // );
+  await safe.deposit(
+    "0xd1135C0307CEB01FD4728db8e5B8D38fbf984F9a",
+    "100000000000000000000",
+    Buffer.from("8435c3bc7cec141b87633a87551a766e866255e82cbfa2a4610fea0c88ae5483", "hex"),
+  );
 });
