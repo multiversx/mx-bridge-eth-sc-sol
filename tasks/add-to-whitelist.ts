@@ -6,7 +6,7 @@ task(
   "Whitelists a new address in the bridge. Requires setup.config.json to be present (created with the deploy script)",
 )
   .addParam("address", "Address of the ERC20 token to be whitelisted")
-  .addParam("min-amount", "Minimum amount needed to transfer this token to Elrond")
+  .addParam("minAmount", "Minimum amount needed to transfer this token to Elrond")
   .setAction(async (taskArgs, hre) => {
     const tokenAddress = taskArgs.address;
     const amount = taskArgs.amount;
