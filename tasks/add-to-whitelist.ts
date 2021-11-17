@@ -6,7 +6,7 @@ task(
   "Whitelists a new address in the bridge. Requires setup.config.json to be present (created with the deploy script)",
 )
   .addParam("address", "Address of the ERC20 token to be whitelisted")
-  .addParam("minAmount", "Minimum amount needed to transfer this token to Elrond")
+  .addParam("amount", "Minimum amount needed to transfer this token to Elrond")
   .setAction(async (taskArgs, hre) => {
     const tokenAddress = taskArgs.address;
     const amount = taskArgs.amount;
@@ -16,6 +16,7 @@ task(
     const safeAddress = config["erc20Safe"];
     const safeContractFactory = await hre.ethers.getContractFactory("ERC20Safe");
     const safe = safeContractFactory.attach(safeAddress).connect(adminWallet);
+
     await safe.whitelistToken(tokenAddress, amount);
     console.log("Token whitelisted: ", tokenAddress);
   });
