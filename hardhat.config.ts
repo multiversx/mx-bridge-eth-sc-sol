@@ -15,6 +15,7 @@ import "./tasks/set-quorum";
 import "./tasks/approve";
 import "./tasks/deposit";
 import "./tasks/set-min-amount";
+import "./tasks/claim";
 
 import "./tasks/deploy";
 

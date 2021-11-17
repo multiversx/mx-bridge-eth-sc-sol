@@ -14,4 +14,8 @@ contract GenericERC20 is ERC20 {
     function mint(address recipientAddress, uint256 amount) external {
         _mint(recipientAddress, amount * (10**decimals()));
     }
+
+    function decimals() public view virtual override returns (uint8) {
+        return 6;
+    }
 }
