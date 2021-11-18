@@ -199,15 +199,14 @@ contract ERC20Safe is BridgeRole {
         @notice Endpoint that allows a user to query the value that can be refunded for a specified token
         @param token Token address for which the user wants a refund
     */
-    function getRefundAmount(IERC20 token) public view returns (uint256) {
+    function getRefundAmount(IERC20 token) external returns (uint256) {
         RefundItem memory rf = _getRefundItem(token);
-        return 0;
 
         return rf.value;
     }
 
     function _getRefundItem(IERC20 token) private view returns (RefundItem storage) {
-        RefundItem[] storage rf = refundItems[msg.sender];
+        RefundItem[] storage rf = refundItems[tx.origin];
         require(rf.length > 0, "Nothing to refund rflen=0");
 
         for (uint256 i = 0; i < rf.length; i++) {
