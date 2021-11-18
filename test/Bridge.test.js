@@ -301,8 +301,8 @@ describe("Bridge", async function () {
           const batchBefore = await erc20Safe.getBatch(batch.nonce);
           const finishTx = await bridge.finishCurrentPendingBatch(batch.nonce, newDepositStatuses, signatures);
           const batchAfter = await erc20Safe.getBatch(batch.nonce);
-          console.log("--------------------", batchAfter);
-          console.log("with tx - checking gas", finishTx);
+          // console.log("--------------------", batchAfter);
+          // console.log("with tx - checking gas", finishTx);
           // Test refund items and current pending batch nonce;
         });
 
@@ -313,6 +313,8 @@ describe("Bridge", async function () {
 
         it("moves to the next batch", async function () {
           await bridge.finishCurrentPendingBatch(batch.nonce, newDepositStatuses, signatures);
+          let refunds = await erc20Safe.connect(adminWallet).claimRefund(afc.address);
+          expect(refunds.length).to.not.equal(0);
 
           nextBatch = await bridge.getNextPendingBatch();
           expect(nextBatch.nonce).to.not.equal(batch.nonce);

@@ -188,7 +188,7 @@ contract ERC20Safe is BridgeRole {
     */
     function claimRefund(IERC20 token) public {
         RefundItem storage rf = _getRefundItem(token);
-        require(rf.value > 0, "Nothing to refund");
+        require(rf.value > 0, "Nothing to refund rfval=0");
 
         uint256 valueToTransfer = rf.value;
         rf.value = 0;
@@ -201,14 +201,14 @@ contract ERC20Safe is BridgeRole {
     */
     function getRefundAmount(IERC20 token) public view returns (uint256) {
         RefundItem memory rf = _getRefundItem(token);
-        require(rf.value > 0, "Nothing to refund");
+        require(rf.value > 0, "Nothing to refund rfval=0");
 
         return rf.value;
     }
 
     function _getRefundItem(IERC20 token) private view returns (RefundItem storage) {
-        RefundItem[] storage rf = refundItems[msg.sender];
-        require(rf.length > 0, "Nothing to refund");
+        RefundItem[] storage rf = refundItems[tx.origin];
+        require(rf.length > 0, "Nothing to refund rflen=0");
 
         for (uint256 i = 0; i < rf.length; i++) {
             if (rf[i].tokenAddress != address(token)) {
@@ -218,11 +218,11 @@ contract ERC20Safe is BridgeRole {
             return rf[i];
         }
 
-        revert("Nothing to refund");
+        revert("Nothing to refund rftoken=not found");
     }
 
     function _addRefundItem(Deposit memory dep) private {
-        RefundItem[] storage rf = refundItems[msg.sender];
+        RefundItem[] storage rf = refundItems[tx.origin];
         for (uint256 i = 0; i < rf.length; i++) {
             if (rf[i].tokenAddress != dep.tokenAddress) {
                 continue;
@@ -230,6 +230,7 @@ contract ERC20Safe is BridgeRole {
 
             rf[i].value += dep.amount;
             rf[i].lastUpdatedBlockNumber = block.number;
+
             return;
         }
 
