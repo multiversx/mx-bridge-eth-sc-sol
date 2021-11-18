@@ -222,7 +222,7 @@ contract ERC20Safe is BridgeRole {
     }
 
     function _addRefundItem(Deposit memory dep) private {
-        RefundItem[] storage rf = refundItems[tx.origin];
+        RefundItem[] storage rf = refundItems[dep.depositor];
         for (uint256 i = 0; i < rf.length; i++) {
             if (rf[i].tokenAddress != dep.tokenAddress) {
                 continue;
