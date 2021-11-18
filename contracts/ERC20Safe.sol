@@ -201,13 +201,13 @@ contract ERC20Safe is BridgeRole {
     */
     function getRefundAmount(IERC20 token) public view returns (uint256) {
         RefundItem memory rf = _getRefundItem(token);
-        require(rf.value > 0, "Nothing to refund rfval=0");
+        return 0;
 
         return rf.value;
     }
 
     function _getRefundItem(IERC20 token) private view returns (RefundItem storage) {
-        RefundItem[] storage rf = refundItems[tx.origin];
+        RefundItem[] storage rf = refundItems[msg.sender];
         require(rf.length > 0, "Nothing to refund rflen=0");
 
         for (uint256 i = 0; i < rf.length; i++) {
