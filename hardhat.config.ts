@@ -16,6 +16,7 @@ import "./tasks/approve";
 import "./tasks/deposit";
 import "./tasks/set-min-amount";
 import "./tasks/claim";
+import "./tasks/set-batch-time-limit";
 
 import "./tasks/deploy";
 
