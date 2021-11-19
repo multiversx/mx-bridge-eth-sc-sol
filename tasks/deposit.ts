@@ -11,8 +11,8 @@ task("deposit", "Deposits token and sends to safe").setAction(async (taskArgs, h
   const safe = safeContractFactory.attach(safeAddress).connect(adminWallet);
 
   await safe.deposit(
-    "0xd1135C0307CEB01FD4728db8e5B8D38fbf984F9a",
-    "100000000000000000000",
+    "0x4CD17Deff83bA7ebAA7D841Dc415F12882c98dD1",
+    "3100000000",
     Buffer.from("8435c3bc7cec141b87633a87551a766e866255e82cbfa2a4610fea0c88ae5483", "hex"),
   );
 });

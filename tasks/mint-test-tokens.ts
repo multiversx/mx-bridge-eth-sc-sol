@@ -5,7 +5,7 @@ task("mint-test-tokens", "Mints tests tokens and sends them to the recipientAddr
     const fs = require("fs");
     const filename = "setup.config.json";
     let config = JSON.parse(fs.readFileSync(filename, "utf8"));
-    const addresses: string[] = ["0x6Ded2B9d49b421A785fe602C6bA1E710cfdc4c2a"];
+    const addresses: string[] = ["0xbC3D5041d1BEC1663F1bbA90f78fd6c41062125e"];
 
     for (let i = 0; i < config.tokens.length; i++) {
       for (let address of addresses) {

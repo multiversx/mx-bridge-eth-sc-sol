@@ -10,5 +10,5 @@ task("set-batch-time-limit", "Sets a new batch time limit").setAction(async (tas
   const safeContractFactory = await hre.ethers.getContractFactory("ERC20Safe");
   const safe = safeContractFactory.attach(safeAddress).connect(adminWallet);
 
-  await safe.setBatchTimeLimit(7);
+  await safe.setBatchTimeLimit(420);
 });
