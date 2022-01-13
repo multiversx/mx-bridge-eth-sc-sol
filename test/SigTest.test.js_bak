@@ -1,0 +1,50 @@
+const { waffle, ethers, network } = require("hardhat");
+const { expect } = require("chai");
+const { provider, deployContract } = waffle;
+const { smockit } = require("@eth-optimism/smock");
+
+const BridgeContract = require("../artifacts/contracts/Bridge.sol/Bridge.json");
+const ERC20SafeContract = require("../artifacts/contracts/ERC20Safe.sol/ERC20Safe.json");
+const AFC = require("../artifacts/contracts/GenericERC20.sol/GenericERC20.json");
+
+describe("Bridge", async function () {
+  const [adminWallet, relayer1, relayer2, relayer3, relayer4, relayer5, relayer6, relayer7, relayer8, otherWallet, otherWallet2] =
+    provider.getWallets();
+  const boardMembers = [adminWallet.address, "0xb6e20ff4ae7d29be233d874633f2f0dcb326e5c0","0x8609d4db3ce70b1a2969e55c6973a12ffc58d454","0xee96e2234edd26dc96bc8dc9a51a513b4e7d62e2","0x02b04cef8fab044c2b518b1ac215b36498686cb3","0xcb2f834ae3bf9c8004ea82109c5b77b2b4bfb69a","0x7e7d4bf7a15cec824ce2d4467491be52f0274c3c","0x824c1813d9e8ba9875bee2b8aceb52fb8486c1ff", "0x9214a60a6b14fbd80ec77f2dbd03c3a295687e15", "0x04add2648743cbdd40c221df0ab1f63124345391", "0xf79e68efaeb0d2d38270493c9f04f94081fc1030"];
+  const quorum = 3;
+
+  let afc;
+  let erc20Safe;
+  let bridge;
+
+  async function setupContracts() {
+    erc20Safe = await deployContract(adminWallet, ERC20SafeContract);
+    bridge = await deployContract(adminWallet, BridgeContract, [boardMembers, quorum, erc20Safe.address]);
+    await erc20Safe.setBridge(bridge.address);
+    await setupErc20Token();
+  }
+
+  async function setupErc20Token() {
+    afc = await deployContract(adminWallet, AFC, [10000000]);
+    await afc.mint(adminWallet.address, 10000000);
+    let tx = await afc.approve(erc20Safe.address, 1000000000);
+    await erc20Safe.whitelistToken(afc.address, 0);
+  }
+
+
+  it("checks sigs", async _ => {
+    console.log('---------- start');
+    await setupContracts();
+
+    const response = await bridge.executeTransfer(
+      ['0xCd111aa29ECb881d18AC25cF9b669B3e2d3e72D5', '0xCd111aa29ECb881d18AC25cF9b669B3e2d3e72D5'],
+      ['0x1ba406543b4b347b3F84d4F3EC66D4968d75F82f', '0x1ba406543b4b347b3F84d4F3EC66D4968d75F82f'],
+      ['2480000000', '2480000000'],
+      ['1', '2'],
+      1,
+      ['0x5f2608eb7cf289794073a9ff3e5138ef557aeb5dbbad7cb583291cdb570905294586b5d7870099d32e0032fb1071ee08abcea4f72311251dd770550b76d5656d01', '0x9d8118940d704d86bf0de19be3e3fdbc239d1daf58780c625d35df20a528dbb96692870bc4852dc16c8282aed523ccdd8c86737e67de9ca743e75b753a5f703f00', '0xbecc5e228af6098e984672f00f3b5b0286f6de16cfe035ea83186dbffc86bf1a3005fd7ab140c980d477b6ae4a22ab9f70691a3229bebae48962d8a4ce6f964e00']
+    );
+
+    console.log('response');
+  });
+});
