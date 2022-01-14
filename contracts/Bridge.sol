@@ -72,46 +72,15 @@ contract Bridge is RelayerRole {
     }
 
     /**
-        @notice Gets information about the current batch of deposits
+        @notice Gets information about the batch of deposits
         @return Batch which consists of:
         - batch nonce
         - timestamp
         - deposits List of the deposits included in this batch
         @dev Even if there are deposits in the Safe, the current batch might still return as empty. This is because it might not be final (not full, and not enough blocks elapsed)
     */
-    function getNextPendingBatch() external view returns (Batch memory) {
-        return safe.getNextPendingBatch();
-    }
-
-    /**
-        @notice Marks all transactions from the batch with their execution status (Rejected or Executed).
-        @dev This is for the Ethereum to Elrond flow
-        @param batchNonceETHElrond Nonce for the batch. Should be equal to the nonce of the current batch. This identifies a batch created on the Ethereum chain toat bridges tokens from Ethereum to Elrond
-        @param newDepositStatuses Array containing new statuses for all the transactions in the batch. Can only be Rejected or Executed statuses. Number of statuses must be equal to the number of transactions in the batch.
-        @param signatures Signatures from all the relayers for the execution. This mimics a delegated multisig contract. For the execution to take place, there must be enough valid signatures to achieve quorum.
-    */
-    function finishCurrentPendingBatch(
-        uint256 batchNonceETHElrond,
-        DepositStatus[] calldata newDepositStatuses,
-        bytes[] calldata signatures
-    ) public onlyRelayer {
-        // Moved this check first because of the relayers who happen to call the bridge with invalid nonce.
-        //  Saves us some gas for the follow-up computation.
-        Batch memory batch = safe.getNextPendingBatch();
-        require(batch.nonce == batchNonceETHElrond, "Invalid batch nonce");
-
-        require(signatures.length >= quorum, "Not enough signatures to achieve quorum");
-
-        for (uint256 i = 0; i < newDepositStatuses.length; i++) {
-            require(
-                newDepositStatuses[i] == DepositStatus.Executed || newDepositStatuses[i] == DepositStatus.Rejected,
-                "Non-final state. Can only be Executed or Rejected"
-            );
-        }
-
-        _validateQuorum(signatures, _getHashedDepositData(abi.encode(batchNonceETHElrond, newDepositStatuses, action)));
-
-        safe.finishCurrentPendingBatch(newDepositStatuses);
+    function getBatch(uint256 batchNonce) external view returns (Batch memory) {
+        return safe.getBatch(batchNonce);
     }
 
     /**
@@ -150,29 +119,6 @@ contract Bridge is RelayerRole {
         CrossTransferStatus storage crossStatus = crossTransferStatuses[batchNonceElrondETH];
         crossStatus.statuses = statuses;
         crossStatus.createdBlockNumber = block.number;
-    }
-
-    /**
-        @notice Verifies if all the deposits within a batch are finalized (Executed or Rejected)
-        @param batchNonceETHElrond Nonce for the batch.
-        @return status for the batch. true - executed, false - pending (not executed yet)
-    */
-    function wasBatchFinished(uint256 batchNonceETHElrond) external view returns (bool) {
-        Batch memory batch = safe.getBatch(batchNonceETHElrond);
-
-        if (batch.deposits.length == 0) {
-            return false;
-        }
-
-        for (uint256 i = 0; i < batch.deposits.length; i++) {
-            if (
-                batch.deposits[i].status != DepositStatus.Executed && batch.deposits[i].status != DepositStatus.Rejected
-            ) {
-                return false;
-            }
-        }
-
-        return true;
     }
 
     /**

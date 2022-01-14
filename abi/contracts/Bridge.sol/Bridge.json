@@ -204,28 +204,11 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "batchNonceETHElrond",
+        "name": "batchNonce",
         "type": "uint256"
-      },
-      {
-        "internalType": "enum DepositStatus[]",
-        "name": "newDepositStatuses",
-        "type": "uint8[]"
-      },
-      {
-        "internalType": "bytes[]",
-        "name": "signatures",
-        "type": "bytes[]"
       }
     ],
-    "name": "finishCurrentPendingBatch",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "getNextPendingBatch",
+    "name": "getBatch",
     "outputs": [
       {
         "components": [
@@ -454,25 +437,6 @@
       }
     ],
     "name": "wasBatchExecuted",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "batchNonceETHElrond",
-        "type": "uint256"
-      }
-    ],
-    "name": "wasBatchFinished",
     "outputs": [
       {
         "internalType": "bool",
