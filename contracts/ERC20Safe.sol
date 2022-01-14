@@ -26,7 +26,6 @@ contract ERC20Safe is BridgeRole {
     uint256 public depositsCount;
     uint256 public batchesCount;
     uint256 public batchTimeLimit = 10 minutes;
-    uint256 public batchSettleBlockCount = 40;
     // Maximum number of transactions within a batch
     uint256 public batchSize = 10;
     uint256 private constant maxBatchSize = 20;
@@ -113,7 +112,9 @@ contract ERC20Safe is BridgeRole {
         batch.deposits.push(
             Deposit(depositNonce, tokenAddress, amount, msg.sender, recipientAddress, DepositStatus.Pending)
         );
-        batch.lastUpdatedBlockNumber = block.number;
+
+        // TODO: refactor naming
+        batch.lastUpdatedBlockNumber = block.timestamp;
         depositsCount++;
 
         IERC20 erc20 = IERC20(tokenAddress);
@@ -140,22 +141,8 @@ contract ERC20Safe is BridgeRole {
         - deposits List of the deposits included in this batch
     */
     function getBatch(uint256 batchNonce) public view returns (Batch memory) {
-        return batches[batchNonce - 1];
-    }
-
-    /**
-        @notice Gets a batch - if it is final
-        @return Batch which consists of:
-        - batch nonce
-        - timestamp
-        - deposits List of the deposits included in this batch
-        @dev This function is to be called by the bridge (which is called by the relayers)
-        It only returns final batches - batches where the block time limit has passed and that have settled (minimal risk for reorgs).
-    */
-    function getNextPendingBatch() public view returns (Batch memory) {
-        Batch memory batch = batches[currentPendingBatch];
-
-        if ((batch.lastUpdatedBlockNumber + batchSettleBlockCount) <= block.number) {
+        Batch memory batch = batches[batchNonce - 1];
+        if ((batch.lastUpdatedBlockNumber + batchTimeLimit) <= block.timestamp) {
             return batch;
         }
 
