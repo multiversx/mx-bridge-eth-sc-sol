@@ -148,19 +148,6 @@
   },
   {
     "inputs": [],
-    "name": "batchSettleBlockCount",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
     "name": "batchSize",
     "outputs": [
       {
@@ -311,73 +298,6 @@
       }
     ],
     "name": "getBatch",
-    "outputs": [
-      {
-        "components": [
-          {
-            "internalType": "uint256",
-            "name": "nonce",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "timestamp",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "lastUpdatedBlockNumber",
-            "type": "uint256"
-          },
-          {
-            "components": [
-              {
-                "internalType": "uint256",
-                "name": "nonce",
-                "type": "uint256"
-              },
-              {
-                "internalType": "address",
-                "name": "tokenAddress",
-                "type": "address"
-              },
-              {
-                "internalType": "uint256",
-                "name": "amount",
-                "type": "uint256"
-              },
-              {
-                "internalType": "address",
-                "name": "depositor",
-                "type": "address"
-              },
-              {
-                "internalType": "bytes32",
-                "name": "recipient",
-                "type": "bytes32"
-              },
-              {
-                "internalType": "enum DepositStatus",
-                "name": "status",
-                "type": "uint8"
-              }
-            ],
-            "internalType": "struct Deposit[]",
-            "name": "deposits",
-            "type": "tuple[]"
-          }
-        ],
-        "internalType": "struct Batch",
-        "name": "",
-        "type": "tuple"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "getNextPendingBatch",
     "outputs": [
       {
         "components": [

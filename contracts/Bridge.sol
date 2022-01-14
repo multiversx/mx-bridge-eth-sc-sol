@@ -97,6 +97,7 @@ contract Bridge is RelayerRole {
         address[] calldata tokens,
         address[] calldata recipients,
         uint256[] calldata amounts,
+        uint256[] calldata depositNonces,
         uint256 batchNonceElrondETH,
         bytes[] calldata signatures
     ) public onlyRelayer {
