@@ -10,12 +10,9 @@ task("deposit", "Deposits token and sends to safe").setAction(async (taskArgs, h
   const safeContractFactory = await hre.ethers.getContractFactory("ERC20Safe");
   const safe = safeContractFactory.attach(safeAddress).connect(adminWallet);
 
-  const batch = await safe.getBatch(1);
-  console.log(batch);
-
-  // await safe.deposit(
-  //   "0x4CD17Deff83bA7ebAA7D841Dc415F12882c98dD1",
-  //   "3100000000",
-  //   Buffer.from("8435c3bc7cec141b87633a87551a766e866255e82cbfa2a4610fea0c88ae5483", "hex"),
-  // );
+  await safe.deposit(
+    "0x4CD17Deff83bA7ebAA7D841Dc415F12882c98dD1",
+    "3100000000",
+    Buffer.from("8435c3bc7cec141b87633a87551a766e866255e82cbfa2a4610fea0c88ae5483", "hex"),
+  );
 });
