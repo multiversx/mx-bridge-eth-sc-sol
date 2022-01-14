@@ -41,6 +41,7 @@ contract ERC20Safe is BridgeRole {
     event TokenWhitelisted(address tokenAddress, uint256 minimumAmount);
     event TokenRemovedFromWhitelist(address tokenAddress);
     event TokenLimitChanged(address token, uint256 amount);
+    event ERC20Deposit(uint256 depositNonce, uint256 batchId);
 
     /**
       @notice Whitelist a token. Only whitelisted tokens can be bridged through the bridge.
@@ -117,6 +118,8 @@ contract ERC20Safe is BridgeRole {
 
         IERC20 erc20 = IERC20(tokenAddress);
         erc20.safeTransferFrom(msg.sender, address(this), amount);
+
+        emit ERC20Deposit(depositNonce, batch.nonce);
     }
 
     function transfer(
