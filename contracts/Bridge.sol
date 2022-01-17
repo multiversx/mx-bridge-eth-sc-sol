@@ -107,7 +107,9 @@ contract Bridge is RelayerRole {
 
         _validateQuorum(
             signatures,
-            _getHashedDepositData(abi.encode(recipients, tokens, amounts, batchNonceElrondETH, executeTransferAction))
+            _getHashedDepositData(
+                abi.encode(recipients, tokens, amounts, depositNonces, batchNonceElrondETH, executeTransferAction)
+            )
         );
 
         DepositStatus[] memory statuses = new DepositStatus[](tokens.length);
