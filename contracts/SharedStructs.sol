@@ -27,12 +27,6 @@ struct CrossTransferStatus {
 struct Batch {
     uint256 nonce;
     uint256 timestamp;
-    uint256 lastUpdatedBlockNumber;
+    uint256 lastUpdatedTimestamp;
     Deposit[] deposits;
-}
-
-struct RefundItem {
-    address tokenAddress;
-    uint256 value;
-    uint256 lastUpdatedBlockNumber;
 }

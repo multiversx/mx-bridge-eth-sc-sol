@@ -22,32 +22,6 @@
     "anonymous": false,
     "inputs": [
       {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "newBatchSize",
-        "type": "uint256"
-      }
-    ],
-    "name": "BatchSizeChanged",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "newTimeLimitInSeconds",
-        "type": "uint256"
-      }
-    ],
-    "name": "BatchTimeLimitChanged",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
         "indexed": true,
         "internalType": "address",
         "name": "previousBridge",
@@ -80,57 +54,6 @@
       }
     ],
     "name": "ERC20Deposit",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "internalType": "address",
-        "name": "token",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "amount",
-        "type": "uint256"
-      }
-    ],
-    "name": "TokenLimitChanged",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "internalType": "address",
-        "name": "tokenAddress",
-        "type": "address"
-      }
-    ],
-    "name": "TokenRemovedFromWhitelist",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "internalType": "address",
-        "name": "tokenAddress",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "minimumAmount",
-        "type": "uint256"
-      }
-    ],
-    "name": "TokenWhitelisted",
     "type": "event"
   },
   {
@@ -194,7 +117,7 @@
       },
       {
         "internalType": "uint256",
-        "name": "lastUpdatedBlockNumber",
+        "name": "lastUpdatedTimestamp",
         "type": "uint256"
       }
     ],
@@ -225,19 +148,6 @@
       }
     ],
     "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "contract IERC20",
-        "name": "token",
-        "type": "address"
-      }
-    ],
-    "name": "claimRefund",
-    "outputs": [],
-    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
@@ -279,19 +189,6 @@
   {
     "inputs": [
       {
-        "internalType": "enum DepositStatus[]",
-        "name": "statuses",
-        "type": "uint8[]"
-      }
-    ],
-    "name": "finishCurrentPendingBatch",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
         "internalType": "uint256",
         "name": "batchNonce",
         "type": "uint256"
@@ -313,7 +210,7 @@
           },
           {
             "internalType": "uint256",
-            "name": "lastUpdatedBlockNumber",
+            "name": "lastUpdatedTimestamp",
             "type": "uint256"
           },
           {
@@ -365,12 +262,12 @@
   {
     "inputs": [
       {
-        "internalType": "contract IERC20",
+        "internalType": "address",
         "name": "token",
         "type": "address"
       }
     ],
-    "name": "getRefundAmount",
+    "name": "getTokenLimit",
     "outputs": [
       {
         "internalType": "uint256",
@@ -378,41 +275,39 @@
         "type": "uint256"
       }
     ],
-    "stateMutability": "nonpayable",
+    "stateMutability": "view",
     "type": "function"
   },
   {
     "inputs": [
       {
         "internalType": "address",
-        "name": "",
+        "name": "token",
         "type": "address"
-      },
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
       }
     ],
-    "name": "refundItems",
+    "name": "isTokenWhitelisted",
     "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
       {
         "internalType": "address",
         "name": "tokenAddress",
         "type": "address"
-      },
-      {
-        "internalType": "uint256",
-        "name": "value",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "lastUpdatedBlockNumber",
-        "type": "uint256"
       }
     ],
-    "stateMutability": "view",
+    "name": "recoverLostFunds",
+    "outputs": [],
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
@@ -490,6 +385,25 @@
     "name": "setTokenLimit",
     "outputs": [],
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "name": "tokenBalances",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   },
   {

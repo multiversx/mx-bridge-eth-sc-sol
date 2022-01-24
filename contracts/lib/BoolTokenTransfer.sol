@@ -15,7 +15,6 @@ library BoolTokenTransfer {
             abi.encodeWithSelector(token.transfer.selector, to, value)
         );
 
-        // Contract call errors - TODO: parse error
         if (!success) {
             return false;
         }

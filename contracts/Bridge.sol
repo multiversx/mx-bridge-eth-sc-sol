@@ -33,7 +33,7 @@ contract Bridge is RelayerRole {
     uint256 public batchSettleBlockCount = 40;
 
     uint256 public quorum;
-    ERC20Safe private immutable safe;
+    ERC20Safe internal immutable safe;
 
     mapping(uint256 => bool) public executedBatches;
     mapping(uint256 => CrossTransferStatus) public crossTransferStatuses;

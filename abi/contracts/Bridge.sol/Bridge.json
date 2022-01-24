@@ -229,7 +229,7 @@
           },
           {
             "internalType": "uint256",
-            "name": "lastUpdatedBlockNumber",
+            "name": "lastUpdatedTimestamp",
             "type": "uint256"
           },
           {

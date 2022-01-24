@@ -10,14 +10,12 @@ import "./lib/BoolTokenTransfer.sol";
 
 /**
 @title ERC20 Safe for bridging tokens
-@author Elrond & AgileFreaks
+@author Elrond
 @notice Contract to be used by the users to make deposits that will be bridged
-@notice The deployer is also the admin of the contract.
 In order to use it:
 - The Bridge.sol must be deployed and must be whitelisted for the Safe contract.
 @dev The deposits are requested by the Bridge, and in order to save gas spent by the relayers
 they will be batched either by time (batchTimeLimit) or size (batchSize).
-There can only be one pending Batch.
  */
 contract ERC20Safe is BridgeRole {
     using SafeERC20 for IERC20;
@@ -26,59 +24,76 @@ contract ERC20Safe is BridgeRole {
     uint256 public depositsCount;
     uint256 public batchesCount;
     uint256 public batchTimeLimit = 10 minutes;
-    // Maximum number of transactions within a batch
+
     uint256 public batchSize = 10;
-    uint256 private constant maxBatchSize = 20;
+    uint256 private constant maxBatchSize = 100;
+
     mapping(uint256 => Batch) public batches;
     mapping(address => bool) public whitelistedTokens;
     mapping(address => uint256) public tokenLimits;
-    mapping(address => RefundItem[]) public refundItems;
-    uint256 private currentPendingBatch;
+    mapping(address => uint256) public tokenBalances;
 
-    event BatchTimeLimitChanged(uint256 newTimeLimitInSeconds);
-    event BatchSizeChanged(uint256 newBatchSize);
-    event TokenWhitelisted(address tokenAddress, uint256 minimumAmount);
-    event TokenRemovedFromWhitelist(address tokenAddress);
-    event TokenLimitChanged(address token, uint256 amount);
     event ERC20Deposit(uint256 depositNonce, uint256 batchId);
 
     /**
-      @notice Whitelist a token. Only whitelisted tokens can be bridged through the bridge.
-      @param token Address of the contract for the ERC20 token that will be used by the bridge
-      @param minimumAmount Number that specifies the minimum number of tokens that the user has to deposit (this is to prevent transactions that are too small)
+      @notice Whitelist a token. Only whitelisted tokens can be bridged.
+      @param token Address of the ERC20 token that will be whitelisted
+      @param minimumAmount Number that specifies the minimum number of tokens that the user has to deposit - to also cover for fees
       @notice emits {TokenWhitelisted} event
-      TODO: - Check token address is contract
    */
     function whitelistToken(address token, uint256 minimumAmount) external onlyAdmin {
         whitelistedTokens[token] = true;
         tokenLimits[token] = minimumAmount;
-
-        emit TokenWhitelisted(token, minimumAmount);
-    }
-
-    function removeTokenFromWhitelist(address token) external onlyAdmin {
-        whitelistedTokens[token] = false;
-        emit TokenRemovedFromWhitelist(token);
-    }
-
-    function setBatchTimeLimit(uint256 newBatchTimeLimit) external onlyAdmin {
-        batchTimeLimit = newBatchTimeLimit;
-        emit BatchTimeLimitChanged(batchTimeLimit);
-    }
-
-    function setBatchSize(uint256 newBatchSize) external onlyAdmin {
-        require(newBatchSize <= maxBatchSize, "Batch size too high");
-        batchSize = newBatchSize;
-        emit BatchSizeChanged(batchSize);
-    }
-
-    function setTokenLimit(address token, uint256 amount) external onlyAdmin {
-        tokenLimits[token] = amount;
-        emit TokenLimitChanged(token, amount);
     }
 
     /**
-      @notice It assumes that tokenAddress is a corect address for an ERC20 token. No checks whatsoever for this (yet)
+     @notice Remove a token from the whitelist
+     @param token Address of the ERC20 token that will be removed from the whitelist
+    */
+    function removeTokenFromWhitelist(address token) external onlyAdmin {
+        whitelistedTokens[token] = false;
+    }
+
+    /**
+     @notice Checks weather a token is whitelisted
+     @param token Address of the ERC20 token we are checking
+    */
+    function isTokenWhitelisted(address token) external view returns (bool) {
+        return whitelistedTokens[token];
+    }
+
+    /**
+     @notice Updates the time limit used to check if a batch is finalized for processing
+     @param newBatchTimeLimit New time limit that will be set until a batch is considered final
+    */
+    function setBatchTimeLimit(uint256 newBatchTimeLimit) external onlyAdmin {
+        batchTimeLimit = newBatchTimeLimit;
+    }
+
+    /**
+     @notice Updates the maximum number of deposits accepted in a batch
+     @param newBatchSize New number of deposits until the batch is considered full
+    */
+    function setBatchSize(uint256 newBatchSize) external onlyAdmin {
+        require(newBatchSize <= maxBatchSize, "Batch size too high");
+        batchSize = newBatchSize;
+    }
+
+    /**
+     @notice Updates the minimum amount that a user needs to deposit for a particular token
+     @param token Address of the ERC20 token
+     @param amount New minimum amount for deposits
+    */
+    function setTokenLimit(address token, uint256 amount) external onlyAdmin {
+        tokenLimits[token] = amount;
+    }
+
+    function getTokenLimit(address token) external view returns (uint256) {
+        return tokenLimits[token];
+    }
+
+    /**
+      @notice Entrypoint for the user in the bridge. Will create a new deposit
       @param tokenAddress Address of the contract for the ERC20 token that will be deposited
       @param amount number of tokens that need to be deposited
       @param recipientAddress address of the receiver of tokens on Elrond Network
@@ -95,11 +110,7 @@ contract ERC20Safe is BridgeRole {
         uint256 currentTimestamp = block.timestamp;
 
         Batch storage batch;
-        if (
-            batchesCount == 0 ||
-            batches[batchesCount - 1].timestamp + batchTimeLimit < currentTimestamp ||
-            batches[batchesCount - 1].deposits.length >= batchSize
-        ) {
+        if (_shouldCreateNewBatch()) {
             batch = batches[batchesCount];
             batch.nonce = batchesCount + 1;
             batch.timestamp = currentTimestamp;
@@ -113,9 +124,10 @@ contract ERC20Safe is BridgeRole {
             Deposit(depositNonce, tokenAddress, amount, msg.sender, recipientAddress, DepositStatus.Pending)
         );
 
-        // TODO: refactor naming
-        batch.lastUpdatedBlockNumber = block.timestamp;
+        batch.lastUpdatedTimestamp = currentTimestamp;
         depositsCount++;
+
+        tokenBalances[tokenAddress] += amount;
 
         IERC20 erc20 = IERC20(tokenAddress);
         erc20.safeTransferFrom(msg.sender, address(this), amount);
@@ -123,13 +135,38 @@ contract ERC20Safe is BridgeRole {
         emit ERC20Deposit(depositNonce, batch.nonce);
     }
 
+    /**
+     @notice Endpoint used by the bridge to perform transfers coming from another chain
+    */
     function transfer(
         address tokenAddress,
         uint256 amount,
         address recipientAddress
     ) external onlyBridge returns (bool) {
         IERC20 erc20 = IERC20(tokenAddress);
-        return erc20.boolTransfer(recipientAddress, amount);
+        bool transferExecuted = erc20.boolTransfer(recipientAddress, amount);
+        if (transferExecuted) {
+            tokenBalances[tokenAddress] -= amount;
+        }
+
+        return transferExecuted;
+    }
+
+    /**
+     @notice Endpoint used by the admin to recover tokens sent directly to the contract
+     @param tokenAddress Address of the ERC20 contract
+    */
+    function recoverLostFunds(address tokenAddress) external onlyAdmin {
+        IERC20 erc20 = IERC20(tokenAddress);
+        uint256 mainBalance = erc20.balanceOf(address(this));
+        uint256 availableForRecovery;
+        if (whitelistedTokens[tokenAddress]) {
+            availableForRecovery = mainBalance - tokenBalances[tokenAddress];
+        } else {
+            availableForRecovery = mainBalance;
+        }
+
+        erc20.safeTransfer(msg.sender, availableForRecovery);
     }
 
     /**
@@ -142,87 +179,25 @@ contract ERC20Safe is BridgeRole {
     */
     function getBatch(uint256 batchNonce) public view returns (Batch memory) {
         Batch memory batch = batches[batchNonce - 1];
-        if ((batch.lastUpdatedBlockNumber + batchTimeLimit) <= block.timestamp) {
+        if (_isBatchFinal(batch)) {
             return batch;
         }
 
         return Batch(0, 0, 0, new Deposit[](0));
     }
 
-    /**
-        @notice Marks all deposits in the current pendin batch as finalized (rejected or executed)
-        @param statuses Array containing DepositStatus for each of the deposits in the current batch
-        @dev This function is to be called by the bridge (which is called by the relayers)
-        Updates statuses for all deposits in the batch.
-        Emits event for each update
-        Allows the next batch to be processed
-    */
-    function finishCurrentPendingBatch(DepositStatus[] calldata statuses) public onlyBridge {
-        Batch storage batch = batches[currentPendingBatch++];
-        require(
-            batch.deposits.length == statuses.length,
-            "Number of deposit statuses must match the number of deposits in the batch"
-        );
-        uint256 batchDepositsCount = batch.deposits.length;
-        for (uint256 i = 0; i < batchDepositsCount; i++) {
-            batch.deposits[i].status = statuses[i];
-            if (statuses[i] == DepositStatus.Rejected) {
-                _addRefundItem(batch.deposits[i]);
-            }
-        }
+    function _isBatchFinal(Batch memory batch) private view returns (bool) {
+        return (batch.lastUpdatedTimestamp + batchTimeLimit) < block.timestamp;
     }
 
-    /**
-        @notice Endpoint that allows a user to get a refund if a transaction on the other chain has been rejected
-        @param token Token address for which the user wants a refund
-    */
-    function claimRefund(IERC20 token) public {
-        RefundItem storage rf = _getRefundItem(token);
-        require(rf.value > 0, "Nothing to refund rfval=0");
-
-        uint256 valueToTransfer = rf.value;
-        rf.value = 0;
-        token.safeTransfer(msg.sender, valueToTransfer);
+    function _isBatchProgessOver(Batch memory batch) private view returns (bool) {
+        return (batch.timestamp + batchTimeLimit) < block.timestamp;
     }
 
-    /**
-        @notice Endpoint that allows a user to query the value that can be refunded for a specified token
-        @param token Token address for which the user wants a refund
-    */
-    function getRefundAmount(IERC20 token) external returns (uint256) {
-        RefundItem memory rf = _getRefundItem(token);
-
-        return rf.value;
-    }
-
-    function _getRefundItem(IERC20 token) private view returns (RefundItem storage) {
-        RefundItem[] storage rf = refundItems[tx.origin];
-        require(rf.length > 0, "Nothing to refund rflen=0");
-
-        for (uint256 i = 0; i < rf.length; i++) {
-            if (rf[i].tokenAddress != address(token)) {
-                continue;
-            }
-
-            return rf[i];
-        }
-
-        revert("Nothing to refund rftoken=not found");
-    }
-
-    function _addRefundItem(Deposit memory dep) private {
-        RefundItem[] storage rf = refundItems[dep.depositor];
-        for (uint256 i = 0; i < rf.length; i++) {
-            if (rf[i].tokenAddress != dep.tokenAddress) {
-                continue;
-            }
-
-            rf[i].value += dep.amount;
-            rf[i].lastUpdatedBlockNumber = block.number;
-
-            return;
-        }
-
-        rf.push(RefundItem(dep.tokenAddress, dep.amount, block.number));
+    function _shouldCreateNewBatch() private view returns (bool) {
+        return
+            batchesCount == 0 ||
+            _isBatchProgessOver(batches[batchesCount - 1]) ||
+            batches[batchesCount - 1].deposits.length >= batchSize;
     }
 }
