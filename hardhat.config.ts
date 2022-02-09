@@ -16,6 +16,7 @@ import "./tasks/approve";
 import "./tasks/deposit";
 import "./tasks/set-min-amount";
 import "./tasks/set-batch-time-limit";
+import "./tasks/set-batch-size";
 
 import "./tasks/deploy";
 
@@ -51,7 +52,7 @@ function getChainConfig(network: keyof typeof chainIds): NetworkUserConfig {
   const url: string = "https://" + network + ".infura.io/v3/" + infuraApiKey;
   return {
     accounts: {
-      count: 12,
+      count: 40,
       mnemonic,
       path: "m/44'/60'/0'/0",
     },
