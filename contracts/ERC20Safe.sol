@@ -24,6 +24,7 @@ contract ERC20Safe is BridgeRole {
     uint256 public depositsCount;
     uint256 public batchesCount;
     uint256 public batchTimeLimit = 10 minutes;
+    uint256 public batchSettleLimit = 10 minutes;
 
     uint256 public batchSize = 10;
     uint256 private constant maxBatchSize = 100;
@@ -187,7 +188,7 @@ contract ERC20Safe is BridgeRole {
     }
 
     function _isBatchFinal(Batch memory batch) private view returns (bool) {
-        return (batch.lastUpdatedTimestamp + batchTimeLimit) < block.timestamp;
+        return (batch.lastUpdatedTimestamp + batchSettleLimit) < block.timestamp;
     }
 
     function _isBatchProgessOver(Batch memory batch) private view returns (bool) {
