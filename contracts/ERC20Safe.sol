@@ -141,6 +141,20 @@ contract ERC20Safe is BridgeRole {
     }
 
     /**
+      @notice Deposit initial supply for an ESDT token already deployed on Elrond
+      @param tokenAddress Address of the contract for the ERC20 token that will be deposited
+      @param amount number of tokens that need to be deposited
+\   */
+    function initSupply(address tokenAddress, uint256 amount) external onlyAdmin {
+        require(whitelistedTokens[tokenAddress], "Unsupported token");
+
+        tokenBalances[tokenAddress] += amount;
+
+        IERC20 erc20 = IERC20(tokenAddress);
+        erc20.safeTransferFrom(msg.sender, address(this), amount);
+    }
+
+    /**
      @notice Endpoint used by the bridge to perform transfers coming from another chain
     */
     function transfer(
