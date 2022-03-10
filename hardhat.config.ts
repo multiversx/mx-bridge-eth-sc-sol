@@ -11,9 +11,12 @@ import "./tasks/accounts";
 import "./tasks/clean";
 import "./tasks/add-to-whitelist";
 import "./tasks/mint-test-tokens";
+import "./tasks/removeRelayers";
+import "./tasks/mint-evil-tokens";
 import "./tasks/set-quorum";
 import "./tasks/approve";
 import "./tasks/deposit";
+import "./tasks/initSupply";
 import "./tasks/set-min-amount";
 import "./tasks/set-batch-time-limit";
 import "./tasks/set-batch-size";
@@ -53,7 +56,7 @@ function getChainConfig(network: keyof typeof chainIds): NetworkUserConfig {
   const url: string = "https://" + network + ".infura.io/v3/" + infuraApiKey;
   return {
     accounts: {
-      count: 41,
+      count: 13,
       mnemonic,
       path: "m/44'/60'/0'/0",
     },

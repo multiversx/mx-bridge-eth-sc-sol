@@ -2,7 +2,7 @@ import { task } from "hardhat/config";
 import { ethers } from "ethers";
 import { Mnemonic } from "@elrondnetwork/erdjs";
 
-task("deposit", "Deposits token and sends to safe").setAction(async (taskArgs, hre) => {
+task("initSupply", "Deposits token without sending").setAction(async (taskArgs, hre) => {
   const fs = require("fs");
   const filename = "setup.config.json";
   let config = JSON.parse(fs.readFileSync(filename, "utf8"));
@@ -17,5 +17,5 @@ task("deposit", "Deposits token and sends to safe").setAction(async (taskArgs, h
   const elrondMnemonic = Mnemonic.fromString(mnemonic);
   const elrondWallet = elrondMnemonic.deriveKey(0);
   const address = elrondWallet.generatePublicKey().toAddress().pubkey();
-  await safe.deposit("0x58E034203d06896e1375FdaE5e9B135Ce04cb7f8", "100000000000000", address, { gasLimit: 5000000 });
+  await safe.initSupply("0x58E034203d06896e1375FdaE5e9B135Ce04cb7f8", "100000000000000", { gasLimit: 5000000 });
 });

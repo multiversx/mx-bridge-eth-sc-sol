@@ -10,6 +10,7 @@
     "@codechecks/client": "^0.1.11",
     "@commitlint/cli": "^13.1.0",
     "@commitlint/config-conventional": "^13.1.0",
+    "@elrondnetwork/erdjs": "^9.1.0",
     "@eth-optimism/smock": "^1.1.10",
     "@ethersproject/abi": "^5.4.1",
     "@ethersproject/abstract-signer": "^5.4.1",
@@ -83,6 +84,8 @@
     "prettier:check": "prettier --check --config ./.prettierrc.yaml \"**/*.{js,json,md,sol,ts}\"",
     "test": "cross-env REPORT_GAS=true hardhat test",
     "typechain": "cross-env TS_NODE_TRANSPILE_ONLY=true hardhat typechain",
-    "size": "cross-env TS_NODE_TRANSPILE_ONLY=true hardhat compile; hardhat size-contracts"
+    "size": "cross-env TS_NODE_TRANSPILE_ONLY=true hardhat compile; hardhat size-contracts",
+    "deploy-test-tokens": "npx hardhat deploy-test-tokens --network ropsten",
+    "removeRelayers": "npx hardhat removeRelayers --start 4 --end 10 --network ropsten"
   }
 }

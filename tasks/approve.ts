@@ -13,5 +13,6 @@ task("approve", "Approve token").setAction(async (taskArgs, hre) => {
       const tokenContract = (await hre.ethers.getContractFactory("GenericERC20")).attach(token).connect(signer);
       await tokenContract.approve(safeAddress, "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
     }
+    break;
   }
 });
