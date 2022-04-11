@@ -68,8 +68,11 @@ contract ERC20Safe is BridgeRole {
      @param newBatchTimeLimit New time limit that will be set until a batch is considered final
     */
     function setBatchTimeLimit(uint256 newBatchTimeLimit) external onlyAdmin {
-        require(newBatchTimeLimit < batchSettleLimit, "Cannot increase batch time limit over settlement limit");
+        require(newBatchTimeLimit <= batchSettleLimit, "Cannot increase batch time limit over settlement limit");
         if (newBatchTimeLimit > batchTimeLimit && batches[batchesCount - 1].deposits.length > 0) {
+            Batch storage batch = batches[batchesCount];
+            batch.nonce = batchesCount + 1;
+            batch.timestamp = block.timestamp;
             batchesCount++;
         }
         batchTimeLimit = newBatchTimeLimit;
