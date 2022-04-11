@@ -233,41 +233,9 @@
             "type": "uint256"
           },
           {
-            "components": [
-              {
-                "internalType": "uint256",
-                "name": "nonce",
-                "type": "uint256"
-              },
-              {
-                "internalType": "address",
-                "name": "tokenAddress",
-                "type": "address"
-              },
-              {
-                "internalType": "uint256",
-                "name": "amount",
-                "type": "uint256"
-              },
-              {
-                "internalType": "address",
-                "name": "depositor",
-                "type": "address"
-              },
-              {
-                "internalType": "bytes32",
-                "name": "recipient",
-                "type": "bytes32"
-              },
-              {
-                "internalType": "enum DepositStatus",
-                "name": "status",
-                "type": "uint8"
-              }
-            ],
-            "internalType": "struct Deposit[]",
-            "name": "deposits",
-            "type": "tuple[]"
+            "internalType": "uint8",
+            "name": "depositsCount",
+            "type": "uint8"
           }
         ],
         "internalType": "struct Batch",

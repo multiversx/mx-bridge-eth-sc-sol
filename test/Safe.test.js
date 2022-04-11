@@ -221,8 +221,26 @@ describe("ERC20Safe", async function () {
           defaultMinAmount,
           Buffer.from("c0f0058cea88a2bc1240b60361efb965957038d05f916c42b3f23a2c38ced81e", "hex"),
         );
-        console.log("current deposits", await safe.depositsCount());
+
         expect(await safe.batchesCount()).to.be.eq(2);
+      });
+
+      it("does not increase gas over 400k", async function () {
+        const batchTimeLimit = parseInt((await safe.batchTimeLimit()).toString());
+        await safe.setBatchSize(40);
+        for (let i = 0; i < 80; i++) {
+          if (i % 40 === 0) {
+            await network.provider.send("evm_increaseTime", [batchTimeLimit + 1]);
+            await network.provider.send("evm_mine");
+          }
+          let depositResp = await safe.deposit(
+            genericERC20.address,
+            defaultMinAmount,
+            Buffer.from("c0f0058cea88a2bc1240b60361efb965957038d05f916c42b3f23a2c38ced81e", "hex"),
+          );
+
+          expect(depositResp.gasLimit).to.be.lt(400000);
+        }
       });
     });
   });
@@ -323,7 +341,7 @@ describe("ERC20Safe", async function () {
         Buffer.from("c0f0058cea88a2bc1240b60361efb965957038d05f916c42b3f23a2c38ced81e", "hex"),
       );
       // Just after deposit
-      expect((await safe.getBatch(1)).deposits.length).to.be.eq(0);
+      expect((await safe.getBatch(1)).depositsCount).to.be.eq(0);
 
       await network.provider.send("evm_increaseTime", [batchTimeLimit - 1]);
       await network.provider.send("evm_mine");
@@ -338,10 +356,10 @@ describe("ERC20Safe", async function () {
       await network.provider.send("evm_mine");
 
       // Enough time has passed since the creation of the batch but not since last deposit
-      expect((await safe.getBatch(1)).deposits.length).to.be.eq(0);
+      expect((await safe.getBatch(1)).depositsCount).to.be.eq(0);
       await network.provider.send("evm_increaseTime", [2]);
       await network.provider.send("evm_mine");
-      expect((await safe.getBatch(1)).deposits.length).to.be.eq(2);
+      expect((await safe.getBatch(1)).depositsCount).to.be.eq(2);
     });
   });
 });
