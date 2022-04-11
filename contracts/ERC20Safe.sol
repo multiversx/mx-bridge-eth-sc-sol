@@ -24,6 +24,7 @@ contract ERC20Safe is BridgeRole {
     uint256 public depositsCount;
     uint256 public batchesCount;
     uint256 public batchTimeLimit = 10 minutes;
+    uint256 public batchSettleLimit = 10 minutes;
 
     uint256 public batchSize = 10;
     uint256 private constant maxBatchSize = 100;
@@ -67,6 +68,13 @@ contract ERC20Safe is BridgeRole {
      @param newBatchTimeLimit New time limit that will be set until a batch is considered final
     */
     function setBatchTimeLimit(uint256 newBatchTimeLimit) external onlyAdmin {
+        require(newBatchTimeLimit <= batchSettleLimit, "Cannot increase batch time limit over settlement limit");
+        if (newBatchTimeLimit > batchTimeLimit && batches[batchesCount - 1].deposits.length > 0) {
+            Batch storage batch = batches[batchesCount];
+            batch.nonce = batchesCount + 1;
+            batch.timestamp = block.timestamp;
+            batchesCount++;
+        }
         batchTimeLimit = newBatchTimeLimit;
     }
 
@@ -136,6 +144,20 @@ contract ERC20Safe is BridgeRole {
     }
 
     /**
+      @notice Deposit initial supply for an ESDT token already deployed on Elrond
+      @param tokenAddress Address of the contract for the ERC20 token that will be deposited
+      @param amount number of tokens that need to be deposited
+\   */
+    function initSupply(address tokenAddress, uint256 amount) external onlyAdmin {
+        require(whitelistedTokens[tokenAddress], "Unsupported token");
+
+        tokenBalances[tokenAddress] += amount;
+
+        IERC20 erc20 = IERC20(tokenAddress);
+        erc20.safeTransferFrom(msg.sender, address(this), amount);
+    }
+
+    /**
      @notice Endpoint used by the bridge to perform transfers coming from another chain
     */
     function transfer(
@@ -187,10 +209,13 @@ contract ERC20Safe is BridgeRole {
     }
 
     function _isBatchFinal(Batch memory batch) private view returns (bool) {
-        return (batch.lastUpdatedTimestamp + batchTimeLimit) < block.timestamp;
+        return (batch.lastUpdatedTimestamp + batchSettleLimit) < block.timestamp;
     }
 
     function _isBatchProgessOver(Batch memory batch) private view returns (bool) {
+        if (batch.deposits.length == 0) {
+            return false;
+        }
         return (batch.timestamp + batchTimeLimit) < block.timestamp;
     }
 

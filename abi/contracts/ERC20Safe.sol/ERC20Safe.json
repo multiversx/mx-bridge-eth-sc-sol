@@ -71,6 +71,19 @@
   },
   {
     "inputs": [],
+    "name": "batchSettleLimit",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "batchSize",
     "outputs": [
       {
@@ -276,6 +289,24 @@
       }
     ],
     "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "tokenAddress",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "initSupply",
+    "outputs": [],
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
