@@ -28,5 +28,5 @@ struct Batch {
     uint256 nonce;
     uint256 timestamp;
     uint256 lastUpdatedTimestamp;
-    Deposit[] deposits;
+    uint8 depositsCount;
 }
