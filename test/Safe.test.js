@@ -121,6 +121,22 @@ describe("ERC20Safe", async function () {
       ).to.be.revertedWith("Unsupported token");
     });
 
+    describe.only("contract is paused", async function () {
+      beforeEach(async function () {
+        await safe.pause();
+      });
+
+      it("fails", async function () {
+        await expect(
+          safe.deposit(
+            genericERC20.address,
+            defaultMinAmount - 1,
+            Buffer.from("c0f0058cea88a2bc1240b60361efb965957038d05f916c42b3f23a2c38ced81e", "hex"),
+          ),
+        ).to.be.revertedWith("Pausable: paused");
+      });
+    });
+
     describe("when token is whitelisted", async function () {
       beforeEach(async function () {
         await safe.whitelistToken(genericERC20.address, defaultMinAmount);

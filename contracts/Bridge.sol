@@ -2,6 +2,7 @@
 
 pragma solidity ^0.8.4;
 
+import "@openzeppelin/contracts/security/Pausable.sol";
 import "./SharedStructs.sol";
 import "./ERC20Safe.sol";
 import "./access/RelayerRole.sol";
@@ -21,7 +22,7 @@ In order to use it:
 @dev This contract mimics a multisign contract by sending the signatures from all
 relayers with the execute call, in order to save gas.
  */
-contract Bridge is RelayerRole {
+contract Bridge is RelayerRole, Pausable {
     /*============================ EVENTS ============================*/
     event QuorumChanged(uint256 quorum);
 
@@ -51,7 +52,7 @@ contract Bridge is RelayerRole {
         address[] memory board,
         uint256 initialQuorum,
         ERC20Safe erc20Safe
-    ) {
+    ) public Pausable() {
         require(initialQuorum >= minimumQuorum, "Quorum is too low.");
         require(board.length >= initialQuorum, "The board should be at least the quorum size.");
 
@@ -69,6 +70,20 @@ contract Bridge is RelayerRole {
         require(newQuorum >= minimumQuorum, "Quorum is too low.");
         quorum = newQuorum;
         emit QuorumChanged(newQuorum);
+    }
+
+    /**
+        @notice Pause the contract
+    */
+    function pause() external whenNotPaused onlyAdmin {
+        super._pause();
+    }
+
+    /**
+        @notice Unpause the contract
+    */
+    function unpause() external whenPaused onlyAdmin {
+        super._unpause();
     }
 
     /**
@@ -107,7 +122,7 @@ contract Bridge is RelayerRole {
         uint256[] calldata depositNonces,
         uint256 batchNonceElrondETH,
         bytes[] calldata signatures
-    ) public onlyRelayer {
+    ) public whenNotPaused onlyRelayer {
         require(signatures.length >= quorum, "Not enough signatures to achieve quorum");
         require(executedBatches[batchNonceElrondETH] == false, "Batch already executed");
         executedBatches[batchNonceElrondETH] = true;

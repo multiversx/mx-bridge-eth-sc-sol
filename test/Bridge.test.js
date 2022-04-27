@@ -361,6 +361,28 @@ describe("Bridge", async function () {
       });
     });
 
+    describe("contract is paused", async function () {
+      beforeEach(async function () {
+        await bridge.pause();
+      });
+      it("fails", async function () {
+        await expect(
+          bridge.executeTransfer(
+            [genericErc20.address],
+            [otherWallet.address],
+            [amount],
+            [1],
+            batchNonce,
+            signatures.slice(0, -2),
+          ),
+        ).to.be.revertedWith("Pausable: paused");
+      });
+
+      it("does not set wasBatchExecuted", async function () {
+        expect(await bridge.wasBatchExecuted(batchNonce)).to.be.false;
+      });
+    });
+
     describe("check execute transfer saves correct statuses", async function () {
       it("returns correct statuses", async function () {
         const newSafeFactory = await ethers.getContractFactory("ERC20Safe");

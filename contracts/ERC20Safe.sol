@@ -4,6 +4,7 @@ pragma solidity ^0.8.4;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts/security/Pausable.sol";
 import "./SharedStructs.sol";
 import "./access/BridgeRole.sol";
 import "./lib/BoolTokenTransfer.sol";
@@ -17,7 +18,7 @@ In order to use it:
 @dev The deposits are requested by the Bridge, and in order to save gas spent by the relayers
 they will be batched either by time (batchTimeLimit) or size (batchSize).
  */
-contract ERC20Safe is BridgeRole {
+contract ERC20Safe is BridgeRole, Pausable {
     using SafeERC20 for IERC20;
     using BoolTokenTransfer for IERC20;
 
@@ -36,6 +37,8 @@ contract ERC20Safe is BridgeRole {
     mapping(uint256 => Deposit[]) public batchDeposits;
 
     event ERC20Deposit(uint256 depositNonce, uint256 batchId);
+
+    constructor() public Pausable() {}
 
     /**
       @notice Whitelist a token. Only whitelisted tokens can be bridged.
@@ -89,6 +92,20 @@ contract ERC20Safe is BridgeRole {
     }
 
     /**
+        @notice Pause the contract
+    */
+    function pause() external whenNotPaused onlyAdmin {
+        super._pause();
+    }
+
+    /**
+        @notice Unpause the contract
+    */
+    function unpause() external whenPaused onlyAdmin {
+        super._unpause();
+    }
+
+    /**
      @notice Updates the minimum amount that a user needs to deposit for a particular token
      @param token Address of the ERC20 token
      @param amount New minimum amount for deposits
@@ -112,7 +129,7 @@ contract ERC20Safe is BridgeRole {
         address tokenAddress,
         uint256 amount,
         bytes32 recipientAddress
-    ) public {
+    ) public whenNotPaused {
         require(whitelistedTokens[tokenAddress], "Unsupported token");
         require(amount >= tokenLimits[tokenAddress], "Tried to deposit an amount below the specified limit");
 
