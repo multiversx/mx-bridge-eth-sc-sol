@@ -24,6 +24,7 @@ contract ERC20Safe is BridgeRole {
     uint256 public depositsCount;
     uint256 public batchesCount;
     uint256 public batchTimeLimit = 10 minutes;
+    uint256 public batchSettleLimit = 10 minutes;
 
     uint256 public batchSize = 10;
     uint256 private constant maxBatchSize = 100;
@@ -32,6 +33,7 @@ contract ERC20Safe is BridgeRole {
     mapping(address => bool) public whitelistedTokens;
     mapping(address => uint256) public tokenLimits;
     mapping(address => uint256) public tokenBalances;
+    mapping(uint256 => Deposit[]) public batchDeposits;
 
     event ERC20Deposit(uint256 depositNonce, uint256 batchId);
 
@@ -67,6 +69,13 @@ contract ERC20Safe is BridgeRole {
      @param newBatchTimeLimit New time limit that will be set until a batch is considered final
     */
     function setBatchTimeLimit(uint256 newBatchTimeLimit) external onlyAdmin {
+        require(newBatchTimeLimit <= batchSettleLimit, "Cannot increase batch time limit over settlement limit");
+        if (newBatchTimeLimit > batchTimeLimit && batchDeposits[batchesCount - 1].length > 0) {
+            Batch storage batch = batches[batchesCount];
+            batch.nonce = batchesCount + 1;
+            batch.timestamp = block.timestamp;
+            batchesCount++;
+        }
         batchTimeLimit = newBatchTimeLimit;
     }
 
@@ -120,11 +129,12 @@ contract ERC20Safe is BridgeRole {
         }
 
         uint256 depositNonce = depositsCount + 1;
-        batch.deposits.push(
+        batchDeposits[batchesCount - 1].push(
             Deposit(depositNonce, tokenAddress, amount, msg.sender, recipientAddress, DepositStatus.Pending)
         );
 
         batch.lastUpdatedTimestamp = currentTimestamp;
+        batch.depositsCount++;
         depositsCount++;
 
         tokenBalances[tokenAddress] += amount;
@@ -133,6 +143,20 @@ contract ERC20Safe is BridgeRole {
         erc20.safeTransferFrom(msg.sender, address(this), amount);
 
         emit ERC20Deposit(depositNonce, batch.nonce);
+    }
+
+    /**
+      @notice Deposit initial supply for an ESDT token already deployed on Elrond
+      @param tokenAddress Address of the contract for the ERC20 token that will be deposited
+      @param amount number of tokens that need to be deposited
+\   */
+    function initSupply(address tokenAddress, uint256 amount) external onlyAdmin {
+        require(whitelistedTokens[tokenAddress], "Unsupported token");
+
+        tokenBalances[tokenAddress] += amount;
+
+        IERC20 erc20 = IERC20(tokenAddress);
+        erc20.safeTransferFrom(msg.sender, address(this), amount);
     }
 
     /**
@@ -175,7 +199,8 @@ contract ERC20Safe is BridgeRole {
         @return Batch which consists of:
         - batch nonce
         - timestamp
-        - deposits List of the deposits included in this batch
+        - lastUpdatedTimestamp
+        - depositsCount
     */
     function getBatch(uint256 batchNonce) public view returns (Batch memory) {
         Batch memory batch = batches[batchNonce - 1];
@@ -183,21 +208,35 @@ contract ERC20Safe is BridgeRole {
             return batch;
         }
 
-        return Batch(0, 0, 0, new Deposit[](0));
+        return Batch(0, 0, 0, 0);
+    }
+
+    /**
+     @notice Gets a list of deposits for a batch nonce
+     @param batchNonce Identifier for the batch
+     @return a list of deposits included in this batch
+    */
+    function getDeposits(uint256 batchNonce) public view returns (Deposit[] memory) {
+        return batchDeposits[batchNonce - 1];
     }
 
     function _isBatchFinal(Batch memory batch) private view returns (bool) {
-        return (batch.lastUpdatedTimestamp + batchTimeLimit) < block.timestamp;
+        return (batch.lastUpdatedTimestamp + batchSettleLimit) < block.timestamp;
     }
 
     function _isBatchProgessOver(Batch memory batch) private view returns (bool) {
+        if (batch.depositsCount == 0) {
+            return false;
+        }
         return (batch.timestamp + batchTimeLimit) < block.timestamp;
     }
 
     function _shouldCreateNewBatch() private view returns (bool) {
-        return
-            batchesCount == 0 ||
-            _isBatchProgessOver(batches[batchesCount - 1]) ||
-            batches[batchesCount - 1].deposits.length >= batchSize;
+        if (batchesCount == 0) {
+            return true;
+        }
+
+        Batch memory batch = batches[batchesCount - 1];
+        return _isBatchProgessOver(batch) || batch.depositsCount >= batchSize;
     }
 }
