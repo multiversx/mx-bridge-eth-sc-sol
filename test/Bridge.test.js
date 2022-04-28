@@ -401,6 +401,7 @@ describe("Bridge", async function () {
       await newBridge.unpause();
 
       it("returns correct statuses", async function () {
+        //TODO: implement this test
         await newBridge.executeTransfer(
           [genericErc20.address],
           [otherWallet.address],
