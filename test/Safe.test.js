@@ -349,7 +349,6 @@ describe("ERC20Safe", async function () {
       await safe.whitelistToken(genericERC20.address, defaultMinAmount);
       await genericERC20.approve(safe.address, "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
       await genericERC20.mint(adminWallet.address, "1000000");
-      await safe.unpause();
     });
 
     it("returns batch only after final", async function () {
