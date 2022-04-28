@@ -4,10 +4,10 @@ pragma solidity ^0.8.4;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/security/Pausable.sol";
 import "./SharedStructs.sol";
 import "./access/BridgeRole.sol";
 import "./lib/BoolTokenTransfer.sol";
+import "./lib/Pausable.sol";
 
 /**
 @title ERC20 Safe for bridging tokens
@@ -37,8 +37,6 @@ contract ERC20Safe is BridgeRole, Pausable {
     mapping(uint256 => Deposit[]) public batchDeposits;
 
     event ERC20Deposit(uint256 depositNonce, uint256 batchId);
-
-    constructor() public Pausable() {}
 
     /**
       @notice Whitelist a token. Only whitelisted tokens can be bridged.
@@ -89,20 +87,6 @@ contract ERC20Safe is BridgeRole, Pausable {
     function setBatchSize(uint256 newBatchSize) external onlyAdmin {
         require(newBatchSize <= maxBatchSize, "Batch size too high");
         batchSize = newBatchSize;
-    }
-
-    /**
-        @notice Pause the contract
-    */
-    function pause() external whenNotPaused onlyAdmin {
-        super._pause();
-    }
-
-    /**
-        @notice Unpause the contract
-    */
-    function unpause() external whenPaused onlyAdmin {
-        super._unpause();
     }
 
     /**

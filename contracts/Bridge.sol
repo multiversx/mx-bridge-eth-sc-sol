@@ -2,10 +2,10 @@
 
 pragma solidity ^0.8.4;
 
-import "@openzeppelin/contracts/security/Pausable.sol";
 import "./SharedStructs.sol";
 import "./ERC20Safe.sol";
 import "./access/RelayerRole.sol";
+import "./lib/Pausable.sol";
 
 /**
 @title Bridge
@@ -52,7 +52,7 @@ contract Bridge is RelayerRole, Pausable {
         address[] memory board,
         uint256 initialQuorum,
         ERC20Safe erc20Safe
-    ) public Pausable() {
+    ) {
         require(initialQuorum >= minimumQuorum, "Quorum is too low.");
         require(board.length >= initialQuorum, "The board should be at least the quorum size.");
 
@@ -70,20 +70,6 @@ contract Bridge is RelayerRole, Pausable {
         require(newQuorum >= minimumQuorum, "Quorum is too low.");
         quorum = newQuorum;
         emit QuorumChanged(newQuorum);
-    }
-
-    /**
-        @notice Pause the contract
-    */
-    function pause() external whenNotPaused onlyAdmin {
-        super._pause();
-    }
-
-    /**
-        @notice Unpause the contract
-    */
-    function unpause() external whenPaused onlyAdmin {
-        super._unpause();
     }
 
     /**
