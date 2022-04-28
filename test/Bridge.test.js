@@ -21,6 +21,7 @@ describe("Bridge", async function () {
     erc20Safe = await deployContract(adminWallet, ERC20SafeContract);
     bridge = await deployContract(adminWallet, BridgeContract, [boardMembers, quorum, erc20Safe.address]);
     await erc20Safe.setBridge(bridge.address);
+    await bridge.unpause();
     await setupErc20Token();
   }
 
@@ -29,6 +30,7 @@ describe("Bridge", async function () {
     await genericErc20.mint(adminWallet.address, 1000);
     await genericErc20.approve(erc20Safe.address, 1000);
     await erc20Safe.whitelistToken(genericErc20.address, 0);
+    await erc20Safe.unpause();
   }
 
   beforeEach(async function () {
@@ -365,6 +367,9 @@ describe("Bridge", async function () {
       beforeEach(async function () {
         await bridge.pause();
       });
+      afterEach(async function () {
+        await bridge.unpause();
+      });
       it("fails", async function () {
         await expect(
           bridge.executeTransfer(
@@ -384,15 +389,18 @@ describe("Bridge", async function () {
     });
 
     describe("check execute transfer saves correct statuses", async function () {
+      const newSafeFactory = await ethers.getContractFactory("ERC20Safe");
+      const newSafe = await newSafeFactory.deploy();
+      const mockedSafe = await smockit(newSafe);
+      await mockedSafe.unpause();
+
+      const newBridgeFactory = await ethers.getContractFactory("Bridge");
+      const newBridge = await newBridgeFactory.deploy(boardMembers, quorum, mockedSafe.address);
+      mockedSafe.smocked.transfer.will.return.with(true);
+
+      await newBridge.unpause();
+
       it("returns correct statuses", async function () {
-        const newSafeFactory = await ethers.getContractFactory("ERC20Safe");
-        const newSafe = await newSafeFactory.deploy();
-        const mockedSafe = await smockit(newSafe);
-
-        const newBridgeFactory = await ethers.getContractFactory("Bridge");
-        const newBridge = await newBridgeFactory.deploy(boardMembers, quorum, mockedSafe.address);
-        mockedSafe.smocked.transfer.will.return.with(true);
-
         await newBridge.executeTransfer(
           [genericErc20.address],
           [otherWallet.address],
@@ -414,14 +422,6 @@ describe("Bridge", async function () {
       });
 
       it("saves refund items", async function () {
-        const newSafeFactory = await ethers.getContractFactory("ERC20Safe");
-        const newSafe = await newSafeFactory.deploy();
-        const mockedSafe = await smockit(newSafe);
-
-        const newBridgeFactory = await ethers.getContractFactory("Bridge");
-        const newBridge = await newBridgeFactory.deploy(boardMembers, quorum, mockedSafe.address);
-        mockedSafe.smocked.transfer.will.return.with(true);
-
         await newBridge.executeTransfer(
           [genericErc20.address],
           [otherWallet.address],

@@ -15,7 +15,7 @@ contract Pausable is AdminRole {
     /**
      * @dev Returns true if the contract is paused, and false otherwise.
      */
-    function paused() public view virtual returns (bool) {
+    function paused() public view returns (bool) {
         return _paused;
     }
 
@@ -50,7 +50,7 @@ contract Pausable is AdminRole {
      *
      * - The contract must not be paused.
      */
-    function pause() external onlyAdmin whenNotPaused {
+    function pause() external onlyAdmin {
         _paused = true;
     }
 
@@ -61,7 +61,7 @@ contract Pausable is AdminRole {
      *
      * - The contract must be paused.
      */
-    function unpause() external onlyAdmin whenPaused {
+    function unpause() external onlyAdmin {
         _paused = false;
     }
 }

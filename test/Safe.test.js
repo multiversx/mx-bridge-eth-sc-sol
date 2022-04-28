@@ -20,6 +20,8 @@ describe("ERC20Safe", async function () {
 
     await genericERC20.approve(safe.address, 1000);
     await safe.setBridge(bridge.address);
+    await bridge.unpause();
+    await safe.unpause();
   });
 
   it("sets creator as admin", async function () {
@@ -121,11 +123,13 @@ describe("ERC20Safe", async function () {
       ).to.be.revertedWith("Unsupported token");
     });
 
-    describe.only("contract is paused", async function () {
+    describe("contract is paused", async function () {
       beforeEach(async function () {
         await safe.pause();
       });
-
+      afterEach(async function () {
+        await safe.unpause();
+      });
       it("fails", async function () {
         await expect(
           safe.deposit(
@@ -345,6 +349,7 @@ describe("ERC20Safe", async function () {
       await safe.whitelistToken(genericERC20.address, defaultMinAmount);
       await genericERC20.approve(safe.address, "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
       await genericERC20.mint(adminWallet.address, "1000000");
+      await safe.unpause();
     });
 
     it("returns batch only after final", async function () {
