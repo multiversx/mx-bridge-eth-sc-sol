@@ -5,6 +5,7 @@ pragma solidity ^0.8.4;
 import "./SharedStructs.sol";
 import "./ERC20Safe.sol";
 import "./access/RelayerRole.sol";
+import "./lib/Pausable.sol";
 
 /**
 @title Bridge
@@ -21,7 +22,7 @@ In order to use it:
 @dev This contract mimics a multisign contract by sending the signatures from all
 relayers with the execute call, in order to save gas.
  */
-contract Bridge is RelayerRole {
+contract Bridge is RelayerRole, Pausable {
     /*============================ EVENTS ============================*/
     event QuorumChanged(uint256 quorum);
 
@@ -107,7 +108,7 @@ contract Bridge is RelayerRole {
         uint256[] calldata depositNonces,
         uint256 batchNonceElrondETH,
         bytes[] calldata signatures
-    ) public onlyRelayer {
+    ) public whenNotPaused onlyRelayer {
         require(signatures.length >= quorum, "Not enough signatures to achieve quorum");
         require(executedBatches[batchNonceElrondETH] == false, "Batch already executed");
         executedBatches[batchNonceElrondETH] = true;

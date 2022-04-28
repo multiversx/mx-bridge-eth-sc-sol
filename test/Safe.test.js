@@ -20,6 +20,8 @@ describe("ERC20Safe", async function () {
 
     await genericERC20.approve(safe.address, 1000);
     await safe.setBridge(bridge.address);
+    await bridge.unpause();
+    await safe.unpause();
   });
 
   it("sets creator as admin", async function () {
@@ -119,6 +121,24 @@ describe("ERC20Safe", async function () {
           Buffer.from("c0f0058cea88a2bc1240b60361efb965957038d05f916c42b3f23a2c38ced81e", "hex"),
         ),
       ).to.be.revertedWith("Unsupported token");
+    });
+
+    describe("contract is paused", async function () {
+      beforeEach(async function () {
+        await safe.pause();
+      });
+      afterEach(async function () {
+        await safe.unpause();
+      });
+      it("fails", async function () {
+        await expect(
+          safe.deposit(
+            genericERC20.address,
+            defaultMinAmount - 1,
+            Buffer.from("c0f0058cea88a2bc1240b60361efb965957038d05f916c42b3f23a2c38ced81e", "hex"),
+          ),
+        ).to.be.revertedWith("Pausable: paused");
+      });
     });
 
     describe("when token is whitelisted", async function () {

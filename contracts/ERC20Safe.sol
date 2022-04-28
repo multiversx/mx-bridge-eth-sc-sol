@@ -7,6 +7,7 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "./SharedStructs.sol";
 import "./access/BridgeRole.sol";
 import "./lib/BoolTokenTransfer.sol";
+import "./lib/Pausable.sol";
 
 /**
 @title ERC20 Safe for bridging tokens
@@ -17,7 +18,7 @@ In order to use it:
 @dev The deposits are requested by the Bridge, and in order to save gas spent by the relayers
 they will be batched either by time (batchTimeLimit) or size (batchSize).
  */
-contract ERC20Safe is BridgeRole {
+contract ERC20Safe is BridgeRole, Pausable {
     using SafeERC20 for IERC20;
     using BoolTokenTransfer for IERC20;
 
@@ -112,7 +113,7 @@ contract ERC20Safe is BridgeRole {
         address tokenAddress,
         uint256 amount,
         bytes32 recipientAddress
-    ) public {
+    ) public whenNotPaused {
         require(whitelistedTokens[tokenAddress], "Unsupported token");
         require(amount >= tokenLimits[tokenAddress], "Tried to deposit an amount below the specified limit");
 
