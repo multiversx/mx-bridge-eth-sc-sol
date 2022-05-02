@@ -9,6 +9,7 @@ const BridgeMockArtifact = require("../artifacts/contracts/test/BridgeMock.sol/B
 
 describe("ERC20Safe", async function () {
   const defaultMinAmount = 25;
+  const defaultMaxAmount = 100;
   const [adminWallet, otherWallet, simpleBoardMember] = provider.getWallets();
   const boardMembers = [adminWallet, otherWallet, simpleBoardMember];
 
@@ -30,19 +31,22 @@ describe("ERC20Safe", async function () {
 
   describe("ERC20Safe - setting whitelisted tokens works as expected", async function () {
     it("correctly whitelists token and updates limits", async function () {
-      await safe.whitelistToken(genericERC20.address, "25");
+      await safe.whitelistToken(genericERC20.address, "25", "100");
       expect(await safe.isTokenWhitelisted(genericERC20.address)).to.be.true;
-      expect(await safe.getTokenLimit(genericERC20.address)).to.eq("25");
+      expect(await safe.getTokenMinLimit(genericERC20.address)).to.eq("25");
+      expect(await safe.getTokenMaxLimit(genericERC20.address)).to.eq("100");
 
-      await safe.setTokenLimit(genericERC20.address, "50");
-      expect(await safe.getTokenLimit(genericERC20.address)).to.eq("50");
+      await safe.setTokenMinLimit(genericERC20.address, "50");
+      await safe.setTokenMaxLimit(genericERC20.address, "80");
+      expect(await safe.getTokenMinLimit(genericERC20.address)).to.eq("50");
+      expect(await safe.getTokenMaxLimit(genericERC20.address)).to.eq("80");
     });
     it("correctly removes token from whitelist", async function () {
       await safe.removeTokenFromWhitelist(genericERC20.address);
       expect(await safe.isTokenWhitelisted(genericERC20.address)).to.be.false;
     });
     it("reverts", async function () {
-      await expect(safe.connect(otherWallet).whitelistToken(genericERC20.address, "0")).to.be.revertedWith(
+      await expect(safe.connect(otherWallet).whitelistToken(genericERC20.address, "0", "100")).to.be.revertedWith(
         "Access Control: sender is not Admin",
       );
       await expect(safe.connect(otherWallet).removeTokenFromWhitelist(genericERC20.address)).to.be.revertedWith(
@@ -70,7 +74,7 @@ describe("ERC20Safe", async function () {
       );
     });
     it("increments batch count", async function () {
-      await safe.whitelistToken(genericERC20.address, defaultMinAmount);
+      await safe.whitelistToken(genericERC20.address, defaultMinAmount, defaultMaxAmount);
       await genericERC20.approve(safe.address, "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
       await genericERC20.mint(adminWallet.address, "1000000");
 
@@ -134,7 +138,7 @@ describe("ERC20Safe", async function () {
         await expect(
           safe.deposit(
             genericERC20.address,
-            defaultMinAmount - 1,
+            defaultMinAmount,
             Buffer.from("c0f0058cea88a2bc1240b60361efb965957038d05f916c42b3f23a2c38ced81e", "hex"),
           ),
         ).to.be.revertedWith("Pausable: paused");
@@ -143,19 +147,29 @@ describe("ERC20Safe", async function () {
 
     describe("when token is whitelisted", async function () {
       beforeEach(async function () {
-        await safe.whitelistToken(genericERC20.address, defaultMinAmount);
+        await safe.whitelistToken(genericERC20.address, defaultMinAmount, defaultMaxAmount);
         await genericERC20.approve(safe.address, "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         await genericERC20.mint(adminWallet.address, "1000000");
       });
 
-      it("reverts when amount is smaller than specified limit", async function () {
+      it("reverts when amount is smaller than minimum specified limit", async function () {
         await expect(
           safe.deposit(
             genericERC20.address,
             defaultMinAmount - 1,
             Buffer.from("c0f0058cea88a2bc1240b60361efb965957038d05f916c42b3f23a2c38ced81e", "hex"),
           ),
-        ).to.be.revertedWith("Tried to deposit an amount below the specified limit");
+        ).to.be.revertedWith("Tried to deposit an amount below the minimum specified limit");
+      });
+
+      it("reverts when amount is bigger than maximum specified limit", async function () {
+        await expect(
+          safe.deposit(
+            genericERC20.address,
+            defaultMaxAmount + 1,
+            Buffer.from("c0f0058cea88a2bc1240b60361efb965957038d05f916c42b3f23a2c38ced81e", "hex"),
+          ),
+        ).to.be.revertedWith("Tried to deposit an amount above the maximum specified limit");
       });
 
       it("increments depositsCount", async () => {
@@ -287,7 +301,7 @@ describe("ERC20Safe", async function () {
     });
 
     it("sends just the balance above what is actually deposited for whitelited tokens", async function () {
-      await safe.whitelistToken(genericERC20.address, defaultMinAmount);
+      await safe.whitelistToken(genericERC20.address, defaultMinAmount, defaultMaxAmount);
       await genericERC20.approve(safe.address, "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
 
       await safe.deposit(
@@ -311,7 +325,7 @@ describe("ERC20Safe", async function () {
     });
 
     it("sends just the balance above what is actually deposited for whitelited tokens - considers bridge transfers", async function () {
-      await safe.whitelistToken(genericERC20.address, defaultMinAmount);
+      await safe.whitelistToken(genericERC20.address, defaultMinAmount, defaultMaxAmount);
       await genericERC20.approve(safe.address, "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
 
       const mockBridge = await deployContract(adminWallet, BridgeMockArtifact, [
@@ -346,7 +360,7 @@ describe("ERC20Safe", async function () {
 
   describe("ERC20Safe - getBatch works as expected", async function () {
     beforeEach(async function () {
-      await safe.whitelistToken(genericERC20.address, defaultMinAmount);
+      await safe.whitelistToken(genericERC20.address, defaultMinAmount, defaultMaxAmount);
       await genericERC20.approve(safe.address, "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
       await genericERC20.mint(adminWallet.address, "1000000");
     });

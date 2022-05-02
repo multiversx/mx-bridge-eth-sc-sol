@@ -29,7 +29,7 @@ describe("Bridge", async function () {
     genericErc20 = await deployContract(adminWallet, GenericERC20, ["TSC", "TSC"]);
     await genericErc20.mint(adminWallet.address, 1000);
     await genericErc20.approve(erc20Safe.address, 1000);
-    await erc20Safe.whitelistToken(genericErc20.address, 0);
+    await erc20Safe.whitelistToken(genericErc20.address, 0, 100);
     await erc20Safe.unpause();
   }
 
@@ -162,12 +162,12 @@ describe("Bridge", async function () {
       signaturesInvalid2,
       signaturesValid;
     beforeEach(async function () {
+      amount = 80;
       await erc20Safe.deposit(
         genericErc20.address,
-        200,
+        amount,
         Buffer.from("c0f0058cea88a2bc1240b60361efb965957038d05f916c42b3f23a2c38ced81e", "hex"),
       );
-      amount = 200;
       batchNonce = 42;
       signatures = await getSignaturesForExecuteTransfer(
         [genericErc20.address],
@@ -342,7 +342,7 @@ describe("Bridge", async function () {
         // add more funds in order to not fail because of insufficient balance
         await erc20Safe.deposit(
           genericErc20.address,
-          200,
+          amount,
           Buffer.from("c0f0058cea88a2bc1240b60361efb965957038d05f916c42b3f23a2c38ced81e", "hex"),
         );
 
