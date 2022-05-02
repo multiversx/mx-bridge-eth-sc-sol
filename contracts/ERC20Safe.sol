@@ -32,7 +32,8 @@ contract ERC20Safe is BridgeRole, Pausable {
 
     mapping(uint256 => Batch) public batches;
     mapping(address => bool) public whitelistedTokens;
-    mapping(address => uint256) public tokenLimits;
+    mapping(address => uint256) public tokenMinLimits;
+    mapping(address => uint256) public tokenMaxLimits;
     mapping(address => uint256) public tokenBalances;
     mapping(uint256 => Deposit[]) public batchDeposits;
 
@@ -42,11 +43,17 @@ contract ERC20Safe is BridgeRole, Pausable {
       @notice Whitelist a token. Only whitelisted tokens can be bridged.
       @param token Address of the ERC20 token that will be whitelisted
       @param minimumAmount Number that specifies the minimum number of tokens that the user has to deposit - to also cover for fees
+      @param maximumAmount Number that specifies the maximum number of tokens that the user has to deposit
       @notice emits {TokenWhitelisted} event
    */
-    function whitelistToken(address token, uint256 minimumAmount) external onlyAdmin {
+    function whitelistToken(
+        address token,
+        uint256 minimumAmount,
+        uint256 maximumAmount
+    ) external onlyAdmin {
         whitelistedTokens[token] = true;
-        tokenLimits[token] = minimumAmount;
+        tokenMinLimits[token] = minimumAmount;
+        tokenMaxLimits[token] = maximumAmount;
     }
 
     /**
@@ -94,12 +101,25 @@ contract ERC20Safe is BridgeRole, Pausable {
      @param token Address of the ERC20 token
      @param amount New minimum amount for deposits
     */
-    function setTokenLimit(address token, uint256 amount) external onlyAdmin {
-        tokenLimits[token] = amount;
+    function setTokenMinLimit(address token, uint256 amount) external onlyAdmin {
+        tokenMinLimits[token] = amount;
     }
 
-    function getTokenLimit(address token) external view returns (uint256) {
-        return tokenLimits[token];
+    function getTokenMinLimit(address token) external view returns (uint256) {
+        return tokenMinLimits[token];
+    }
+
+    /**
+     @notice Updates the maximum amount that a user needs to deposit for a particular token
+     @param token Address of the ERC20 token
+     @param amount New maximum amount for deposits
+    */
+    function setTokenMaxLimit(address token, uint256 amount) external onlyAdmin {
+        tokenMaxLimits[token] = amount;
+    }
+
+    function getTokenMaxLimit(address token) external view returns (uint256) {
+        return tokenMaxLimits[token];
     }
 
     /**
@@ -115,7 +135,8 @@ contract ERC20Safe is BridgeRole, Pausable {
         bytes32 recipientAddress
     ) public whenNotPaused {
         require(whitelistedTokens[tokenAddress], "Unsupported token");
-        require(amount >= tokenLimits[tokenAddress], "Tried to deposit an amount below the specified limit");
+        require(amount >= tokenMinLimits[tokenAddress], "Tried to deposit an amount below the minimum specified limit");
+        require(amount <= tokenMaxLimits[tokenAddress], "Tried to deposit an amount above the maximum specified limit");
 
         uint256 currentTimestamp = block.timestamp;
 

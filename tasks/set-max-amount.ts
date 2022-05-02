@@ -1,7 +1,7 @@
 import { task } from "hardhat/config";
 import { ethers } from "ethers";
 
-task("set-min-amount", "Updates minimum amount for depositing an ERC20 token")
+task("set-max-amount", "Updates minimum amount for depositing an ERC20 token")
   .addParam("address", "Address of the ERC20 token to be whitelisted")
   .addParam("amount", "New amount we want to set (full value, with 18 decimals)")
   .setAction(async (taskArgs, hre) => {
@@ -14,5 +14,5 @@ task("set-min-amount", "Updates minimum amount for depositing an ERC20 token")
     const safeAddress = config["erc20Safe"];
     const safeContractFactory = await hre.ethers.getContractFactory("ERC20Safe");
     const safe = safeContractFactory.attach(safeAddress).connect(adminWallet);
-    await safe.setTokenMinLimit(tokenAddress, amount);
+    await safe.setTokenMaxLimit(tokenAddress, amount);
   });

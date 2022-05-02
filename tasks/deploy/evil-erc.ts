@@ -17,5 +17,5 @@ task("deploy-evil-erc", "Deploys EvilERC20 contract to use to test the bridge").
 
   //whitelist tokens in safe
   console.log("Whitelisting token ", usdcContract.address);
-  await safe.whitelistToken(usdcContract.address, "25000000");
+  await safe.whitelistToken(usdcContract.address, "25000000", "100000000000");
 });
