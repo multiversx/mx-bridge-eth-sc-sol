@@ -73,29 +73,6 @@ describe("ERC20Safe", async function () {
         "Cannot increase batch block limit over settlement limit",
       );
     });
-    it("increments batch count", async function () {
-      await safe.whitelistToken(genericERC20.address, defaultMinAmount, defaultMaxAmount);
-      await genericERC20.approve(safe.address, "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
-      await genericERC20.mint(adminWallet.address, "1000000");
-
-      const fiveMinutes = 20;
-      const tenMinutes = 40;
-      await safe.setBatchBlockLimit(fiveMinutes);
-
-      await safe.setBatchSize(1);
-      await safe.deposit(
-        genericERC20.address,
-        defaultMinAmount,
-        Buffer.from("c0f0058cea88a2bc1240b60361efb965957038d05f916c42b3f23a2c38ced81e", "hex"),
-      );
-
-      await safe.setBatchSize(10);
-      await safe.setBatchBlockLimit(tenMinutes);
-
-      expect(await safe.batchesCount()).to.be.eq(2);
-      const batch = await safe.getBatch(2);
-      expect(batch.nonce).to.eq("2");
-    });
   });
 
   describe("ERC20Safe - setting batch size works as expected", async function () {

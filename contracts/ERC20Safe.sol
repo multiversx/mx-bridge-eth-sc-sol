@@ -77,12 +77,6 @@ contract ERC20Safe is BridgeRole, Pausable {
     */
     function setBatchBlockLimit(uint8 newBatchBlockLimit) external onlyAdmin {
         require(newBatchBlockLimit <= batchSettleLimit, "Cannot increase batch block limit over settlement limit");
-        if (newBatchBlockLimit > batchBlockLimit && batchDeposits[batchesCount - 1].length > 0) {
-            Batch storage batch = batches[batchesCount];
-            batch.nonce = batchesCount + 1;
-            batch.blockNumber = uint64(block.number);
-            batchesCount++;
-        }
         batchBlockLimit = newBatchBlockLimit;
     }
 
