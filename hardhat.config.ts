@@ -16,7 +16,7 @@ import "./tasks/approve";
 import "./tasks/deposit";
 import "./tasks/set-min-amount";
 import "./tasks/set-max-amount";
-import "./tasks/set-batch-time-limit";
+import "./tasks/set-batch-block-limit";
 import "./tasks/set-batch-size";
 import "./tasks/fill-nonce-gap";
 

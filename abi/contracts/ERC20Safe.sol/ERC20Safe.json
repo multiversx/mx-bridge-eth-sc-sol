@@ -70,6 +70,19 @@
     "type": "function"
   },
   {
+    "inputs": [],
+    "name": "batchBlockLimit",
+    "outputs": [
+      {
+        "internalType": "uint8",
+        "name": "",
+        "type": "uint8"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [
       {
         "internalType": "uint256",
@@ -123,9 +136,9 @@
     "name": "batchSettleLimit",
     "outputs": [
       {
-        "internalType": "uint64",
+        "internalType": "uint8",
         "name": "",
-        "type": "uint64"
+        "type": "uint8"
       }
     ],
     "stateMutability": "view",
@@ -139,19 +152,6 @@
         "internalType": "uint16",
         "name": "",
         "type": "uint16"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "batchTimeLimit",
-    "outputs": [
-      {
-        "internalType": "uint64",
-        "name": "",
-        "type": "uint64"
       }
     ],
     "stateMutability": "view",
@@ -174,12 +174,12 @@
       },
       {
         "internalType": "uint64",
-        "name": "timestamp",
+        "name": "blockNumber",
         "type": "uint64"
       },
       {
         "internalType": "uint64",
-        "name": "lastUpdatedTimestamp",
+        "name": "lastUpdatedBlockNumber",
         "type": "uint64"
       },
       {
@@ -196,9 +196,9 @@
     "name": "batchesCount",
     "outputs": [
       {
-        "internalType": "uint112",
+        "internalType": "uint64",
         "name": "",
-        "type": "uint112"
+        "type": "uint64"
       }
     ],
     "stateMutability": "view",
@@ -245,9 +245,9 @@
     "name": "depositsCount",
     "outputs": [
       {
-        "internalType": "uint112",
+        "internalType": "uint64",
         "name": "",
-        "type": "uint112"
+        "type": "uint64"
       }
     ],
     "stateMutability": "view",
@@ -272,12 +272,12 @@
           },
           {
             "internalType": "uint64",
-            "name": "timestamp",
+            "name": "blockNumber",
             "type": "uint64"
           },
           {
             "internalType": "uint64",
-            "name": "lastUpdatedTimestamp",
+            "name": "lastUpdatedBlockNumber",
             "type": "uint64"
           },
           {
@@ -476,12 +476,12 @@
   {
     "inputs": [
       {
-        "internalType": "uint16",
-        "name": "newBatchSize",
-        "type": "uint16"
+        "internalType": "uint8",
+        "name": "newBatchBlockLimit",
+        "type": "uint8"
       }
     ],
-    "name": "setBatchSize",
+    "name": "setBatchBlockLimit",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -489,12 +489,12 @@
   {
     "inputs": [
       {
-        "internalType": "uint64",
-        "name": "newBatchTimeLimit",
-        "type": "uint64"
+        "internalType": "uint16",
+        "name": "newBatchSize",
+        "type": "uint16"
       }
     ],
-    "name": "setBatchTimeLimit",
+    "name": "setBatchSize",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

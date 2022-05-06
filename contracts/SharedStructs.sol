@@ -26,7 +26,7 @@ struct CrossTransferStatus {
 
 struct Batch {
     uint112 nonce;
-    uint64 timestamp;
-    uint64 lastUpdatedTimestamp;
+    uint64 blockNumber;
+    uint64 lastUpdatedBlockNumber;
     uint16 depositsCount;
 }

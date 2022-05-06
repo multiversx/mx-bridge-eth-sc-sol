@@ -224,12 +224,12 @@
           },
           {
             "internalType": "uint64",
-            "name": "timestamp",
+            "name": "blockNumber",
             "type": "uint64"
           },
           {
             "internalType": "uint64",
-            "name": "lastUpdatedTimestamp",
+            "name": "lastUpdatedBlockNumber",
             "type": "uint64"
           },
           {
