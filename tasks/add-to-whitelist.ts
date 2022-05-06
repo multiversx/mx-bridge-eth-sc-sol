@@ -1,8 +1,8 @@
 import { task } from "hardhat/config";
 
 task("add-to-whitelist", "Whitelists a new address in the bridge.")
-  .addOptionalParam("minAmount", "Minimum amount allowed to transfer this token to Elrond")
-  .addOptionalParam("maxAmount", "Maximum amount allowed to transfer this token to Elrond")
+  .addOptionalParam("min-amount", "Minimum amount allowed to transfer this token to Elrond")
+  .addOptionalParam("max-amount", "Maximum amount allowed to transfer this token to Elrond")
   .addOptionalParam("address", "address to be whitelisted")
   .setAction(async (taskArgs, hre) => {
     const minAmount = taskArgs.minAmount ?? 25;
