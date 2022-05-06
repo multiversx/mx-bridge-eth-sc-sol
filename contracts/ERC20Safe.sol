@@ -239,11 +239,11 @@ contract ERC20Safe is BridgeRole, Pausable {
         return (batch.lastUpdatedBlockNumber + batchSettleLimit) < block.number;
     }
 
-    function _isBatchProgessOver(Batch memory batch) private view returns (bool) {
-        if (batch.depositsCount == 0) {
+    function _isBatchProgessOver(uint16 depCount, uint64 blockNumber) private view returns (bool) {
+        if (depCount == 0) {
             return false;
         }
-        return (batch.blockNumber + batchBlockLimit) < block.number;
+        return (blockNumber + batchBlockLimit) < block.number;
     }
 
     function _shouldCreateNewBatch() private view returns (bool) {
@@ -252,6 +252,6 @@ contract ERC20Safe is BridgeRole, Pausable {
         }
 
         Batch memory batch = batches[batchesCount - 1];
-        return _isBatchProgessOver(batch) || batch.depositsCount >= batchSize;
+        return _isBatchProgessOver(batch.depositsCount, batch.blockNumber) || batch.depositsCount >= batchSize;
     }
 }

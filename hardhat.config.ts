@@ -92,7 +92,7 @@ const config: HardhatUserConfig = {
     tests: "./test",
   },
   solidity: {
-    version: "0.8.7",
+    version: "0.8.13",
     settings: {
       metadata: {
         // Not including the metadata hash
@@ -102,7 +102,7 @@ const config: HardhatUserConfig = {
       // Disable the optimizer when debugging
       // https://hardhat.org/hardhat-network/#solidity-optimizer-support
       optimizer: {
-        enabled: false,
+        enabled: true,
         runs: 200,
       },
     },
