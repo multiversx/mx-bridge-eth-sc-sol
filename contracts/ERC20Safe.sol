@@ -22,13 +22,13 @@ contract ERC20Safe is BridgeRole, Pausable {
     using SafeERC20 for IERC20;
     using BoolTokenTransfer for IERC20;
 
-    uint256 public depositsCount;
-    uint256 public batchesCount;
-    uint256 public batchTimeLimit = 10 minutes;
-    uint256 public batchSettleLimit = 10 minutes;
+    uint112 public batchesCount;
+    uint112 public depositsCount;
+    uint16 public batchSize = 10;
+    uint16 private constant maxBatchSize = 100;
 
-    uint256 public batchSize = 10;
-    uint256 private constant maxBatchSize = 100;
+    uint64 public batchTimeLimit = 10 minutes;
+    uint64 public batchSettleLimit = 10 minutes;
 
     mapping(uint256 => Batch) public batches;
     mapping(address => bool) public whitelistedTokens;
@@ -37,7 +37,7 @@ contract ERC20Safe is BridgeRole, Pausable {
     mapping(address => uint256) public tokenBalances;
     mapping(uint256 => Deposit[]) public batchDeposits;
 
-    event ERC20Deposit(uint256 depositNonce, uint256 batchId);
+    event ERC20Deposit(uint112 depositNonce, uint112 batchId);
 
     /**
       @notice Whitelist a token. Only whitelisted tokens can be bridged.
@@ -76,12 +76,12 @@ contract ERC20Safe is BridgeRole, Pausable {
      @notice Updates the time limit used to check if a batch is finalized for processing
      @param newBatchTimeLimit New time limit that will be set until a batch is considered final
     */
-    function setBatchTimeLimit(uint256 newBatchTimeLimit) external onlyAdmin {
+    function setBatchTimeLimit(uint64 newBatchTimeLimit) external onlyAdmin {
         require(newBatchTimeLimit <= batchSettleLimit, "Cannot increase batch time limit over settlement limit");
         if (newBatchTimeLimit > batchTimeLimit && batchDeposits[batchesCount - 1].length > 0) {
             Batch storage batch = batches[batchesCount];
             batch.nonce = batchesCount + 1;
-            batch.timestamp = block.timestamp;
+            batch.timestamp = uint64(block.timestamp);
             batchesCount++;
         }
         batchTimeLimit = newBatchTimeLimit;
@@ -91,7 +91,7 @@ contract ERC20Safe is BridgeRole, Pausable {
      @notice Updates the maximum number of deposits accepted in a batch
      @param newBatchSize New number of deposits until the batch is considered full
     */
-    function setBatchSize(uint256 newBatchSize) external onlyAdmin {
+    function setBatchSize(uint16 newBatchSize) external onlyAdmin {
         require(newBatchSize <= maxBatchSize, "Batch size too high");
         batchSize = newBatchSize;
     }
@@ -138,7 +138,7 @@ contract ERC20Safe is BridgeRole, Pausable {
         require(amount >= tokenMinLimits[tokenAddress], "Tried to deposit an amount below the minimum specified limit");
         require(amount <= tokenMaxLimits[tokenAddress], "Tried to deposit an amount above the maximum specified limit");
 
-        uint256 currentTimestamp = block.timestamp;
+        uint64 currentTimestamp = uint64(block.timestamp);
 
         Batch storage batch;
         if (_shouldCreateNewBatch()) {
@@ -150,7 +150,7 @@ contract ERC20Safe is BridgeRole, Pausable {
             batch = batches[batchesCount - 1];
         }
 
-        uint256 depositNonce = depositsCount + 1;
+        uint112 depositNonce = depositsCount + 1;
         batchDeposits[batchesCount - 1].push(
             Deposit(depositNonce, tokenAddress, amount, msg.sender, recipientAddress, DepositStatus.Pending)
         );

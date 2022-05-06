@@ -391,8 +391,7 @@ describe("Bridge", async function () {
     describe("check execute transfer saves correct statuses", async function () {
       const newSafeFactory = await ethers.getContractFactory("ERC20Safe");
       const newSafe = await newSafeFactory.deploy();
-      const mockedSafe = await smockit(newSafe);
-      await mockedSafe.unpause();
+      let mockedSafe = await smockit(newSafe);
 
       const newBridgeFactory = await ethers.getContractFactory("Bridge");
       const newBridge = await newBridgeFactory.deploy(boardMembers, quorum, mockedSafe.address);

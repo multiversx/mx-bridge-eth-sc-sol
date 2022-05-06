@@ -11,7 +11,7 @@ enum DepositStatus {
 }
 
 struct Deposit {
-    uint256 nonce;
+    uint112 nonce;
     address tokenAddress;
     uint256 amount;
     address depositor;
@@ -25,8 +25,8 @@ struct CrossTransferStatus {
 }
 
 struct Batch {
-    uint256 nonce;
-    uint256 timestamp;
-    uint256 lastUpdatedTimestamp;
-    uint8 depositsCount;
+    uint112 nonce;
+    uint64 timestamp;
+    uint64 lastUpdatedTimestamp;
+    uint16 depositsCount;
 }

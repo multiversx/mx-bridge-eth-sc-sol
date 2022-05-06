@@ -218,24 +218,24 @@
       {
         "components": [
           {
-            "internalType": "uint256",
+            "internalType": "uint112",
             "name": "nonce",
-            "type": "uint256"
+            "type": "uint112"
           },
           {
-            "internalType": "uint256",
+            "internalType": "uint64",
             "name": "timestamp",
-            "type": "uint256"
+            "type": "uint64"
           },
           {
-            "internalType": "uint256",
+            "internalType": "uint64",
             "name": "lastUpdatedTimestamp",
-            "type": "uint256"
+            "type": "uint64"
           },
           {
-            "internalType": "uint8",
+            "internalType": "uint16",
             "name": "depositsCount",
-            "type": "uint8"
+            "type": "uint16"
           }
         ],
         "internalType": "struct Batch",
@@ -259,9 +259,9 @@
       {
         "components": [
           {
-            "internalType": "uint256",
+            "internalType": "uint112",
             "name": "nonce",
-            "type": "uint256"
+            "type": "uint112"
           },
           {
             "internalType": "address",
@@ -382,6 +382,26 @@
   },
   {
     "inputs": [],
+    "name": "pause",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "paused",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "quorum",
     "outputs": [
       {
@@ -448,6 +468,13 @@
       }
     ],
     "name": "transferAdmin",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "unpause",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

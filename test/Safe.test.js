@@ -100,14 +100,14 @@ describe("ERC20Safe", async function () {
 
   describe("ERC20Safe - setting batch size works as expected", async function () {
     it("is default correct", async function () {
-      expect(await safe.batchSize()).to.eq("10");
+      expect(await safe.batchSize()).to.eq(10);
     });
     it("updates the batch size", async function () {
       await safe.setBatchSize("20");
-      expect(await safe.batchSize()).to.equal("20");
+      expect(await safe.batchSize()).to.equal(20);
     });
     it("reverts - for bigger than max size", async function () {
-      await expect(safe.setBatchSize("100000")).to.be.revertedWith("Batch size too high");
+      await expect(safe.setBatchSize("1000")).to.be.revertedWith("Batch size too high");
     });
     it("reverts - for non admin", async function () {
       await expect(safe.connect(otherWallet).setBatchSize("24")).to.be.revertedWith(
