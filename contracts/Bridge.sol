@@ -139,6 +139,7 @@ contract Bridge is RelayerRole, Pausable {
      */
     function getStatusesAfterExecution(uint256 batchNonceElrondETH) external view returns (DepositStatus[] memory) {
         CrossTransferStatus memory crossStatus = crossTransferStatuses[batchNonceElrondETH];
+        require(crossStatus.createdBlockNumber > 0, "Invalid nonce requested");
         require((crossStatus.createdBlockNumber + batchSettleBlockCount) <= block.number, "Statuses not final yet");
 
         return crossStatus.statuses;

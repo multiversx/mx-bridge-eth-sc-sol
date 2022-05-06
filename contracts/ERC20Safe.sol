@@ -27,7 +27,7 @@ contract ERC20Safe is BridgeRole, Pausable {
     uint16 public batchSize = 10;
     uint16 private constant maxBatchSize = 100;
     uint8 public batchBlockLimit = 40;
-    uint8 public batchSettleLimit = 40;
+    uint8 public constant batchSettleLimit = 40;
 
     mapping(uint256 => Batch) public batches;
     mapping(address => bool) public whitelistedTokens;
