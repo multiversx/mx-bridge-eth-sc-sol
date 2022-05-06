@@ -19,6 +19,8 @@ import "./tasks/set-max-amount";
 import "./tasks/set-batch-block-limit";
 import "./tasks/set-batch-size";
 import "./tasks/fill-nonce-gap";
+import "./tasks/add-relayer";
+import "./tasks/remove-relayer";
 
 import "./tasks/deploy";
 
