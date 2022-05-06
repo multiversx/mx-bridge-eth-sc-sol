@@ -1,12 +1,12 @@
 import { task } from "hardhat/config";
 
 task("add-to-whitelist", "Whitelists a new address in the bridge.")
-  .addOptionalParam("min-amount", "Minimum amount allowed to transfer this token to Elrond")
-  .addOptionalParam("max-amount", "Maximum amount allowed to transfer this token to Elrond")
+  .addOptionalParam("min", "Minimum amount allowed to transfer this token to Elrond")
+  .addOptionalParam("max", "Maximum amount allowed to transfer this token to Elrond")
   .addOptionalParam("address", "address to be whitelisted")
   .setAction(async (taskArgs, hre) => {
-    const minAmount = taskArgs.minAmount ?? 25;
-    const maxAmount = taskArgs.maxAmount ?? 100;
+    const minAmount = taskArgs.min ?? 25;
+    const maxAmount = taskArgs.max ?? 100;
     const address = taskArgs.address;
     const [adminWallet] = await hre.ethers.getSigners();
     const fs = require("fs");
