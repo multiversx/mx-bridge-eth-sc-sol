@@ -42,15 +42,15 @@
     "inputs": [
       {
         "indexed": false,
-        "internalType": "uint256",
+        "internalType": "uint112",
         "name": "depositNonce",
-        "type": "uint256"
+        "type": "uint112"
       },
       {
         "indexed": false,
-        "internalType": "uint256",
+        "internalType": "uint112",
         "name": "batchId",
-        "type": "uint256"
+        "type": "uint112"
       }
     ],
     "name": "ERC20Deposit",
@@ -64,6 +64,19 @@
         "internalType": "address",
         "name": "",
         "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "batchBlockLimit",
+    "outputs": [
+      {
+        "internalType": "uint8",
+        "name": "",
+        "type": "uint8"
       }
     ],
     "stateMutability": "view",
@@ -85,9 +98,9 @@
     "name": "batchDeposits",
     "outputs": [
       {
-        "internalType": "uint256",
+        "internalType": "uint112",
         "name": "nonce",
-        "type": "uint256"
+        "type": "uint112"
       },
       {
         "internalType": "address",
@@ -123,9 +136,9 @@
     "name": "batchSettleLimit",
     "outputs": [
       {
-        "internalType": "uint256",
+        "internalType": "uint8",
         "name": "",
-        "type": "uint256"
+        "type": "uint8"
       }
     ],
     "stateMutability": "view",
@@ -136,22 +149,9 @@
     "name": "batchSize",
     "outputs": [
       {
-        "internalType": "uint256",
+        "internalType": "uint16",
         "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "batchTimeLimit",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
+        "type": "uint16"
       }
     ],
     "stateMutability": "view",
@@ -168,24 +168,24 @@
     "name": "batches",
     "outputs": [
       {
-        "internalType": "uint256",
+        "internalType": "uint112",
         "name": "nonce",
-        "type": "uint256"
+        "type": "uint112"
       },
       {
-        "internalType": "uint256",
-        "name": "timestamp",
-        "type": "uint256"
+        "internalType": "uint64",
+        "name": "blockNumber",
+        "type": "uint64"
       },
       {
-        "internalType": "uint256",
-        "name": "lastUpdatedTimestamp",
-        "type": "uint256"
+        "internalType": "uint64",
+        "name": "lastUpdatedBlockNumber",
+        "type": "uint64"
       },
       {
-        "internalType": "uint8",
+        "internalType": "uint16",
         "name": "depositsCount",
-        "type": "uint8"
+        "type": "uint16"
       }
     ],
     "stateMutability": "view",
@@ -196,9 +196,9 @@
     "name": "batchesCount",
     "outputs": [
       {
-        "internalType": "uint256",
+        "internalType": "uint64",
         "name": "",
-        "type": "uint256"
+        "type": "uint64"
       }
     ],
     "stateMutability": "view",
@@ -245,9 +245,9 @@
     "name": "depositsCount",
     "outputs": [
       {
-        "internalType": "uint256",
+        "internalType": "uint64",
         "name": "",
-        "type": "uint256"
+        "type": "uint64"
       }
     ],
     "stateMutability": "view",
@@ -266,24 +266,24 @@
       {
         "components": [
           {
-            "internalType": "uint256",
+            "internalType": "uint112",
             "name": "nonce",
-            "type": "uint256"
+            "type": "uint112"
           },
           {
-            "internalType": "uint256",
-            "name": "timestamp",
-            "type": "uint256"
+            "internalType": "uint64",
+            "name": "blockNumber",
+            "type": "uint64"
           },
           {
-            "internalType": "uint256",
-            "name": "lastUpdatedTimestamp",
-            "type": "uint256"
+            "internalType": "uint64",
+            "name": "lastUpdatedBlockNumber",
+            "type": "uint64"
           },
           {
-            "internalType": "uint8",
+            "internalType": "uint16",
             "name": "depositsCount",
-            "type": "uint8"
+            "type": "uint16"
           }
         ],
         "internalType": "struct Batch",
@@ -307,9 +307,9 @@
       {
         "components": [
           {
-            "internalType": "uint256",
+            "internalType": "uint112",
             "name": "nonce",
-            "type": "uint256"
+            "type": "uint112"
           },
           {
             "internalType": "address",
@@ -353,7 +353,26 @@
         "type": "address"
       }
     ],
-    "name": "getTokenLimit",
+    "name": "getTokenMaxLimit",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      }
+    ],
+    "name": "getTokenMinLimit",
     "outputs": [
       {
         "internalType": "uint256",
@@ -402,6 +421,26 @@
     "type": "function"
   },
   {
+    "inputs": [],
+    "name": "pause",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "paused",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [
       {
         "internalType": "address",
@@ -437,12 +476,12 @@
   {
     "inputs": [
       {
-        "internalType": "uint256",
-        "name": "newBatchSize",
-        "type": "uint256"
+        "internalType": "uint8",
+        "name": "newBatchBlockLimit",
+        "type": "uint8"
       }
     ],
-    "name": "setBatchSize",
+    "name": "setBatchBlockLimit",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -450,12 +489,12 @@
   {
     "inputs": [
       {
-        "internalType": "uint256",
-        "name": "newBatchTimeLimit",
-        "type": "uint256"
+        "internalType": "uint16",
+        "name": "newBatchSize",
+        "type": "uint16"
       }
     ],
-    "name": "setBatchTimeLimit",
+    "name": "setBatchSize",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -486,7 +525,25 @@
         "type": "uint256"
       }
     ],
-    "name": "setTokenLimit",
+    "name": "setTokenMaxLimit",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "setTokenMinLimit",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -518,7 +575,26 @@
         "type": "address"
       }
     ],
-    "name": "tokenLimits",
+    "name": "tokenMaxLimits",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "name": "tokenMinLimits",
     "outputs": [
       {
         "internalType": "uint256",
@@ -572,6 +648,13 @@
     "type": "function"
   },
   {
+    "inputs": [],
+    "name": "unpause",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
     "inputs": [
       {
         "internalType": "address",
@@ -581,6 +664,11 @@
       {
         "internalType": "uint256",
         "name": "minimumAmount",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "maximumAmount",
         "type": "uint256"
       }
     ],

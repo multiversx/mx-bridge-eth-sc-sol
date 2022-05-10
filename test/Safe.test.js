@@ -55,59 +55,36 @@ describe("ERC20Safe", async function () {
     });
   });
 
-  describe("ERC20Safe - setting batch time limit works as expected", async function () {
+  describe("ERC20Safe - setting batch block limit works as expected", async function () {
     it("is default correct", async function () {
-      const tenMinutes = 10 * 60;
-      expect(await safe.batchTimeLimit()).to.eq(tenMinutes);
+      const tenMinutes = 40;
+      expect(await safe.batchBlockLimit()).to.eq(tenMinutes);
     });
     it("updates the batch time limit", async function () {
-      const eight = 8 * 60;
-      await safe.setBatchTimeLimit(eight);
-      expect(await safe.batchTimeLimit()).to.equal(eight);
+      const eight = 8;
+      await safe.setBatchBlockLimit(eight);
+      expect(await safe.batchBlockLimit()).to.equal(eight);
     });
     it("reverts", async function () {
-      await expect(safe.connect(otherWallet).setBatchTimeLimit(10000)).to.be.revertedWith(
+      await expect(safe.connect(otherWallet).setBatchBlockLimit(30)).to.be.revertedWith(
         "Access Control: sender is not Admin",
       );
-      await expect(safe.connect(adminWallet).setBatchTimeLimit(20 * 60)).to.be.revertedWith(
-        "Cannot increase batch time limit over settlement limit",
+      await expect(safe.connect(adminWallet).setBatchBlockLimit(50)).to.be.revertedWith(
+        "Cannot increase batch block limit over settlement limit",
       );
-    });
-    it("increments batch count", async function () {
-      await safe.whitelistToken(genericERC20.address, defaultMinAmount, defaultMaxAmount);
-      await genericERC20.approve(safe.address, "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
-      await genericERC20.mint(adminWallet.address, "1000000");
-
-      const fiveMinutes = 5 * 60;
-      const tenMinutes = 10 * 60;
-      await safe.setBatchTimeLimit(fiveMinutes);
-
-      await safe.setBatchSize(1);
-      await safe.deposit(
-        genericERC20.address,
-        defaultMinAmount,
-        Buffer.from("c0f0058cea88a2bc1240b60361efb965957038d05f916c42b3f23a2c38ced81e", "hex"),
-      );
-
-      await safe.setBatchSize(10);
-      await safe.setBatchTimeLimit(tenMinutes);
-
-      expect(await safe.batchesCount()).to.be.eq(2);
-      const batch = await safe.getBatch(2);
-      expect(batch.nonce).to.eq("2");
     });
   });
 
   describe("ERC20Safe - setting batch size works as expected", async function () {
     it("is default correct", async function () {
-      expect(await safe.batchSize()).to.eq("10");
+      expect(await safe.batchSize()).to.eq(10);
     });
     it("updates the batch size", async function () {
       await safe.setBatchSize("20");
-      expect(await safe.batchSize()).to.equal("20");
+      expect(await safe.batchSize()).to.equal(20);
     });
     it("reverts - for bigger than max size", async function () {
-      await expect(safe.setBatchSize("100000")).to.be.revertedWith("Batch size too high");
+      await expect(safe.setBatchSize("1000")).to.be.revertedWith("Batch size too high");
     });
     it("reverts - for non admin", async function () {
       await expect(safe.connect(otherWallet).setBatchSize("24")).to.be.revertedWith(
@@ -182,7 +159,8 @@ describe("ERC20Safe", async function () {
         expect(await safe.depositsCount()).to.equal(1);
       });
 
-      it("updates the lastUpdatedTimestamp on the batch", async function () {
+      it("updates the lastUpdatedBlockNumber on the batch", async function () {
+        await safe.setBatchBlockLimit(1);
         await safe.deposit(
           genericERC20.address,
           defaultMinAmount,
@@ -193,16 +171,19 @@ describe("ERC20Safe", async function () {
 
         // Manually increase block time, it doesn't happen by default
         await network.provider.send("evm_increaseTime", [3600]);
-        await network.provider.send("evm_mine");
+        for (let i = 0; i < 41; i++) {
+          await network.provider.send("evm_mine");
+        }
 
         await safe.deposit(
           genericERC20.address,
           defaultMinAmount,
           Buffer.from("c0f0058cea88a2bc1240b60361efb965957038d05f916c42b3f23a2c38ced81e", "hex"),
         );
+        await network.provider.send("evm_mine");
         const batchAfterSecondTx = await safe.getBatch(batchNonce);
 
-        expect(batchAfterFirstTx.lastUpdatedTimestamp).to.not.equal(batchAfterSecondTx.lastUpdatedTimestamp);
+        expect(batchAfterFirstTx.lastUpdatedBlockNumber).to.not.equal(batchAfterSecondTx.lastUpdatedBlockNumber);
       });
 
       it("creates new batches by batchSize", async function () {
@@ -231,12 +212,14 @@ describe("ERC20Safe", async function () {
       });
 
       it("creates new batches as time passes", async function () {
-        const batchTimeLimit = parseInt((await safe.batchTimeLimit()).toString());
+        const batchBlockLimit = parseInt((await safe.batchBlockLimit()).toString());
         await safe.setBatchSize(2);
         expect(await safe.batchesCount()).to.be.eq(0);
 
-        await network.provider.send("evm_increaseTime", [batchTimeLimit + 1]);
-        await network.provider.send("evm_mine");
+        await network.provider.send("evm_increaseTime", [batchBlockLimit + 1]);
+        for (let i = 0; i < batchBlockLimit + 1; i++) {
+          await network.provider.send("evm_mine");
+        }
         // With 0 extra deposits expect batch count to remain the same
         expect(await safe.batchesCount()).to.be.eq(0);
 
@@ -247,8 +230,10 @@ describe("ERC20Safe", async function () {
         );
         expect(await safe.batchesCount()).to.be.eq(1);
 
-        await network.provider.send("evm_increaseTime", [batchTimeLimit + 1]);
-        await network.provider.send("evm_mine");
+        await network.provider.send("evm_increaseTime", [batchBlockLimit + 1]);
+        for (let i = 0; i < batchBlockLimit + 1; i++) {
+          await network.provider.send("evm_mine");
+        }
 
         await safe.deposit(
           genericERC20.address,
@@ -260,12 +245,14 @@ describe("ERC20Safe", async function () {
       });
 
       it("does not increase gas over 400k", async function () {
-        const batchTimeLimit = parseInt((await safe.batchTimeLimit()).toString());
+        const batchBlockLimit = parseInt((await safe.batchBlockLimit()).toString());
         await safe.setBatchSize(40);
         for (let i = 0; i < 80; i++) {
           if (i % 40 === 0) {
-            await network.provider.send("evm_increaseTime", [batchTimeLimit + 1]);
-            await network.provider.send("evm_mine");
+            await network.provider.send("evm_increaseTime", [batchBlockLimit + 1]);
+            for (let i = 0; i < batchBlockLimit + 1; i++) {
+              await network.provider.send("evm_mine");
+            }
           }
           let depositResp = await safe.deposit(
             genericERC20.address,
@@ -367,7 +354,7 @@ describe("ERC20Safe", async function () {
 
     it("returns batch only after final", async function () {
       await safe.setBatchSize(3);
-      const batchTimeLimit = parseInt((await safe.batchTimeLimit()).toString());
+      const batchBlockLimit = parseInt((await safe.batchBlockLimit()).toString());
 
       await safe.deposit(
         genericERC20.address,
@@ -377,8 +364,10 @@ describe("ERC20Safe", async function () {
       // Just after deposit
       expect((await safe.getBatch(1)).depositsCount).to.be.eq(0);
 
-      await network.provider.send("evm_increaseTime", [batchTimeLimit - 1]);
-      await network.provider.send("evm_mine");
+      await network.provider.send("evm_increaseTime", [batchBlockLimit - 1]);
+      for (let i = 0; i < batchBlockLimit - 1; i++) {
+        await network.provider.send("evm_mine");
+      }
 
       await safe.deposit(
         genericERC20.address,
@@ -386,13 +375,17 @@ describe("ERC20Safe", async function () {
         Buffer.from("c0f0058cea88a2bc1240b60361efb965957038d05f916c42b3f23a2c38ced81e", "hex"),
       );
 
-      await network.provider.send("evm_increaseTime", [batchTimeLimit - 1]);
-      await network.provider.send("evm_mine");
+      await network.provider.send("evm_increaseTime", [batchBlockLimit - 1]);
+      for (let i = 0; i < batchBlockLimit - 1; i++) {
+        await network.provider.send("evm_mine");
+      }
 
       // Enough time has passed since the creation of the batch but not since last deposit
       expect((await safe.getBatch(1)).depositsCount).to.be.eq(0);
       await network.provider.send("evm_increaseTime", [2]);
-      await network.provider.send("evm_mine");
+      for (let i = 0; i < 2; i++) {
+        await network.provider.send("evm_mine");
+      }
       expect((await safe.getBatch(1)).depositsCount).to.be.eq(2);
     });
   });

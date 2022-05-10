@@ -76,7 +76,7 @@ contract Bridge is RelayerRole, Pausable {
         @notice Gets information about the batch
         @return Batch which consists of:
         - batch nonce
-        - timestamp
+        - blockNumber
         - depositsCount
         @dev Even if there are deposits in the Safe, the current batch might still return the count as 0. This is because it might not be final (not full, and not enough blocks elapsed)
     */
@@ -139,6 +139,7 @@ contract Bridge is RelayerRole, Pausable {
      */
     function getStatusesAfterExecution(uint256 batchNonceElrondETH) external view returns (DepositStatus[] memory) {
         CrossTransferStatus memory crossStatus = crossTransferStatuses[batchNonceElrondETH];
+        require(crossStatus.createdBlockNumber > 0, "Invalid nonce requested");
         require((crossStatus.createdBlockNumber + batchSettleBlockCount) <= block.number, "Statuses not final yet");
 
         return crossStatus.statuses;
