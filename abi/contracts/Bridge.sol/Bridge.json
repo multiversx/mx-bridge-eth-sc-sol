@@ -117,6 +117,38 @@
     "type": "function"
   },
   {
+    "inputs": [],
+    "name": "batchSettleBlockCount",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "name": "crossTransferStatuses",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "createdBlockNumber",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [
       {
         "internalType": "address[]",
@@ -131,6 +163,11 @@
       {
         "internalType": "uint256[]",
         "name": "amounts",
+        "type": "uint256[]"
+      },
+      {
+        "internalType": "uint256[]",
+        "name": "depositNonces",
         "type": "uint256[]"
       },
       {
@@ -172,87 +209,89 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "batchNonceETHElrond",
+        "name": "batchNonce",
         "type": "uint256"
-      },
-      {
-        "internalType": "enum DepositStatus[]",
-        "name": "newDepositStatuses",
-        "type": "uint8[]"
-      },
-      {
-        "internalType": "bytes[]",
-        "name": "signatures",
-        "type": "bytes[]"
       }
     ],
-    "name": "finishCurrentPendingBatch",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "getNextPendingBatch",
+    "name": "getBatch",
     "outputs": [
       {
         "components": [
           {
-            "internalType": "uint256",
+            "internalType": "uint112",
             "name": "nonce",
-            "type": "uint256"
+            "type": "uint112"
           },
           {
-            "internalType": "uint256",
-            "name": "timestamp",
-            "type": "uint256"
+            "internalType": "uint64",
+            "name": "blockNumber",
+            "type": "uint64"
           },
           {
-            "internalType": "uint256",
+            "internalType": "uint64",
             "name": "lastUpdatedBlockNumber",
-            "type": "uint256"
+            "type": "uint64"
           },
           {
-            "components": [
-              {
-                "internalType": "uint256",
-                "name": "nonce",
-                "type": "uint256"
-              },
-              {
-                "internalType": "address",
-                "name": "tokenAddress",
-                "type": "address"
-              },
-              {
-                "internalType": "uint256",
-                "name": "amount",
-                "type": "uint256"
-              },
-              {
-                "internalType": "address",
-                "name": "depositor",
-                "type": "address"
-              },
-              {
-                "internalType": "bytes",
-                "name": "recipient",
-                "type": "bytes"
-              },
-              {
-                "internalType": "enum DepositStatus",
-                "name": "status",
-                "type": "uint8"
-              }
-            ],
-            "internalType": "struct Deposit[]",
-            "name": "deposits",
-            "type": "tuple[]"
+            "internalType": "uint16",
+            "name": "depositsCount",
+            "type": "uint16"
           }
         ],
         "internalType": "struct Batch",
         "name": "",
         "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "batchNonce",
+        "type": "uint256"
+      }
+    ],
+    "name": "getBatchDeposits",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "uint112",
+            "name": "nonce",
+            "type": "uint112"
+          },
+          {
+            "internalType": "address",
+            "name": "tokenAddress",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "amount",
+            "type": "uint256"
+          },
+          {
+            "internalType": "address",
+            "name": "depositor",
+            "type": "address"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "recipient",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "enum DepositStatus",
+            "name": "status",
+            "type": "uint8"
+          }
+        ],
+        "internalType": "struct Deposit[]",
+        "name": "",
+        "type": "tuple[]"
       }
     ],
     "stateMutability": "view",
@@ -306,12 +345,51 @@
   {
     "inputs": [
       {
+        "internalType": "uint256",
+        "name": "batchNonceElrondETH",
+        "type": "uint256"
+      }
+    ],
+    "name": "getStatusesAfterExecution",
+    "outputs": [
+      {
+        "internalType": "enum DepositStatus[]",
+        "name": "",
+        "type": "uint8[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
         "internalType": "address",
         "name": "account",
         "type": "address"
       }
     ],
     "name": "isRelayer",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "pause",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "paused",
     "outputs": [
       {
         "internalType": "bool",
@@ -395,6 +473,13 @@
     "type": "function"
   },
   {
+    "inputs": [],
+    "name": "unpause",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
     "inputs": [
       {
         "internalType": "uint256",
@@ -403,25 +488,6 @@
       }
     ],
     "name": "wasBatchExecuted",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "batchNonceETHElrond",
-        "type": "uint256"
-      }
-    ],
-    "name": "wasBatchFinished",
     "outputs": [
       {
         "internalType": "bool",

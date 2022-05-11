@@ -12,6 +12,13 @@ import "./tasks/clean";
 import "./tasks/add-to-whitelist";
 import "./tasks/mint-test-tokens";
 import "./tasks/set-quorum";
+import "./tasks/approve";
+import "./tasks/deposit";
+import "./tasks/set-min-amount";
+import "./tasks/set-max-amount";
+import "./tasks/set-batch-block-limit";
+import "./tasks/set-batch-size";
+import "./tasks/fill-nonce-gap";
 
 import "./tasks/deploy";
 
@@ -47,7 +54,7 @@ function getChainConfig(network: keyof typeof chainIds): NetworkUserConfig {
   const url: string = "https://" + network + ".infura.io/v3/" + infuraApiKey;
   return {
     accounts: {
-      count: 10,
+      count: 12,
       mnemonic,
       path: "m/44'/60'/0'/0",
     },
@@ -76,6 +83,7 @@ const config: HardhatUserConfig = {
     kovan: getChainConfig("kovan"),
     rinkeby: getChainConfig("rinkeby"),
     ropsten: getChainConfig("ropsten"),
+    mainnet: getChainConfig("mainnet"),
   },
   paths: {
     artifacts: "./artifacts",
@@ -84,7 +92,7 @@ const config: HardhatUserConfig = {
     tests: "./test",
   },
   solidity: {
-    version: "0.8.7",
+    version: "0.8.13",
     settings: {
       metadata: {
         // Not including the metadata hash
@@ -94,7 +102,7 @@ const config: HardhatUserConfig = {
       // Disable the optimizer when debugging
       // https://hardhat.org/hardhat-network/#solidity-optimizer-support
       optimizer: {
-        enabled: false,
+        enabled: true,
         runs: 200,
       },
     },

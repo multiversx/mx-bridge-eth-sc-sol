@@ -5,6 +5,7 @@ pragma solidity ^0.8.4;
 import "./SharedStructs.sol";
 import "./ERC20Safe.sol";
 import "./access/RelayerRole.sol";
+import "./lib/Pausable.sol";
 
 /**
 @title Bridge
@@ -21,7 +22,7 @@ In order to use it:
 @dev This contract mimics a multisign contract by sending the signatures from all
 relayers with the execute call, in order to save gas.
  */
-contract Bridge is RelayerRole {
+contract Bridge is RelayerRole, Pausable {
     /*============================ EVENTS ============================*/
     event QuorumChanged(uint256 quorum);
 
@@ -30,11 +31,13 @@ contract Bridge is RelayerRole {
     string private constant executeTransferAction = "ExecuteBatchedTransfer";
     string private constant prefix = "\x19Ethereum Signed Message:\n32";
     uint256 private constant minimumQuorum = 3;
+    uint256 public batchSettleBlockCount = 40;
 
     uint256 public quorum;
-    ERC20Safe private immutable safe;
+    ERC20Safe internal immutable safe;
 
     mapping(uint256 => bool) public executedBatches;
+    mapping(uint256 => CrossTransferStatus) public crossTransferStatuses;
 
     /*========================= PUBLIC API =========================*/
 
@@ -70,44 +73,22 @@ contract Bridge is RelayerRole {
     }
 
     /**
-        @notice Gets information about the current batch of deposits
+        @notice Gets information about the batch
         @return Batch which consists of:
         - batch nonce
-        - timestamp
-        - deposits List of the deposits included in this batch
-        @dev Even if there are deposits in the Safe, the current batch might still return as empty. This is because it might not be final (not full, and not enough blocks elapsed)
+        - blockNumber
+        - depositsCount
+        @dev Even if there are deposits in the Safe, the current batch might still return the count as 0. This is because it might not be final (not full, and not enough blocks elapsed)
     */
-    function getNextPendingBatch() external view returns (Batch memory) {
-        return safe.getNextPendingBatch();
+    function getBatch(uint256 batchNonce) external view returns (Batch memory) {
+        return safe.getBatch(batchNonce);
     }
 
     /**
-        @notice Marks all transactions from the batch with their execution status (Rejected or Executed).
-        @dev This is for the Ethereum to Elrond flow
-        @param batchNonceETHElrond Nonce for the batch. Should be equal to the nonce of the current batch. This identifies a batch created on the Ethereum chain toat bridges tokens from Ethereum to Elrond
-        @param newDepositStatuses Array containing new statuses for all the transactions in the batch. Can only be Rejected or Executed statuses. Number of statuses must be equal to the number of transactions in the batch.
-        @param signatures Signatures from all the relayers for the execution. This mimics a delegated multisig contract. For the execution to take place, there must be enough valid signatures to achieve quorum.
+        @notice Gets information about the deposits from a batch
     */
-    function finishCurrentPendingBatch(
-        uint256 batchNonceETHElrond,
-        DepositStatus[] calldata newDepositStatuses,
-        bytes[] calldata signatures
-    ) public onlyRelayer {
-        for (uint256 i = 0; i < newDepositStatuses.length; i++) {
-            require(
-                newDepositStatuses[i] == DepositStatus.Executed || newDepositStatuses[i] == DepositStatus.Rejected,
-                "Non-final state. Can only be Executed or Rejected"
-            );
-        }
-
-        require(signatures.length >= quorum, "Not enough signatures to achieve quorum");
-
-        Batch memory batch = safe.getNextPendingBatch();
-        require(batch.nonce == batchNonceETHElrond, "Invalid batch nonce");
-
-        _validateQuorum(signatures, _getHashedDepositData(abi.encode(batchNonceETHElrond, newDepositStatuses, action)));
-
-        safe.finishCurrentPendingBatch(newDepositStatuses);
+    function getBatchDeposits(uint256 batchNonce) external view returns (Deposit[] memory) {
+        return safe.getDeposits(batchNonce);
     }
 
     /**
@@ -124,44 +105,44 @@ contract Bridge is RelayerRole {
         address[] calldata tokens,
         address[] calldata recipients,
         uint256[] calldata amounts,
+        uint256[] calldata depositNonces,
         uint256 batchNonceElrondETH,
         bytes[] calldata signatures
-    ) public onlyRelayer {
+    ) public whenNotPaused onlyRelayer {
         require(signatures.length >= quorum, "Not enough signatures to achieve quorum");
         require(executedBatches[batchNonceElrondETH] == false, "Batch already executed");
         executedBatches[batchNonceElrondETH] = true;
 
         _validateQuorum(
             signatures,
-            _getHashedDepositData(abi.encode(recipients, tokens, amounts, batchNonceElrondETH, executeTransferAction))
+            _getHashedDepositData(
+                abi.encode(recipients, tokens, amounts, depositNonces, batchNonceElrondETH, executeTransferAction)
+            )
         );
 
+        DepositStatus[] memory statuses = new DepositStatus[](tokens.length);
         for (uint256 j = 0; j < tokens.length; j++) {
-            safe.transfer(tokens[j], amounts[j], recipients[j]);
+            statuses[j] = safe.transfer(tokens[j], amounts[j], recipients[j])
+                ? DepositStatus.Executed
+                : DepositStatus.Rejected;
         }
+
+        CrossTransferStatus storage crossStatus = crossTransferStatuses[batchNonceElrondETH];
+        crossStatus.statuses = statuses;
+        crossStatus.createdBlockNumber = block.number;
     }
 
     /**
-        @notice Verifies if all the deposits within a batch are finalized (Executed or Rejected)
-        @param batchNonceETHElrond Nonce for the batch.
-        @return status for the batch. true - executed, false - pending (not executed yet)
-    */
-    function wasBatchFinished(uint256 batchNonceETHElrond) external view returns (bool) {
-        Batch memory batch = safe.getBatch(batchNonceETHElrond);
+        @notice Only returns values if the cross transfers were executed some predefined time ago to ensure finality
+        @param batchNonceElrondETH Nonce for the batch
+        @return a list of statuses for each transfer in the batch provided
+     */
+    function getStatusesAfterExecution(uint256 batchNonceElrondETH) external view returns (DepositStatus[] memory) {
+        CrossTransferStatus memory crossStatus = crossTransferStatuses[batchNonceElrondETH];
+        require(crossStatus.createdBlockNumber > 0, "Invalid nonce requested");
+        require((crossStatus.createdBlockNumber + batchSettleBlockCount) <= block.number, "Statuses not final yet");
 
-        if (batch.deposits.length == 0) {
-            return false;
-        }
-
-        for (uint256 i = 0; i < batch.deposits.length; i++) {
-            if (
-                batch.deposits[i].status != DepositStatus.Executed && batch.deposits[i].status != DepositStatus.Rejected
-            ) {
-                return false;
-            }
-        }
-
-        return true;
+        return crossStatus.statuses;
     }
 
     function wasBatchExecuted(uint256 batchNonceElrondETH) external view returns (bool) {
@@ -179,26 +160,23 @@ contract Bridge is RelayerRole {
 
         for (uint256 i = 0; i < signatures.length; i++) {
             address publicKey = _recover(signatures[i], data);
-
-            require(isRelayer(publicKey), "Not a recognized relayer");
+            if (!isRelayer(publicKey)) {
+                continue;
+            }
 
             // Determine if we have multiple signatures from the same relayer
-            uint256 si;
-            for (si = 0; si < validSigners.length; si++) {
-                if (validSigners[si] == address(0)) {
-                    // We reached the end of the loop.
-                    // This preserves the value of `si` which is used below
-                    // as the first open position.
+            bool signerExists = false;
+            for (uint256 si = 0; si < validSigners.length; si++) {
+                if (validSigners[si] == publicKey) {
+                    signerExists = true;
                     break;
                 }
-
-                require(publicKey != validSigners[si], "Multiple signatures from the same relayer");
             }
-            // We save this signer in the first open position.
-            validSigners[si] = publicKey;
-            // END: Determine if we have multiple signatures from the same relayer
 
-            signersCount++;
+            if (!signerExists) {
+                signersCount++;
+                validSigners[i] = publicKey;
+            }
         }
 
         require(signersCount >= quorum, "Quorum was not met");

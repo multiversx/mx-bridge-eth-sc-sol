@@ -1,4 +1,5 @@
 import { task, types } from "hardhat/config";
+import { ethers } from "ethers";
 
 task("Contracts", "Deploys ERC20Safe and the Bridge contract")
   .addParam(
@@ -10,6 +11,7 @@ task("Contracts", "Deploys ERC20Safe and the Bridge contract")
     const relayerAddresses: string[] = JSON.parse(taskArgs.relayerAddresses);
     const quorum = taskArgs.quorum;
     console.log("Relayers used for deploy", relayerAddresses);
+    console.log("Quorum used for relay", quorum);
     const [adminWallet] = await hre.ethers.getSigners();
     console.log("Admin Public Address:", adminWallet.address);
 
