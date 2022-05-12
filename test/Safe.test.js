@@ -345,7 +345,7 @@ describe("ERC20Safe", async function () {
     });
   });
 
-  describe("ERC20Safe - getBatch works as expected", async function () {
+  describe("ERC20Safe - getBatch and getDeposits work as expected", async function () {
     beforeEach(async function () {
       await safe.whitelistToken(genericERC20.address, defaultMinAmount, defaultMaxAmount);
       await genericERC20.approve(safe.address, "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
@@ -363,6 +363,7 @@ describe("ERC20Safe", async function () {
       );
       // Just after deposit
       expect((await safe.getBatch(1)).depositsCount).to.be.eq(0);
+      expect((await safe.getDeposits(1)).length).to.be.eq(0);
 
       await network.provider.send("evm_increaseTime", [batchBlockLimit - 1]);
       for (let i = 0; i < batchBlockLimit - 1; i++) {
@@ -382,11 +383,13 @@ describe("ERC20Safe", async function () {
 
       // Enough time has passed since the creation of the batch but not since last deposit
       expect((await safe.getBatch(1)).depositsCount).to.be.eq(0);
+      expect((await safe.getDeposits(1)).length).to.be.eq(0);
       await network.provider.send("evm_increaseTime", [2]);
       for (let i = 0; i < 2; i++) {
         await network.provider.send("evm_mine");
       }
       expect((await safe.getBatch(1)).depositsCount).to.be.eq(2);
+      expect((await safe.getDeposits(1)).length).to.be.eq(2);
     });
   });
 });

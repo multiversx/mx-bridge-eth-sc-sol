@@ -232,7 +232,12 @@ contract ERC20Safe is BridgeRole, Pausable {
      @return a list of deposits included in this batch
     */
     function getDeposits(uint256 batchNonce) public view returns (Deposit[] memory) {
-        return batchDeposits[batchNonce - 1];
+        Batch memory batch = batches[batchNonce - 1];
+        if (_isBatchFinal(batch)) {
+            return batchDeposits[batchNonce - 1];
+        }
+
+        return batchDeposits[type(uint256).max];
     }
 
     function _isBatchFinal(Batch memory batch) private view returns (bool) {
