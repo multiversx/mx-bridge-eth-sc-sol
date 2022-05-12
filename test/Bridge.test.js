@@ -1,7 +1,7 @@
 const { waffle, ethers, network } = require("hardhat");
 const { expect } = require("chai");
 const { provider, deployContract } = waffle;
-const { smockit } = require("@eth-optimism/smock");
+const { smock } = require("@defi-wonderland/smock");
 
 const BridgeContract = require("../artifacts/contracts/Bridge.sol/Bridge.json");
 const ERC20SafeContract = require("../artifacts/contracts/ERC20Safe.sol/ERC20Safe.json");
@@ -389,10 +389,7 @@ describe("Bridge", async function () {
     });
 
     describe("check execute transfer saves correct statuses", async function () {
-      const newSafeFactory = await ethers.getContractFactory("ERC20Safe");
-      const newSafe = await newSafeFactory.deploy();
-      let mockedSafe = await smockit(newSafe);
-
+      let mockedSafe = await smock.fake("FakeSafe");
       const newBridgeFactory = await ethers.getContractFactory("Bridge");
       const newBridge = await newBridgeFactory.deploy(boardMembers, quorum, mockedSafe.address);
       mockedSafe.smocked.transfer.will.return.with(true);
