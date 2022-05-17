@@ -25,6 +25,7 @@ import "./tasks/pause-bridge";
 import "./tasks/unpause-bridge";
 import "./tasks/pause-safe";
 import "./tasks/unpause-safe";
+import "./tasks/init-supply";
 
 import "./tasks/deploy";
 
