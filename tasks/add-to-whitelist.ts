@@ -20,6 +20,9 @@ task("add-to-whitelist", "Whitelists a new address in the bridge.")
     const gasPrice = taskArgs.price * 1000000000;
     await safe.whitelistToken(address, minAmount, maxAmount, { gasPrice: gasPrice });
 
+    if (config.tokens === undefined) {
+      config.tokens = {};
+    }
     config.tokens[address] = { min: minAmount, max: maxAmount };
     fs.writeFileSync(filename, JSON.stringify(config));
     console.log("Token whitelisted: ", address);

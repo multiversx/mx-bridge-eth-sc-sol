@@ -13,6 +13,9 @@ task("add-relayer", "Add relayer with given address")
     const bridgeContractFactory = await hre.ethers.getContractFactory("Bridge");
     const bridge = bridgeContractFactory.attach(bridgeAddress).connect(adminWallet);
     await bridge.addRelayer(address);
+    if (config.relayers === undefined) {
+      config.relayers = [];
+    }
     config.relayers.append(address);
     fs.writeFileSync(filename, JSON.stringify(config));
   });

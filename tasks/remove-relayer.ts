@@ -15,6 +15,8 @@ task("remove-relayer", "Remove relayer with given address")
     const bridge = bridgeContractFactory.attach(bridgeAddress).connect(adminWallet);
     const gasPrice = taskArgs.price * 1000000000;
     await bridge.removeRelayer(address, { gasPrice: gasPrice });
-    config.relayers = config.relayers.filter((relayerAddress: string) => relayerAddress !== address);
+    if (config.relayers !== undefined) {
+      config.relayers = config.relayers.filter((relayerAddress: string) => relayerAddress !== address);
+    }
     fs.writeFileSync(filename, JSON.stringify(config));
   });

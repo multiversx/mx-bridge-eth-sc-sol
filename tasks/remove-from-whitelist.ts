@@ -16,7 +16,8 @@ task("remove-from-whitelist", "Removed an already whitelisted address in the bri
     const gasPrice = taskArgs.price * 1000000000;
     await safe.removeTokenFromWhitelist(address, { gasPrice: gasPrice });
     console.log("Token removed: ", address);
-
-    delete config.tokens[address];
+    if (config.tokens !== undefined && config.tokens[address] !== undefined) {
+      delete config.tokens[address];
+    }
     fs.writeFileSync(filename, JSON.stringify(config));
   });
