@@ -2,6 +2,7 @@ import { task } from "hardhat/config";
 
 task("remove-relayer", "Remove relayer with given address")
   .addParam("address", "Address of the relayer to be removed")
+  .addOptionalParam("price", "Gas price in gwei for this transaction", undefined)
   .setAction(async (taskArgs, hre) => {
     const address = taskArgs.address;
 
@@ -12,7 +13,8 @@ task("remove-relayer", "Remove relayer with given address")
     const bridgeAddress = config["bridge"];
     const bridgeContractFactory = await hre.ethers.getContractFactory("Bridge");
     const bridge = bridgeContractFactory.attach(bridgeAddress).connect(adminWallet);
-    await bridge.removeRelayer(address);
+    const gasPrice = taskArgs.price * 1000000000;
+    await bridge.removeRelayer(address, { gasPrice: gasPrice });
     config.relayers = config.relayers.filter((relayerAddress: string) => relayerAddress !== address);
     fs.writeFileSync(filename, JSON.stringify(config));
   });

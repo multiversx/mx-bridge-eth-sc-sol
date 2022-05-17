@@ -4,6 +4,7 @@ import { task } from "hardhat/config";
 task("approve", "Approve token")
   .addParam("address", "address to be aproved")
   .addOptionalParam("signers", "Signers count to approve token")
+  .addOptionalParam("price", "Gas price in gwei for this transaction", undefined)
   .setAction(async (taskArgs, hre) => {
     const fs = require("fs");
     const filename = "setup.config.json";
@@ -15,6 +16,9 @@ task("approve", "Approve token")
     for (let i = 0; i < signersCount; i++) {
       const signer = signers[i];
       const tokenContract = (await hre.ethers.getContractFactory("GenericERC20")).attach(address).connect(signer);
-      await tokenContract.approve(safeAddress, "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+      const gasPrice = taskArgs.price * 1000000000;
+      await tokenContract.approve(safeAddress, "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", {
+        gasPrice: gasPrice,
+      });
     }
   });
