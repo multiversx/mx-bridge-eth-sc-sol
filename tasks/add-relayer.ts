@@ -7,9 +7,12 @@ task("add-relayer", "Add relayer with given address")
 
     const [adminWallet] = await hre.ethers.getSigners();
     const fs = require("fs");
-    const config = JSON.parse(fs.readFileSync("setup.config.json", "utf8"));
+    const filename = "setup.config.json";
+    const config = JSON.parse(fs.readFileSync(filename, "utf8"));
     const bridgeAddress = config["bridge"];
     const bridgeContractFactory = await hre.ethers.getContractFactory("Bridge");
     const bridge = bridgeContractFactory.attach(bridgeAddress).connect(adminWallet);
     await bridge.addRelayer(address);
+    config.relayers.append(address);
+    fs.writeFileSync(filename, JSON.stringify(config));
   });

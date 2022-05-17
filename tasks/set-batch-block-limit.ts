@@ -12,4 +12,6 @@ task("set-batch-block-limit", "Sets a new batch block limit")
     const safe = safeContractFactory.attach(safeAddress).connect(adminWallet);
 
     await safe.setBatchBlockLimit(taskArgs.blocks);
+    config.batchBlockLimit = taskArgs.blocks;
+    fs.writeFileSync(filename, JSON.stringify(config));
   });

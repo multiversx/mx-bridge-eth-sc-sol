@@ -13,4 +13,6 @@ task("set-batch-size", "Sets a new batch size")
     const safe = safeContractFactory.attach(safeAddress).connect(adminWallet);
 
     await safe.setBatchSize(size);
+    config.batchSize = size;
+    fs.writeFileSync(filename, JSON.stringify(config));
   });
