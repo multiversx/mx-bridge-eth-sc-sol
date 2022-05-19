@@ -27,6 +27,7 @@ import "./tasks/pause-safe";
 import "./tasks/unpause-safe";
 import "./tasks/init-supply";
 import "./tasks/remove-from-whitelist";
+import "./tasks/recover-lost-funds";
 
 import "./tasks/deploy";
 
