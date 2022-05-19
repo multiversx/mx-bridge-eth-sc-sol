@@ -13,7 +13,7 @@ task("remove-relayer", "Remove relayer with given address")
     const bridgeAddress = config["bridge"];
     const bridgeContractFactory = await hre.ethers.getContractFactory("Bridge");
     const bridge = bridgeContractFactory.attach(bridgeAddress).connect(adminWallet);
-    const gasPrice = taskArgs.price * 1000000000;
+    const gasPrice = (taskArgs.price ?? 0) * 1000000000;
     await bridge.removeRelayer(address, { gasPrice: gasPrice });
     if (config.relayers !== undefined) {
       config.relayers = config.relayers.filter((relayerAddress: string) => relayerAddress !== address);

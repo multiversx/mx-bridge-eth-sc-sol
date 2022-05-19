@@ -9,6 +9,6 @@ task("unpause-safe", "Unpause the safe SC")
     const safeAddress = config["erc20Safe"];
     const safeContractFactory = await hre.ethers.getContractFactory("ERC20Safe");
     const safe = safeContractFactory.attach(safeAddress).connect(adminWallet);
-    const gasPrice = taskArgs.price * 1000000000;
+    const gasPrice = (taskArgs.price ?? 0) * 1000000000;
     const result = await safe.unpause({ gasPrice: gasPrice });
   });

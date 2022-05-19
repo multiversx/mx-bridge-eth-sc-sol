@@ -4,6 +4,7 @@ import { address } from "hardhat/internal/core/config/config-validation";
 task("init-supply", "Deposit the initial supply on a new SC from an old one")
   .addParam("address", "The addres of the token that will be deposited")
   .addParam("amount", "New amount we want to set (full value, with 18 decimals)")
+  .addOptionalParam("price", "Gas price in gwei for this transaction", undefined)
   .setAction(async (taskArgs, hre) => {
     const [adminWallet] = await hre.ethers.getSigners();
     const fs = require("fs");
@@ -13,5 +14,6 @@ task("init-supply", "Deposit the initial supply on a new SC from an old one")
     const safeAddress = config["erc20Safe"];
     const safeContractFactory = await hre.ethers.getContractFactory("ERC20Safe");
     const safe = safeContractFactory.attach(safeAddress).connect(adminWallet);
-    const result = await safe.initSupply(address, amount, { gasLimit: 5000000, gasPrice: 247590000000 });
+    const gasPrice = (taskArgs.price ?? 0) * 1000000000;
+    const result = await safe.initSupply(address, amount, { gasPrice: gasPrice });
   });

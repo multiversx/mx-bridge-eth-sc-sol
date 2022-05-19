@@ -11,7 +11,7 @@ task("set-quorum", "Updates the quorum on the Bridge contract")
     const bridgeAddress = config["bridge"];
     const bridgeContractFactory = await hre.ethers.getContractFactory("Bridge");
     const bridge = bridgeContractFactory.attach(bridgeAddress).connect(adminWallet);
-    const gasPrice = taskArgs.price * 1000000000;
+    const gasPrice = (taskArgs.price ?? 0) * 1000000000;
     const result = await bridge.setQuorum(size, { gasPrice: gasPrice });
     console.log("Quorum updated: ", size);
   });

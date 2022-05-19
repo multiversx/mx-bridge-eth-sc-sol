@@ -11,6 +11,6 @@ task("set-bridge-on-safe", "Set")
     const bridgeAddress = config["bridge"];
     const safeContractFactory = await hre.ethers.getContractFactory("ERC20Safe");
     const safe = safeContractFactory.attach(safeAddress).connect(adminWallet);
-    const gasPrice = taskArgs.price * 1000000000;
+    const gasPrice = (taskArgs.price ?? 0) * 1000000000;
     await safe.setBridge(bridgeAddress, { gasPrice: gasPrice });
   });

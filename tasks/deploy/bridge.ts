@@ -22,7 +22,7 @@ task("deploy-bridge", "Deploys the Bridge contract")
     const config = JSON.parse(fs.readFileSync(filename, "utf8"));
 
     const Bridge = await hre.ethers.getContractFactory("Bridge");
-    const gasPrice = taskArgs.price * 1000000000;
+    const gasPrice = (taskArgs.price ?? 0) * 1000000000;
     const bridgeContract = await Bridge.deploy(relayerAddresses, quorum, config.erc20Safe, { gasPrice: gasPrice });
     await bridgeContract.deployed();
     console.log("Bridge deployed to:", bridgeContract.address);

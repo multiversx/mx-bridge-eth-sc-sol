@@ -17,7 +17,7 @@ task("add-to-whitelist", "Whitelists a new address in the bridge.")
     const safeContractFactory = await hre.ethers.getContractFactory("ERC20Safe");
     const safe = safeContractFactory.attach(safeAddress).connect(adminWallet);
 
-    const gasPrice = taskArgs.price * 1000000000;
+    const gasPrice = (taskArgs.price ?? 0) * 1000000000;
     await safe.whitelistToken(address, minAmount, maxAmount, { gasPrice: gasPrice });
 
     if (config.tokens === undefined) {
