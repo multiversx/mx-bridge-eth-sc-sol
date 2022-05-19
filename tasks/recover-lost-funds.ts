@@ -1,6 +1,6 @@
 import { task } from "hardhat/config";
 
-task("pause-safe", "Pause the safe SC")
+task("recover-lost-funds", "Recover lost funds for a given token")
   .addParam("address", "address to be whitelisted")
   .addOptionalParam("price", "Gas price in gwei for this transaction", undefined)
   .setAction(async (taskArgs, hre) => {
