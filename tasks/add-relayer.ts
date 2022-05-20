@@ -16,6 +16,6 @@ task("add-relayer", "Add relayer with given address")
     if (config.relayers === undefined) {
       config.relayers = [];
     }
-    config.relayers.append(address);
+    config.relayers.push(address);
     fs.writeFileSync(filename, JSON.stringify(config));
   });
