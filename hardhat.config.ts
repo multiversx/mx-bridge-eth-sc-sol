@@ -28,6 +28,9 @@ import "./tasks/unpause-safe";
 import "./tasks/init-supply";
 import "./tasks/remove-from-whitelist";
 import "./tasks/recover-lost-funds";
+import "./tasks/get-batch";
+import "./tasks/get-batch-deposits";
+import "./tasks/get-statuses-after-execution";
 
 import "./tasks/deploy";
 
