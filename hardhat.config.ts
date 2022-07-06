@@ -96,6 +96,22 @@ const config: HardhatUserConfig = {
     rinkeby: getChainConfig("rinkeby"),
     ropsten: getChainConfig("ropsten"),
     mainnet: getChainConfig("mainnet"),
+    testnet_bsc: {
+      accounts: {
+        count: 12,
+        mnemonic,
+        path: "m/44'/60'/0'/0",
+      },
+      url: `https://data-seed-prebsc-1-s1.binance.org:8545`,
+    },
+    mainnet_bsc: {
+      accounts: {
+        count: 12,
+        mnemonic,
+        path: "m/44'/60'/0'/0",
+      },
+      url: `https://bsc-dataseed.binance.org/`,
+    },
   },
   paths: {
     artifacts: "./artifacts",

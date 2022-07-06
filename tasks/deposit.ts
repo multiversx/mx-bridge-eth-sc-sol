@@ -11,8 +11,9 @@ task("deposit", "Deposits token and sends to safe").setAction(async (taskArgs, h
   const safe = safeContractFactory.attach(safeAddress).connect(adminWallet);
 
   await safe.deposit(
-    "0x4CD17Deff83bA7ebAA7D841Dc415F12882c98dD1",
-    "3100000000",
-    Buffer.from("8435c3bc7cec141b87633a87551a766e866255e82cbfa2a4610fea0c88ae5483", "hex"),
+    "0x04c03296b5715019177483c288e65b934f64d904",
+    "50000000000",
+    Buffer.from("344abc44119cfcace253de05e33c01796c12f96f3bcc52b504b9bc2b96927ceb", "hex"),
+    { gasPrice: 10000000000, gasLimit: 500000 },
   );
 });

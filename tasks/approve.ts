@@ -16,9 +16,6 @@ task("approve", "Approve token")
     for (let i = 0; i < signersCount; i++) {
       const signer = signers[i];
       const tokenContract = (await hre.ethers.getContractFactory("GenericERC20")).attach(address).connect(signer);
-      const gasPrice = (taskArgs.price ?? 0) * 1000000000;
-      await tokenContract.approve(safeAddress, "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", {
-        gasPrice: gasPrice,
-      });
+      await tokenContract.approve(safeAddress, "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
     }
   });
