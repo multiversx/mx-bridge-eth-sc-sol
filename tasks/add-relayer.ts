@@ -2,6 +2,7 @@ import { task } from "hardhat/config";
 
 task("add-relayer", "Add relayer with given address")
   .addParam("address", "Address of the relayer to be added")
+  .addOptionalParam("price", "Gas price in gwei for this transaction", undefined)
   .setAction(async (taskArgs, hre) => {
     const address = taskArgs.address;
 
@@ -12,7 +13,11 @@ task("add-relayer", "Add relayer with given address")
     const bridgeAddress = config["bridge"];
     const bridgeContractFactory = await hre.ethers.getContractFactory("Bridge");
     const bridge = bridgeContractFactory.attach(bridgeAddress).connect(adminWallet);
-    await bridge.addRelayer(address);
+    if (taskArgs.price) {
+      await bridge.addRelayer(address, { gasPrice: taskArgs.price * 1000000000 });
+    } else {
+      await bridge.addRelayer(address);
+    }
     if (config.relayers === undefined) {
       config.relayers = [];
     }

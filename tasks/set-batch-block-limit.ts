@@ -12,8 +12,11 @@ task("set-batch-block-limit", "Sets a new batch block limit")
     const safeContractFactory = await hre.ethers.getContractFactory("ERC20Safe");
     const safe = safeContractFactory.attach(safeAddress).connect(adminWallet);
 
-    const gasPrice = (taskArgs.price ?? 0) * 1000000000;
-    await safe.setBatchBlockLimit(taskArgs.blocks, { gasPrice: gasPrice });
+    if (taskArgs.price) {
+      await safe.setBatchBlockLimit(taskArgs.blocks, { gasPrice: taskArgs.price * 1000000000 });
+    } else {
+      await safe.setBatchBlockLimit(taskArgs.blocks);
+    }
     config.batchBlockLimit = taskArgs.blocks;
     fs.writeFileSync(filename, JSON.stringify(config));
   });

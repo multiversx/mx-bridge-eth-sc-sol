@@ -8,8 +8,12 @@ task("deploy-safe", "Deploys ERC20Safe")
     console.log("Admin Public Address:", adminWallet.address);
 
     const ERC20Safe = await hre.ethers.getContractFactory("ERC20Safe");
-    const gasPrice = (taskArgs.price ?? 0) * 1000000000;
-    const safeContract = await ERC20Safe.deploy({ gasPrice: gasPrice });
+    let safeContract;
+    if (taskArgs.price) {
+      safeContract = await ERC20Safe.deploy({ gasPrice: taskArgs.price * 1000000000 });
+    } else {
+      safeContract = await ERC20Safe.deploy();
+    }
     await safeContract.deployed();
     console.log("ERC20Safe deployed to:", safeContract.address);
 

@@ -14,6 +14,9 @@ task("init-supply", "Deposit the initial supply on a new SC from an old one")
     const safeAddress = config["erc20Safe"];
     const safeContractFactory = await hre.ethers.getContractFactory("ERC20Safe");
     const safe = safeContractFactory.attach(safeAddress).connect(adminWallet);
-    const gasPrice = (taskArgs.price ?? 0) * 1000000000;
-    const result = await safe.initSupply(address, amount, { gasPrice: gasPrice });
+    if (taskArgs.price) {
+      await safe.initSupply(address, amount, { gasPrice: taskArgs.price * 1000000000 });
+    } else {
+      await safe.initSupply(address, amount);
+    }
   });

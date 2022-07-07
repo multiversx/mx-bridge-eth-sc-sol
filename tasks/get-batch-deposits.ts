@@ -16,6 +16,6 @@ task("get-batch-deposits", "Get deposits of the given batch ID")
     const bridgeAddress = config["bridge"];
     const bridgeContractFactory = await hre.ethers.getContractFactory("Bridge");
     const bridge = bridgeContractFactory.attach(bridgeAddress).connect(adminWallet);
-    result = await bridge.getDeposits(batchId);
+    result = await bridge.getBatchDeposits(batchId);
     console.log(result);
   });

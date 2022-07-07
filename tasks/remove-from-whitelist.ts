@@ -13,8 +13,11 @@ task("remove-from-whitelist", "Removed an already whitelisted address in the bri
     const safeContractFactory = await hre.ethers.getContractFactory("ERC20Safe");
     const safe = safeContractFactory.attach(safeAddress).connect(adminWallet);
 
-    const gasPrice = (taskArgs.price ?? 0) * 1000000000;
-    await safe.removeTokenFromWhitelist(address, { gasPrice: gasPrice });
+    if (taskArgs.price) {
+      await safe.removeTokenFromWhitelist(address, { gasPrice: taskArgs.price * 1000000000 });
+    } else {
+      await safe.removeTokenFromWhitelist(address);
+    }
     console.log("Token removed: ", address);
     if (config.tokens !== undefined && config.tokens[address] !== undefined) {
       delete config.tokens[address];

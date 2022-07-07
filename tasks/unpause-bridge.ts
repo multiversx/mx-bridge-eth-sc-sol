@@ -9,6 +9,9 @@ task("unpause-bridge", "Unpause the bridge SC")
     const bridgeAddress = config["bridge"];
     const bridgeContractFactory = await hre.ethers.getContractFactory("Bridge");
     const bridge = bridgeContractFactory.attach(bridgeAddress).connect(adminWallet);
-    const gasPrice = (taskArgs.price ?? 0) * 1000000000;
-    const result = await bridge.unpause({ gasPrice: gasPrice });
+    if (taskArgs.price) {
+      await bridge.unpause({ gasPrice: taskArgs.price * 1000000000 });
+    } else {
+      await bridge.unpause();
+    }
   });
