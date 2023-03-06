@@ -27,7 +27,7 @@ contract ERC20Safe is BridgeRole, Pausable {
     uint16 public batchSize = 10;
     uint16 private constant maxBatchSize = 100;
     uint8 public batchBlockLimit = 40;
-    uint8 public constant batchSettleLimit = 40;
+    uint8 public batchSettleLimit = 40;
 
     mapping(uint256 => Batch) public batches;
     mapping(address => bool) public whitelistedTokens;
@@ -78,6 +78,15 @@ contract ERC20Safe is BridgeRole, Pausable {
     function setBatchBlockLimit(uint8 newBatchBlockLimit) external onlyAdmin {
         require(newBatchBlockLimit <= batchSettleLimit, "Cannot increase batch block limit over settlement limit");
         batchBlockLimit = newBatchBlockLimit;
+    }
+
+    /**
+     @notice Updates the settle number limit used to determine if a batch is final
+     @param newBatchSettleLimit New block settle limit that will be set until a batch is considered final
+    */
+    function setBatchSettleLimit(uint8 newBatchSettleLimit) external onlyAdmin whenPaused {
+        require(_shouldCreateNewBatch(), "Cannot change batchSettleLimit with pending batches");
+        batchSettleLimit = newBatchSettleLimit;
     }
 
     /**
