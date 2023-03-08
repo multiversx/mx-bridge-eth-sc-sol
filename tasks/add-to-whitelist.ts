@@ -1,4 +1,5 @@
 import { task } from "hardhat/config";
+import { getDeployOptions } from "./args/deployOptions";
 
 task("add-to-whitelist", "Whitelists a new address in the bridge.")
   .addOptionalParam("min", "Minimum amount allowed to transfer this token to Elrond")
@@ -17,11 +18,7 @@ task("add-to-whitelist", "Whitelists a new address in the bridge.")
     const safeContractFactory = await hre.ethers.getContractFactory("ERC20Safe");
     const safe = safeContractFactory.attach(safeAddress).connect(adminWallet);
 
-    if (taskArgs.price) {
-      await safe.whitelistToken(address, minAmount, maxAmount, { gasPrice: taskArgs.price * 1000000000 });
-    } else {
-      await safe.whitelistToken(address, minAmount, maxAmount);
-    }
+    await safe.whitelistToken(address, minAmount, maxAmount, getDeployOptions(taskArgs));
 
     if (config.tokens === undefined) {
       config.tokens = {};

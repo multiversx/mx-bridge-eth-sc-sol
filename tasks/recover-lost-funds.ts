@@ -1,4 +1,5 @@
 import { task } from "hardhat/config";
+import { getDeployOptions } from "./args/deployOptions";
 
 task("recover-lost-funds", "Recover lost funds for a given token")
   .addParam("address", "address to be whitelisted")
@@ -11,9 +12,5 @@ task("recover-lost-funds", "Recover lost funds for a given token")
     const safeContractFactory = await hre.ethers.getContractFactory("ERC20Safe");
     const safe = safeContractFactory.attach(safeAddress).connect(adminWallet);
     const address = taskArgs.address;
-    if (taskArgs.price) {
-      await safe.recoverLostFunds(address, { gasPrice: taskArgs.price * 1000000000 });
-    } else {
-      await safe.recoverLostFunds(address);
-    }
+    await safe.recoverLostFunds(address, getDeployOptions(taskArgs));
   });

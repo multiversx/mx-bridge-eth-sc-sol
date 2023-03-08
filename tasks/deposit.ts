@@ -1,5 +1,5 @@
 import { task } from "hardhat/config";
-import { ethers } from "ethers";
+import { getDeployOptions } from "./args/deployOptions";
 
 task("deposit", "Deposits token and sends to safe")
   .addParam("address", "Address of the token to be sent")
@@ -18,9 +18,6 @@ task("deposit", "Deposits token and sends to safe")
     const address = taskArgs.address;
     const amount = taskArgs.amount;
     const receiver = taskArgs.receiver;
-    if (taskArgs.price) {
-      await safe.deposit(address, amount, Buffer.from(receiver, "hex"), { gasPrice: taskArgs.price * 1000000000 });
-    } else {
-      await safe.deposit(address, amount, Buffer.from(receiver, "hex"));
-    }
+
+    await safe.deposit(address, amount, Buffer.from(receiver, "hex"), getDeployOptions(taskArgs));
   });

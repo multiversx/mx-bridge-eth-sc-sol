@@ -1,5 +1,6 @@
 import { task } from "hardhat/config";
 import { ethers } from "ethers";
+import { getDeployOptions } from "./args/deployOptions";
 
 task("set-max-amount", "Updates minimum amount for depositing an ERC20 token")
   .addParam("address", "Address of the ERC20 token to be whitelisted")
@@ -15,9 +16,5 @@ task("set-max-amount", "Updates minimum amount for depositing an ERC20 token")
     const safeAddress = config["erc20Safe"];
     const safeContractFactory = await hre.ethers.getContractFactory("ERC20Safe");
     const safe = safeContractFactory.attach(safeAddress).connect(adminWallet);
-    if (taskArgs.price) {
-      await safe.setTokenMaxLimit(tokenAddress, amount, { gasPrice: taskArgs.price * 1000000000 });
-    } else {
-      await safe.setTokenMaxLimit(tokenAddress, amount);
-    }
+    await safe.setTokenMaxLimit(tokenAddress, amount, getDeployOptions(taskArgs));
   });

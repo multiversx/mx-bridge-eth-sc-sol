@@ -1,4 +1,5 @@
 import { task } from "hardhat/config";
+import { getDeployOptions } from "./args/deployOptions";
 
 task("remove-relayer", "Remove relayer with given address")
   .addParam("address", "Address of the relayer to be removed")
@@ -13,11 +14,7 @@ task("remove-relayer", "Remove relayer with given address")
     const bridgeAddress = config["bridge"];
     const bridgeContractFactory = await hre.ethers.getContractFactory("Bridge");
     const bridge = bridgeContractFactory.attach(bridgeAddress).connect(adminWallet);
-    if (taskArgs.price) {
-      await bridge.removeRelayer(address, { gasPrice: taskArgs.price * 1000000000 });
-    } else {
-      await bridge.removeRelayer(address);
-    }
+    await bridge.removeRelayer(address, getDeployOptions(taskArgs));
     if (config.relayers !== undefined) {
       config.relayers = config.relayers.filter((relayerAddress: string) => relayerAddress !== address);
     }

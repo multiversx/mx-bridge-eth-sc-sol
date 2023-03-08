@@ -1,4 +1,5 @@
 import { task } from "hardhat/config";
+import { getDeployOptions } from "./args/deployOptions";
 
 task("remove-from-whitelist", "Removed an already whitelisted address in the bridge.")
   .addParam("address", "address to be whitelisted")
@@ -13,11 +14,8 @@ task("remove-from-whitelist", "Removed an already whitelisted address in the bri
     const safeContractFactory = await hre.ethers.getContractFactory("ERC20Safe");
     const safe = safeContractFactory.attach(safeAddress).connect(adminWallet);
 
-    if (taskArgs.price) {
-      await safe.removeTokenFromWhitelist(address, { gasPrice: taskArgs.price * 1000000000 });
-    } else {
-      await safe.removeTokenFromWhitelist(address);
-    }
+    await safe.removeTokenFromWhitelist(address, getDeployOptions(taskArgs));
+
     console.log("Token removed: ", address);
     if (config.tokens !== undefined && config.tokens[address] !== undefined) {
       delete config.tokens[address];

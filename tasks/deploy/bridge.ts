@@ -1,6 +1,7 @@
 import { task, types } from "hardhat/config";
 import { ethers } from "ethers";
 import fs from "fs";
+import { getDeployOptions } from "../args/deployOptions";
 
 task("deploy-bridge", "Deploys the Bridge contract")
   .addParam(
@@ -23,13 +24,8 @@ task("deploy-bridge", "Deploys the Bridge contract")
 
     const Bridge = await hre.ethers.getContractFactory("Bridge");
     let bridgeContract;
-    if (taskArgs.price) {
-      bridgeContract = await Bridge.deploy(relayerAddresses, quorum, config.erc20Safe, {
-        gasPrice: taskArgs.price * 1000000000,
-      });
-    } else {
-      bridgeContract = await Bridge.deploy(relayerAddresses, quorum, config.erc20Safe);
-    }
+    bridgeContract = await Bridge.deploy(relayerAddresses, quorum, config.erc20Safe, getDeployOptions(taskArgs));
+
     await bridgeContract.deployed();
     console.log("Bridge deployed to:", bridgeContract.address);
 

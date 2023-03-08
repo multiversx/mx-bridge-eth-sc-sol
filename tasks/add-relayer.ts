@@ -1,4 +1,5 @@
 import { task } from "hardhat/config";
+import { getDeployOptions } from "./args/deployOptions";
 
 task("add-relayer", "Add relayer with given address")
   .addParam("address", "Address of the relayer to be added")
@@ -13,11 +14,8 @@ task("add-relayer", "Add relayer with given address")
     const bridgeAddress = config["bridge"];
     const bridgeContractFactory = await hre.ethers.getContractFactory("Bridge");
     const bridge = bridgeContractFactory.attach(bridgeAddress).connect(adminWallet);
-    if (taskArgs.price) {
-      await bridge.addRelayer(address, { gasPrice: taskArgs.price * 1000000000 });
-    } else {
-      await bridge.addRelayer(address);
-    }
+
+    await bridge.addRelayer(address, getDeployOptions(taskArgs));
     if (config.relayers === undefined) {
       config.relayers = [];
     }

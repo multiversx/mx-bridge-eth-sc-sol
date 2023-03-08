@@ -1,4 +1,5 @@
 import { task } from "hardhat/config";
+import { getDeployOptions } from "./args/deployOptions";
 
 task("set-quorum", "Updates the quorum on the Bridge contract")
   .addParam("size", "Integer representing the quorum for a transfer to be considered valid")
@@ -11,10 +12,7 @@ task("set-quorum", "Updates the quorum on the Bridge contract")
     const bridgeAddress = config["bridge"];
     const bridgeContractFactory = await hre.ethers.getContractFactory("Bridge");
     const bridge = bridgeContractFactory.attach(bridgeAddress).connect(adminWallet);
-    if (taskArgs.price) {
-      await bridge.setQuorum(size, { gasPrice: taskArgs.price * 1000000000 });
-    } else {
-      await bridge.setQuorum(size);
-    }
+
+    await bridge.setQuorum(size, getDeployOptions(taskArgs));
     console.log("Quorum updated: ", size);
   });

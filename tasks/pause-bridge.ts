@@ -1,4 +1,5 @@
 import { task } from "hardhat/config";
+import { getDeployOptions } from "./args/deployOptions";
 
 task("pause-bridge", "Pause the bridge SC")
   .addOptionalParam("price", "Gas price in gwei for this transaction", undefined)
@@ -9,9 +10,6 @@ task("pause-bridge", "Pause the bridge SC")
     const bridgeAddress = config["bridge"];
     const bridgeContractFactory = await hre.ethers.getContractFactory("Bridge");
     const bridge = bridgeContractFactory.attach(bridgeAddress).connect(adminWallet);
-    if (taskArgs.price) {
-      await bridge.pause({ gasPrice: taskArgs.price * 1000000000 });
-    } else {
-      await bridge.pause();
-    }
+
+    await bridge.pause(getDeployOptions(taskArgs));
   });

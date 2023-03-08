@@ -1,5 +1,6 @@
 import { task, types } from "hardhat/config";
 import { ethers } from "ethers";
+import { getDeployOptions } from "../args/deployOptions";
 
 task("deploy-safe", "Deploys ERC20Safe")
   .addOptionalParam("price", "Gas price in gwei for this transaction", undefined)
@@ -9,11 +10,7 @@ task("deploy-safe", "Deploys ERC20Safe")
 
     const ERC20Safe = await hre.ethers.getContractFactory("ERC20Safe");
     let safeContract;
-    if (taskArgs.price) {
-      safeContract = await ERC20Safe.deploy({ gasPrice: taskArgs.price * 1000000000 });
-    } else {
-      safeContract = await ERC20Safe.deploy();
-    }
+    safeContract = await ERC20Safe.deploy(getDeployOptions(taskArgs));
     await safeContract.deployed();
     console.log("ERC20Safe deployed to:", safeContract.address);
 

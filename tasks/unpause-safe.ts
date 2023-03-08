@@ -1,4 +1,5 @@
 import { task } from "hardhat/config";
+import { getDeployOptions } from "./args/deployOptions";
 
 task("unpause-safe", "Unpause the safe SC")
   .addOptionalParam("price", "Gas price in gwei for this transaction", undefined)
@@ -9,9 +10,6 @@ task("unpause-safe", "Unpause the safe SC")
     const safeAddress = config["erc20Safe"];
     const safeContractFactory = await hre.ethers.getContractFactory("ERC20Safe");
     const safe = safeContractFactory.attach(safeAddress).connect(adminWallet);
-    if (taskArgs.price) {
-      await safe.unpause({ gasPrice: taskArgs.price * 1000000000 });
-    } else {
-      await safe.unpause();
-    }
+
+    await safe.unpause(getDeployOptions(taskArgs));
   });

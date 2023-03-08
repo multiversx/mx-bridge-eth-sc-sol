@@ -1,5 +1,6 @@
 import { ethers } from "ethers";
 import { task } from "hardhat/config";
+import { getDeployOptions } from "./args/deployOptions";
 
 task("approve", "Approve token")
   .addParam("address", "address to be aproved")
@@ -16,12 +17,10 @@ task("approve", "Approve token")
     for (let i = 0; i < signersCount; i++) {
       const signer = signers[i];
       const tokenContract = (await hre.ethers.getContractFactory("GenericERC20")).attach(address).connect(signer);
-      if (taskArgs.price) {
-        await tokenContract.approve(safeAddress, "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", {
-          gasPrice: taskArgs.price * 1000000000,
-        });
-      } else {
-        await tokenContract.approve(safeAddress, "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
-      }
+      await tokenContract.approve(
+        safeAddress,
+        "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        getDeployOptions(taskArgs),
+      );
     }
   });

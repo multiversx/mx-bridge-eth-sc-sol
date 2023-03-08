@@ -1,4 +1,5 @@
 import { task } from "hardhat/config";
+import { getDeployOptions } from "./args/deployOptions";
 
 task("set-batch-size", "Sets a new batch size")
   .addParam("size", "new batch size")
@@ -13,11 +14,8 @@ task("set-batch-size", "Sets a new batch size")
     const safeContractFactory = await hre.ethers.getContractFactory("ERC20Safe");
     const safe = safeContractFactory.attach(safeAddress).connect(adminWallet);
 
-    if (taskArgs.price) {
-      await safe.setBatchSize(size, { gasPrice: taskArgs.price * 1000000000 });
-    } else {
-      await safe.setBatchSize(size);
-    }
+    await safe.setBatchSize(size, getDeployOptions(taskArgs));
+
     config.batchSize = size;
     fs.writeFileSync(filename, JSON.stringify(config));
   });

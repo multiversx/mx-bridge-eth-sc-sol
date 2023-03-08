@@ -1,5 +1,6 @@
 import { task } from "hardhat/config";
 import { address } from "hardhat/internal/core/config/config-validation";
+import { getDeployOptions } from "./args/deployOptions";
 
 task("init-supply", "Deposit the initial supply on a new SC from an old one")
   .addParam("address", "The addres of the token that will be deposited")
@@ -14,9 +15,6 @@ task("init-supply", "Deposit the initial supply on a new SC from an old one")
     const safeAddress = config["erc20Safe"];
     const safeContractFactory = await hre.ethers.getContractFactory("ERC20Safe");
     const safe = safeContractFactory.attach(safeAddress).connect(adminWallet);
-    if (taskArgs.price) {
-      await safe.initSupply(address, amount, { gasPrice: taskArgs.price * 1000000000 });
-    } else {
-      await safe.initSupply(address, amount);
-    }
+
+    await safe.initSupply(address, amount, getDeployOptions(taskArgs));
   });

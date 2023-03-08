@@ -1,4 +1,5 @@
 import { task, types } from "hardhat/config";
+import { getDeployOptions } from "../args/deployOptions";
 
 task("set-bridge-on-safe", "Set")
   .addOptionalParam("price", "Gas price in gwei for this transaction", undefined)
@@ -11,9 +12,5 @@ task("set-bridge-on-safe", "Set")
     const bridgeAddress = config["bridge"];
     const safeContractFactory = await hre.ethers.getContractFactory("ERC20Safe");
     const safe = safeContractFactory.attach(safeAddress).connect(adminWallet);
-    if (taskArgs.price) {
-      await safe.setBridge(bridgeAddress, { gasPrice: taskArgs.price * 1000000000 });
-    } else {
-      await safe.setBridge(bridgeAddress);
-    }
+    await safe.setBridge(bridgeAddress, getDeployOptions(taskArgs));
   });
