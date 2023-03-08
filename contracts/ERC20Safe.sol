@@ -249,7 +249,7 @@ contract ERC20Safe is BridgeRole, Pausable {
     }
 
     /**
-     @notice Checks weather there is any batch still in progress
+     @notice Checks whether there is any batch still in progress
     */
     function isAnyBatchInProgress() public view returns (bool) {
         if (batchesCount == 0) {

@@ -142,9 +142,9 @@ describe("ERC20Safe", async function () {
     it("updates the batch settle limit", async function () {
       await safe.pause();
 
-      const fifty = 50;
-      await safe.connect(adminWallet).setBatchSettleLimit(fifty);
-      expect(await safe.batchSettleLimit()).to.equal(fifty);
+      const batchSettleLimit = 50;
+      await safe.connect(adminWallet).setBatchSettleLimit(batchSettleLimit);
+      expect(await safe.batchSettleLimit()).to.equal(batchSettleLimit);
 
       await safe.unpause();
     });

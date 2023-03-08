@@ -77,7 +77,7 @@ contract Bridge is RelayerRole, Pausable {
      @param newBatchSettleLimit New block settle limit that will be set until a batch is considered final
     */
     function setBatchSettleLimit(uint8 newBatchSettleLimit) external onlyAdmin whenPaused {
-        require(!safe.isAnyBatchInProgress(), "Cannot change batchSettleLimit with pending batches");
+        require(!safe.isAnyBatchInProgress(), "Cannot change batchSettleBlockCount with pending batches");
         batchSettleBlockCount = newBatchSettleLimit;
     }
 
