@@ -14,12 +14,4 @@ task("deploy-test-tokens", "Deploys ERC20 contracts to use to test the bridge").
 
   const usdcContract = await genericERC20Factory.deploy("USDC", "USDC");
   await usdcContract.deployed();
-
-  //whitelist tokens in safe
-  console.log("Whitelisting token ", usdcContract.address);
-  await safe.whitelistToken(usdcContract.address, "25000000", "100000000000");
-
-  //save in configuration file
-  config.tokens = [usdcContract.address];
-  fs.writeFileSync(filename, JSON.stringify(config));
 });

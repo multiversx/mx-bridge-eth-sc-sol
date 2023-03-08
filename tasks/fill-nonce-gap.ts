@@ -7,11 +7,11 @@ async function trySend(
   gasPrice: number,
 ) {
   try {
-    const tx = await signer.sendTransaction({ to: address, value: 0, nonce: nonce, gasPrice: gasPrice });
+    const tx = await signer.sendTransaction({ to: address, value: 0, nonce: nonce, gasPrice: gasPrice * 1000000000 });
     console.log(nonce, tx.hash);
   } catch (e: any) {
     if (e.message.includes("replacement fee too low", 0) || e.message === "already known") {
-      await trySend(signer, address, nonce, gasPrice * 10);
+      await trySend(signer, address, nonce, gasPrice * 2);
     }
   }
 }
@@ -28,7 +28,7 @@ task("fill-nonce-gap", "Fill nonce gap").setAction(async (taskArgs, hre) => {
     console.log(`${address}, gaps: ${pendingNonce - currentNonce}`);
     console.log(`https://ropsten.etherscan.io/address/${address}`);
     for (let nonce = currentNonce; nonce < pendingNonce; nonce++) {
-      await trySend(signer, address, nonce, 100000000000);
+      await trySend(signer, address, nonce, 10 * 1000000000);
     }
   }
 });

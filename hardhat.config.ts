@@ -25,6 +25,12 @@ import "./tasks/pause-bridge";
 import "./tasks/unpause-bridge";
 import "./tasks/pause-safe";
 import "./tasks/unpause-safe";
+import "./tasks/init-supply";
+import "./tasks/remove-from-whitelist";
+import "./tasks/recover-lost-funds";
+import "./tasks/get-batch";
+import "./tasks/get-batch-deposits";
+import "./tasks/get-statuses-after-execution";
 
 import "./tasks/deploy";
 
@@ -69,6 +75,30 @@ function getChainConfig(network: keyof typeof chainIds): NetworkUserConfig {
   };
 }
 
+function getBSCConfig(network: string): NetworkUserConfig {
+  let config = {
+    accounts: {
+      count: 12,
+      mnemonic,
+      path: "m/44'/60'/0'/0",
+    },
+    url: `https://data-seed-prebsc-1-s1.binance.org:8545`,
+  };
+
+  switch (network) {
+    case "testnet":
+      config.url = "https://data-seed-prebsc-1-s1.binance.org:8545";
+      break;
+    case "mainnet":
+      config.url = "https://bsc-dataseed.binance.org";
+      break;
+    default:
+      throw new Error("invalid config option for bsc chain");
+  }
+
+  return config;
+}
+
 const config: HardhatUserConfig = {
   defaultNetwork: "hardhat",
   gasReporter: {
@@ -90,6 +120,8 @@ const config: HardhatUserConfig = {
     rinkeby: getChainConfig("rinkeby"),
     ropsten: getChainConfig("ropsten"),
     mainnet: getChainConfig("mainnet"),
+    testnet_bsc: getBSCConfig("testnet"),
+    mainnet_bsc: getBSCConfig("mainnet"),
   },
   paths: {
     artifacts: "./artifacts",

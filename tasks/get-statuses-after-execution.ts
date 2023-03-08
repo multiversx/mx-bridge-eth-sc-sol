@@ -1,8 +1,7 @@
 import { task } from "hardhat/config";
-import { getDeployOptions } from "./args/deployOptions";
 
-task("pause-bridge", "Pause the bridge SC")
-  .addOptionalParam("price", "Gas price in gwei for this transaction", undefined)
+task("get-statuses-after-execution", "Get statuses of the swaps after execution from a given batch")
+  .addParam("batch", "Id of the batch")
   .setAction(async (taskArgs, hre) => {
     const [adminWallet] = await hre.ethers.getSigners();
     const fs = require("fs");
@@ -10,6 +9,7 @@ task("pause-bridge", "Pause the bridge SC")
     const bridgeAddress = config["bridge"];
     const bridgeContractFactory = await hre.ethers.getContractFactory("Bridge");
     const bridge = bridgeContractFactory.attach(bridgeAddress).connect(adminWallet);
-
-    await bridge.pause(getDeployOptions(taskArgs));
+    const batch = parseInt(taskArgs.batch);
+    const result = await bridge.getStatusesAfterExecution(batch);
+    console.log(result);
   });
