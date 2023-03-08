@@ -105,15 +105,37 @@ describe("ERC20Safe", async function () {
         Buffer.from("c0f0058cea88a2bc1240b60361efb965957038d05f916c42b3f23a2c38ced81e", "hex"),
       );
 
+      // Thanks to the previous deposit, we have a pending non-final batch
+      await safe.pause();
+      await expect(safe.connect(adminWallet).setBatchSettleLimit(30)).to.be.revertedWith(
+        "Cannot change batchSettleLimit with pending batches",
+      );
+      await safe.unpause();
+
       await network.provider.send("evm_increaseTime", [3600]);
       for (let i = 0; i < 41; i++) {
         await network.provider.send("evm_mine");
-      }
+      } // Finalized the batch
       await safe.pause();
       await expect(safe.connect(adminWallet).setBatchSettleLimit(30)).to.be.revertedWith(
         "Cannot decrease batchSettleLimit under the value of batch block limit",
       );
+      await safe.unpause();
 
+      // Now we should fill a batch without finalising it, so _shouldCreateNewBatch returns true, but _isBatchFinal
+      //  will return false
+      const batchSize = await safe.batchSize();
+      for (let i = 0; i < batchSize; i++) {
+        await safe.deposit(
+          genericERC20.address,
+          defaultMinAmount,
+          Buffer.from("c0f0058cea88a2bc1240b60361efb965957038d05f916c42b3f23a2c38ced81e", "hex"),
+        );
+      }
+      await safe.pause();
+      await expect(safe.connect(adminWallet).setBatchSettleLimit(30)).to.be.revertedWith(
+        "Cannot change batchSettleLimit with pending batches",
+      );
       await safe.unpause();
     });
 

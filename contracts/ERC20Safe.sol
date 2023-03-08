@@ -257,7 +257,14 @@ contract ERC20Safe is BridgeRole, Pausable {
         }
 
         Batch memory lastBatch = batches[batchesCount - 1];
-        return !(_shouldCreateNewBatch() || _isBatchFinal(lastBatch));
+        if (!_shouldCreateNewBatch()) {
+            return true;
+        }
+        if (!_isBatchFinal(lastBatch)) {
+            return true;
+        }
+
+        return false;
     }
 
     function _isBatchFinal(Batch memory batch) private view returns (bool) {
