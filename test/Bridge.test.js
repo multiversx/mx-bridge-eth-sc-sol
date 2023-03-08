@@ -394,7 +394,7 @@ describe("Bridge", async function () {
       let mockedSafe = await smockit(newSafe);
 
       const newBridgeFactory = await ethers.getContractFactory("Bridge");
-      const newBridge = await newBridgeFactory.deploy(boardMembers, quorum, mockedSafe.address);
+      const newBridge = await newBridgeFactory.deploy([boardMembers, quorum, mockedSafe.address]);
       mockedSafe.smocked.transfer.will.return.with(true);
 
       await newBridge.unpause();

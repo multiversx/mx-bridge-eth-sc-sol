@@ -402,6 +402,19 @@
     "type": "function"
   },
   {
+    "inputs": [],
+    "name": "isAnyBatchInProgress",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [
       {
         "internalType": "address",
@@ -482,6 +495,19 @@
       }
     ],
     "name": "setBatchBlockLimit",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint8",
+        "name": "newBatchSettleLimit",
+        "type": "uint8"
+      }
+    ],
+    "name": "setBatchSettleLimit",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

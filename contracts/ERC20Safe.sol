@@ -85,7 +85,11 @@ contract ERC20Safe is BridgeRole, Pausable {
      @param newBatchSettleLimit New block settle limit that will be set until a batch is considered final
     */
     function setBatchSettleLimit(uint8 newBatchSettleLimit) external onlyAdmin whenPaused {
-        require(isAnyBatchInProgress(), "Cannot change batchSettleLimit with pending batches");
+        require(!isAnyBatchInProgress(), "Cannot change batchSettleLimit with pending batches");
+        require(
+            newBatchSettleLimit >= batchBlockLimit,
+            "Cannot decrease batchSettleLimit under the value of batch block limit"
+        );
         batchSettleLimit = newBatchSettleLimit;
     }
 
@@ -237,7 +241,7 @@ contract ERC20Safe is BridgeRole, Pausable {
 
     /**
      @notice Gets a list of deposits for a batch nonce
-     @param batchNonce Identifier for the batch
+     @param batchNonce Identifier for the batchsetBatchSettleLimit
      @return a list of deposits included in this batch
     */
     function getDeposits(uint256 batchNonce) public view returns (Deposit[] memory) {
@@ -248,11 +252,12 @@ contract ERC20Safe is BridgeRole, Pausable {
      @notice Checks weather there is any batch still in progress
     */
     function isAnyBatchInProgress() public view returns (bool) {
-        Batch memory lastBatch = batches[batchesCount - 1];
-        if (_shouldCreateNewBatch() || _isBatchFinal(lastBatch)) {
+        if (batchesCount == 0) {
             return false;
         }
-        return batchDeposits[batchNonce - 1];
+
+        Batch memory lastBatch = batches[batchesCount - 1];
+        return !(_shouldCreateNewBatch() || _isBatchFinal(lastBatch));
     }
 
     function _isBatchFinal(Batch memory batch) private view returns (bool) {
