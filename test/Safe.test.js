@@ -75,6 +75,81 @@ describe("ERC20Safe", async function () {
     });
   });
 
+  describe("ERC20Safe - setting batch settle limit works as expected", async function () {
+    it("is default correct", async function () {
+      const tenMinutes = 40;
+      expect(await safe.batchSettleLimit()).to.eq(tenMinutes);
+    });
+    it("reverts", async function () {
+      await expect(safe.connect(adminWallet).setBatchSettleLimit(50)).to.be.revertedWith("Pausable: not paused");
+
+      await safe.pause();
+
+      await expect(safe.connect(otherWallet).setBatchSettleLimit(50)).to.be.revertedWith(
+        "Access Control: sender is not Admin",
+      );
+
+      // Having no batch
+      await expect(safe.connect(adminWallet).setBatchSettleLimit(30)).to.be.revertedWith(
+        "Cannot decrease batchSettleLimit under the value of batch block limit",
+      );
+
+      // Creating a batch
+      await safe.whitelistToken(genericERC20.address, defaultMinAmount, defaultMaxAmount);
+      await genericERC20.approve(safe.address, "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+      await genericERC20.mint(adminWallet.address, "1000000");
+      await safe.unpause();
+      await safe.deposit(
+        genericERC20.address,
+        defaultMinAmount,
+        Buffer.from("c0f0058cea88a2bc1240b60361efb965957038d05f916c42b3f23a2c38ced81e", "hex"),
+      );
+
+      // Thanks to the previous deposit, we have a pending non-final batch
+      await safe.pause();
+      await expect(safe.connect(adminWallet).setBatchSettleLimit(30)).to.be.revertedWith(
+        "Cannot change batchSettleLimit with pending batches",
+      );
+      await safe.unpause();
+
+      await network.provider.send("evm_increaseTime", [3600]);
+      for (let i = 0; i < 41; i++) {
+        await network.provider.send("evm_mine");
+      } // Finalized the batch
+      await safe.pause();
+      await expect(safe.connect(adminWallet).setBatchSettleLimit(30)).to.be.revertedWith(
+        "Cannot decrease batchSettleLimit under the value of batch block limit",
+      );
+      await safe.unpause();
+
+      // Now we should fill a batch without finalising it, so _shouldCreateNewBatch returns true, but _isBatchFinal
+      //  will return false
+      const batchSize = await safe.batchSize();
+      for (let i = 0; i < batchSize; i++) {
+        await safe.deposit(
+          genericERC20.address,
+          defaultMinAmount,
+          Buffer.from("c0f0058cea88a2bc1240b60361efb965957038d05f916c42b3f23a2c38ced81e", "hex"),
+        );
+      }
+      await safe.pause();
+      await expect(safe.connect(adminWallet).setBatchSettleLimit(30)).to.be.revertedWith(
+        "Cannot change batchSettleLimit with pending batches",
+      );
+      await safe.unpause();
+    });
+
+    it("updates the batch settle limit", async function () {
+      await safe.pause();
+
+      const batchSettleLimit = 50;
+      await safe.connect(adminWallet).setBatchSettleLimit(batchSettleLimit);
+      expect(await safe.batchSettleLimit()).to.equal(batchSettleLimit);
+
+      await safe.unpause();
+    });
+  });
+
   describe("ERC20Safe - setting batch size works as expected", async function () {
     it("is default correct", async function () {
       expect(await safe.batchSize()).to.eq(10);

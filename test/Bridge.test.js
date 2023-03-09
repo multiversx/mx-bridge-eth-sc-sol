@@ -391,7 +391,7 @@ describe("Bridge", async function () {
     describe("check execute transfer saves correct statuses", async function () {
       let mockedSafe = await smock.fake("FakeSafe");
       const newBridgeFactory = await ethers.getContractFactory("Bridge");
-      const newBridge = await newBridgeFactory.deploy(boardMembers, quorum, mockedSafe.address);
+      const newBridge = await newBridgeFactory.deploy([boardMembers, quorum, mockedSafe.address]);
       mockedSafe.smocked.transfer.will.return.with(true);
 
       await newBridge.unpause();
