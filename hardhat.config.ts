@@ -106,7 +106,7 @@ function getPolygonConfig(network: string): NetworkUserConfig {
       mnemonic,
       path: "m/44'/60'/0'/0",
     },
-    url: `https://data-seed-prebsc-1-s1.binance.org:8545`,
+    url: "https://polygon-mumbai.infura.io/v3/" + infuraApiKey,
   };
 
   switch (network) {
