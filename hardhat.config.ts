@@ -66,7 +66,7 @@ function getETHConfig(network: string): NetworkUserConfig {
       mnemonic,
       path: "m/44'/60'/0'/0",
     },
-    url: "https://" + chainIds.mainnet + ".infura.io/v3/" + infuraApiKey,
+    url: "https://" + chainIds.goerli + ".infura.io/v3/" + infuraApiKey,
   };
 
   switch (network) {
