@@ -45,10 +45,7 @@ dotenvConfig({ path: resolve(__dirname, "./.env") });
 const chainIds = {
   goerli: 5,
   hardhat: 31337,
-  kovan: 42,
   mainnet: 1,
-  rinkeby: 4,
-  ropsten: 3,
 };
 
 // Ensure that we have all the environment variables we need.
@@ -62,17 +59,28 @@ if (!infuraApiKey) {
   throw new Error("Please set your INFURA_API_KEY in a .env file");
 }
 
-function getChainConfig(network: keyof typeof chainIds): NetworkUserConfig {
-  const url: string = "https://" + network + ".infura.io/v3/" + infuraApiKey;
-  return {
+function getETHConfig(network: string): NetworkUserConfig {
+  let config = {
     accounts: {
       count: 12,
       mnemonic,
       path: "m/44'/60'/0'/0",
     },
-    chainId: chainIds[network],
-    url,
+    url: "https://" + chainIds.goerli + ".infura.io/v3/" + infuraApiKey,
   };
+
+  switch (network) {
+    case "testnet":
+      config.url = "https://" + chainIds.goerli + ".infura.io/v3/" + infuraApiKey;
+      break;
+    case "mainnet":
+      config.url = "https://" + chainIds.mainnet + ".infura.io/v3/" + infuraApiKey;
+      break;
+    default:
+      throw new Error("invalid config option for eth chain");
+  }
+
+  return config;
 }
 
 function getBSCConfig(network: string): NetworkUserConfig {
@@ -99,6 +107,30 @@ function getBSCConfig(network: string): NetworkUserConfig {
   return config;
 }
 
+function getPolygonConfig(network: string): NetworkUserConfig {
+  let config = {
+    accounts: {
+      count: 12,
+      mnemonic,
+      path: "m/44'/60'/0'/0",
+    },
+    url: "https://polygon-mumbai.infura.io/v3/" + infuraApiKey,
+  };
+
+  switch (network) {
+    case "testnet":
+      config.url = "https://polygon-mumbai.infura.io/v3/" + infuraApiKey;
+      break;
+    case "mainnet":
+      config.url = "https://polygon-rpc.com";
+      break;
+    default:
+      throw new Error("invalid config option for polygon chain");
+  }
+
+  return config;
+}
+
 const config: HardhatUserConfig = {
   defaultNetwork: "hardhat",
   gasReporter: {
@@ -115,13 +147,12 @@ const config: HardhatUserConfig = {
       },
       chainId: chainIds.hardhat,
     },
-    goerli: getChainConfig("goerli"),
-    kovan: getChainConfig("kovan"),
-    rinkeby: getChainConfig("rinkeby"),
-    ropsten: getChainConfig("ropsten"),
-    mainnet: getChainConfig("mainnet"),
+    goerli: getETHConfig("testnet"),
+    mainnet_eth: getETHConfig("mainnet"),
     testnet_bsc: getBSCConfig("testnet"),
     mainnet_bsc: getBSCConfig("mainnet"),
+    mumbai: getPolygonConfig("testnet"),
+    mainnet_polygon: getPolygonConfig("mainnet"),
   },
   paths: {
     artifacts: "./artifacts",
