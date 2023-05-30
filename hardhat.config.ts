@@ -99,6 +99,30 @@ function getBSCConfig(network: string): NetworkUserConfig {
   return config;
 }
 
+function getPolygonConfig(network: string): NetworkUserConfig {
+  let config = {
+    accounts: {
+      count: 12,
+      mnemonic,
+      path: "m/44'/60'/0'/0",
+    },
+    url: `https://data-seed-prebsc-1-s1.binance.org:8545`,
+  };
+
+  switch (network) {
+    case "testnet":
+      config.url = "https://polygon-mumbai.infura.io/v3/" + infuraApiKey;
+      break;
+    case "mainnet":
+      config.url = "https://polygon-rpc.com";
+      break;
+    default:
+      throw new Error("invalid config option for polygon chain");
+  }
+
+  return config;
+}
+
 const config: HardhatUserConfig = {
   defaultNetwork: "hardhat",
   gasReporter: {
@@ -122,6 +146,8 @@ const config: HardhatUserConfig = {
     mainnet: getChainConfig("mainnet"),
     testnet_bsc: getBSCConfig("testnet"),
     mainnet_bsc: getBSCConfig("mainnet"),
+    mumbai: getPolygonConfig("testnet"),
+    mainnet_polygon: getPolygonConfig("mainnet"),
   },
   paths: {
     artifacts: "./artifacts",
