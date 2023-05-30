@@ -59,17 +59,28 @@ if (!infuraApiKey) {
   throw new Error("Please set your INFURA_API_KEY in a .env file");
 }
 
-function getChainConfig(network: keyof typeof chainIds): NetworkUserConfig {
-  const url: string = "https://" + network + ".infura.io/v3/" + infuraApiKey;
-  return {
+function getETHConfig(network: string): NetworkUserConfig {
+  let config = {
     accounts: {
       count: 12,
       mnemonic,
       path: "m/44'/60'/0'/0",
     },
-    chainId: chainIds[network],
-    url,
+    url: "https://" + chainIds.mainnet + ".infura.io/v3/" + infuraApiKey,
   };
+
+  switch (network) {
+    case "testnet":
+      config.url = "https://" + chainIds.goerli + ".infura.io/v3/" + infuraApiKey;
+      break;
+    case "mainnet":
+      config.url = "https://" + chainIds.mainnet + ".infura.io/v3/" + infuraApiKey;
+      break;
+    default:
+      throw new Error("invalid config option for eth chain");
+  }
+
+  return config;
 }
 
 function getBSCConfig(network: string): NetworkUserConfig {
@@ -136,8 +147,8 @@ const config: HardhatUserConfig = {
       },
       chainId: chainIds.hardhat,
     },
-    goerli: getChainConfig("goerli"),
-    mainnet_eth: getChainConfig("mainnet"),
+    goerli: getETHConfig("testnet"),
+    mainnet_eth: getETHConfig("mainnet"),
     testnet_bsc: getBSCConfig("testnet"),
     mainnet_bsc: getBSCConfig("mainnet"),
     mumbai: getPolygonConfig("testnet"),
