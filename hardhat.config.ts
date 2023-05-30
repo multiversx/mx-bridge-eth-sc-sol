@@ -45,10 +45,7 @@ dotenvConfig({ path: resolve(__dirname, "./.env") });
 const chainIds = {
   goerli: 5,
   hardhat: 31337,
-  kovan: 42,
   mainnet: 1,
-  rinkeby: 4,
-  ropsten: 3,
 };
 
 // Ensure that we have all the environment variables we need.
@@ -140,10 +137,7 @@ const config: HardhatUserConfig = {
       chainId: chainIds.hardhat,
     },
     goerli: getChainConfig("goerli"),
-    kovan: getChainConfig("kovan"),
-    rinkeby: getChainConfig("rinkeby"),
-    ropsten: getChainConfig("ropsten"),
-    mainnet: getChainConfig("mainnet"),
+    mainnet_eth: getChainConfig("mainnet"),
     testnet_bsc: getBSCConfig("testnet"),
     mainnet_bsc: getBSCConfig("mainnet"),
     mumbai: getPolygonConfig("testnet"),
