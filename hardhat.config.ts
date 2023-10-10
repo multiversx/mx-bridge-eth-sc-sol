@@ -174,6 +174,11 @@ const config: HardhatUserConfig = {
         enabled: true,
         runs: 200,
       },
+      outputSelection: {
+        "*": {
+          "*": ["storageLayout"],
+        },
+      },
     },
   },
   typechain: {
@@ -184,7 +189,7 @@ const config: HardhatUserConfig = {
     path: "./abi",
     clear: true,
     flat: false,
-    only: [":Bridge$", ":ERC20Safe$"],
+    only: [":Bridge$", ":ERC20Safe$", ":SCExecProxy$"],
     pretty: false,
   },
 };
