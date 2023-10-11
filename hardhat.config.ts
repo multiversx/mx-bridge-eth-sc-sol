@@ -30,6 +30,7 @@ import "./tasks/remove-from-whitelist";
 import "./tasks/recover-lost-funds";
 import "./tasks/get-batch";
 import "./tasks/get-batch-deposits";
+import "./tasks/quorum";
 import "./tasks/get-statuses-after-execution";
 
 import "./tasks/deploy";
@@ -44,6 +45,7 @@ dotenvConfig({ path: resolve(__dirname, "./.env") });
 
 const chainIds = {
   goerli: 5,
+  sepolia: "sepolia",
   hardhat: 31337,
   mainnet: 1,
 };
@@ -66,12 +68,12 @@ function getETHConfig(network: string): NetworkUserConfig {
       mnemonic,
       path: "m/44'/60'/0'/0",
     },
-    url: "https://" + chainIds.goerli + ".infura.io/v3/" + infuraApiKey,
+    url: "https://" + chainIds.sepolia + ".infura.io/v3/" + infuraApiKey,
   };
 
   switch (network) {
     case "testnet":
-      config.url = "https://" + chainIds.goerli + ".infura.io/v3/" + infuraApiKey;
+      config.url = "https://" + chainIds.sepolia + ".infura.io/v3/" + infuraApiKey;
       break;
     case "mainnet":
       config.url = "https://" + chainIds.mainnet + ".infura.io/v3/" + infuraApiKey;
@@ -147,7 +149,7 @@ const config: HardhatUserConfig = {
       },
       chainId: chainIds.hardhat,
     },
-    goerli: getETHConfig("testnet"),
+    sepolia: getETHConfig("testnet"),
     mainnet_eth: getETHConfig("mainnet"),
     testnet_bsc: getBSCConfig("testnet"),
     mainnet_bsc: getBSCConfig("mainnet"),
