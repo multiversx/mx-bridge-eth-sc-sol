@@ -34,9 +34,15 @@
     "inputs": [
       {
         "indexed": true,
-        "internalType": "uint112",
+        "internalType": "uint64",
         "name": "batchNonce",
-        "type": "uint112"
+        "type": "uint64"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint64",
+        "name": "depositNonce",
+        "type": "uint64"
       },
       {
         "indexed": false,
