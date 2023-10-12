@@ -11,5 +11,6 @@ task("unpause-safe", "Unpause the safe SC")
     const safeContractFactory = await hre.ethers.getContractFactory("ERC20Safe");
     const safe = safeContractFactory.attach(safeAddress).connect(adminWallet);
 
-    await safe.unpause(getDeployOptions(taskArgs));
+    console.log(safeAddress);
+    console.log(await safe.unpause(getDeployOptions(taskArgs)));
   });

@@ -33,16 +33,16 @@
     "anonymous": false,
     "inputs": [
       {
+        "indexed": true,
+        "internalType": "uint112",
+        "name": "batchNonce",
+        "type": "uint112"
+      },
+      {
         "indexed": false,
         "internalType": "string",
         "name": "callData",
         "type": "string"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint112",
-        "name": "batchNonce",
-        "type": "uint112"
       }
     ],
     "name": "ERC20SCDeposit",

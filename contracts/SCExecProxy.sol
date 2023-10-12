@@ -12,7 +12,7 @@ contract SCExecProxy is AdminRole {
 
     mapping(uint112 => DepositSCExtension) depositInfo;
 
-    event ERC20SCDeposit(string callData, uint112 batchNonce);
+    event ERC20SCDeposit(uint112 indexed batchNonce, string callData);
 
     constructor(ERC20Safe erc20Safe) {
         safe = erc20Safe;
@@ -24,7 +24,6 @@ contract SCExecProxy is AdminRole {
         bytes32 recipientAddress,
         string calldata callData
     ) public {
-        // First, get tokens into this contract
         IERC20 erc20 = IERC20(tokenAddress);
         erc20.safeTransferFrom(msg.sender, address(this), amount);
 
@@ -32,7 +31,7 @@ contract SCExecProxy is AdminRole {
         safe.deposit(tokenAddress, amount, recipientAddress);
 
         uint112 currentBatchId = safe.batchesCount();
-        emit ERC20SCDeposit(callData, currentBatchId);
+        emit ERC20SCDeposit(currentBatchId, callData);
     }
 
     function setSafe(ERC20Safe erc20Safe) public onlyAdmin {

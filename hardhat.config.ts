@@ -30,8 +30,9 @@ import "./tasks/remove-from-whitelist";
 import "./tasks/recover-lost-funds";
 import "./tasks/get-batch";
 import "./tasks/get-batch-deposits";
-import "./tasks/quorum";
+// import "./tasks/quorum";
 import "./tasks/get-statuses-after-execution";
+import "./tasks/depositSC";
 
 import "./tasks/deploy";
 

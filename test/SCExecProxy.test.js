@@ -74,7 +74,7 @@ describe("Bridge", async function () {
           ),
       )
         .to.emit(scExec, "ERC20SCDeposit")
-        .withArgs("dyr", 1);
+        .withArgs(1, "dyr");
     });
   });
 });
