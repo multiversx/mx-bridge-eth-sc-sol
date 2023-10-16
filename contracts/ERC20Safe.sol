@@ -31,6 +31,7 @@ contract ERC20Safe is BridgeRole, Pausable {
 
     mapping(uint256 => Batch) public batches;
     mapping(address => bool) public whitelistedTokens;
+    mapping(address => bool) public whitelistedTokensMintBurn;
     mapping(address => uint256) public tokenMinLimits;
     mapping(address => uint256) public tokenMaxLimits;
     mapping(address => uint256) public tokenBalances;
@@ -48,9 +49,11 @@ contract ERC20Safe is BridgeRole, Pausable {
     function whitelistToken(
         address token,
         uint256 minimumAmount,
-        uint256 maximumAmount
+        uint256 maximumAmount,
+        bool mintBurn
     ) external onlyAdmin {
         whitelistedTokens[token] = true;
+        whitelistedTokensMintBurn[token] = mintBurn;
         tokenMinLimits[token] = minimumAmount;
         tokenMaxLimits[token] = maximumAmount;
     }
@@ -135,11 +138,7 @@ contract ERC20Safe is BridgeRole, Pausable {
       @param recipientAddress address of the receiver of tokens on Elrond Network
       @notice emits {ERC20Deposited} event
 \   */
-    function deposit(
-        address tokenAddress,
-        uint256 amount,
-        bytes32 recipientAddress
-    ) public whenNotPaused {
+    function deposit(address tokenAddress, uint256 amount, bytes32 recipientAddress) public whenNotPaused {
         require(whitelistedTokens[tokenAddress], "Unsupported token");
         require(amount >= tokenMinLimits[tokenAddress], "Tried to deposit an amount below the minimum specified limit");
         require(amount <= tokenMaxLimits[tokenAddress], "Tried to deposit an amount above the maximum specified limit");
@@ -165,7 +164,9 @@ contract ERC20Safe is BridgeRole, Pausable {
         batch.depositsCount++;
         depositsCount++;
 
-        tokenBalances[tokenAddress] += amount;
+        if (!whitelistedTokensMintBurn[tokenAddress]) {
+            tokenBalances[tokenAddress] += amount;
+        }
 
         IERC20 erc20 = IERC20(tokenAddress);
         erc20.safeTransferFrom(msg.sender, address(this), amount);
@@ -181,7 +182,9 @@ contract ERC20Safe is BridgeRole, Pausable {
     function initSupply(address tokenAddress, uint256 amount) external onlyAdmin {
         require(whitelistedTokens[tokenAddress], "Unsupported token");
 
-        tokenBalances[tokenAddress] += amount;
+        if (!whitelistedTokensMintBurn[tokenAddress]) {
+            tokenBalances[tokenAddress] += amount;
+        }
 
         IERC20 erc20 = IERC20(tokenAddress);
         erc20.safeTransferFrom(msg.sender, address(this), amount);
@@ -197,7 +200,7 @@ contract ERC20Safe is BridgeRole, Pausable {
     ) external onlyBridge returns (bool) {
         IERC20 erc20 = IERC20(tokenAddress);
         bool transferExecuted = erc20.boolTransfer(recipientAddress, amount);
-        if (transferExecuted) {
+        if (transferExecuted && !whitelistedTokensMintBurn[tokenAddress]) {
             tokenBalances[tokenAddress] -= amount;
         }
 

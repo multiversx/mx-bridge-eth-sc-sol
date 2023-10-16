@@ -38,7 +38,7 @@ describe("ERC20Safe, MintBurnERC20, and Bridge Interaction", function () {
   async function setupErc20Token() {
     mintBurnErc20 = await deployContract(adminWallet, MintBurnERC20Contract, ["Test Token", "TST", 18]);
     await mintBurnErc20.setSafe(erc20Safe.address);
-    await erc20Safe.whitelistToken(mintBurnErc20.address, 0, 100);
+    await erc20Safe.whitelistToken(mintBurnErc20.address, 0, 100, true);
     await erc20Safe.unpause();
   }
 
@@ -96,16 +96,22 @@ describe("ERC20Safe, MintBurnERC20, and Bridge Interaction", function () {
       return [signature1, signature2, signature3, signature4, signature5, signature6, signature7];
     }
 
-    it("mints tokens", async function () {
+    it("mints & burn tokens", async function () {
       await expect(() =>
         bridge.executeTransfer([mintBurnErc20.address], [otherWallet.address], [amount], [1], batchNonce, signatures),
       ).to.changeTokenBalance(mintBurnErc20, otherWallet, amount);
-    });
 
-    it("burns tokens", async function () {
-      await expect(() =>
-        erc20Safe.deposit(mintBurnErc20.address, amount, otherWallet.address.slice(2)),
-      ).to.changeTokenBalance(mintBurnErc20, otherWallet, 0);
+      await erc20Safe
+        .connect(otherWallet)
+        .deposit(
+          mintBurnErc20.address,
+          amount,
+          Buffer.from("c0f0058cea88a2bc1240b60361efb965957038d05f916c42b3f23a2c38ced81e", "hex"),
+        );
+
+      const initialBalance = await mintBurnErc20.balanceOf(otherWallet.address);
+      // Check that the initial balance was `amount`
+      expect(initialBalance).to.equal(0);
     });
   });
 });
