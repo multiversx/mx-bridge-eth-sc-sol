@@ -36,10 +36,6 @@ contract MintBurnERC20 is ERC20, AdminRole {
     }
 
     function transferFrom(address sender, address recipient, uint256 amount) public virtual override returns (bool) {
-        if (sender == _safe) {
-            _mint(recipient, amount);
-            return true;
-        }
         if (recipient == _safe) {
             _burn(sender, amount);
             return true;
@@ -49,12 +45,9 @@ contract MintBurnERC20 is ERC20, AdminRole {
 
     function transfer(address recipient, uint256 amount) public virtual override returns (bool) {
         address sender = _msgSender();
+        require(recipient != _safe, "ERC20: cannot transfer to the ERC20Safe directly");
         if (sender == _safe) {
             _mint(recipient, amount);
-            return true;
-        }
-        if (recipient == _safe) {
-            _burn(sender, amount);
             return true;
         }
         return super.transfer(recipient, amount);

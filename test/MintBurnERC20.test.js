@@ -101,6 +101,11 @@ describe("ERC20Safe, MintBurnERC20, and Bridge Interaction", function () {
         bridge.executeTransfer([mintBurnErc20.address], [otherWallet.address], [amount], [1], batchNonce, signatures),
       ).to.changeTokenBalance(mintBurnErc20, otherWallet, amount);
 
+      // check that calling transfer on mintBurnErc20 fails when called by otherWallet
+      await expect(mintBurnErc20.connect(otherWallet).transfer(erc20Safe.address, amount)).to.be.revertedWith(
+        "ERC20: cannot transfer to the ERC20Safe directly",
+      );
+
       await erc20Safe
         .connect(otherWallet)
         .deposit(
