@@ -6,6 +6,7 @@ task("deposit-sc", "Deposits token and sends to safe")
   .addParam("amount", "Amount we want to deposit (full value, with decimals)")
   .addParam("receiversc", "Elrond address hex encoded of the receiver")
   .addParam("callData", "data field for MVX SC execution")
+  .addParam("mvxGasLimit", "data field for MVX SC execution")
   .addOptionalParam("price", "Gas price in gwei for this transaction", undefined)
   .setAction(async (taskArgs, hre) => {
     const fs = require("fs");
@@ -20,6 +21,14 @@ task("deposit-sc", "Deposits token and sends to safe")
     const amount = taskArgs.amount;
     const receiver = taskArgs.receiversc;
     const callData = taskArgs.callData;
+    const mvxGasLimit = taskArgs.mvxGasLimit;
 
-    await scExecContract.deposit(address, amount, Buffer.from(receiver, "hex"), callData, getDeployOptions(taskArgs));
+    await scExecContract.deposit(
+      address,
+      amount,
+      Buffer.from(receiver, "hex"),
+      mvxGasLimit,
+      callData,
+      getDeployOptions(taskArgs),
+    );
   });

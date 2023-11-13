@@ -47,6 +47,12 @@
       {
         "indexed": false,
         "internalType": "string",
+        "name": "mvxGasLimit",
+        "type": "string"
+      },
+      {
+        "indexed": false,
+        "internalType": "string",
         "name": "callData",
         "type": "string"
       }
@@ -83,6 +89,11 @@
         "internalType": "bytes32",
         "name": "recipientAddress",
         "type": "bytes32"
+      },
+      {
+        "internalType": "string",
+        "name": "mvxGasLimit",
+        "type": "string"
       },
       {
         "internalType": "string",
