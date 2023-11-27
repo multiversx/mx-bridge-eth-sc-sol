@@ -137,18 +137,9 @@ contract ERC20Safe is BridgeRole, Pausable {
       @param tokenAddress Address of the contract for the ERC20 token that will be deposited
       @param amount number of tokens that need to be deposited
       @param recipientAddress address of the receiver of tokens on Elrond Network
-      @param data the smart contract call to be executed on MultiversX side
-      @param gasLimit gas limit for the SC call to be executed on MultiversX side
       @notice emits {ERC20Deposited} event
 \   */
-
-    function deposit(
-        address tokenAddress,
-        uint256 amount,
-        bytes32 recipientAddress,
-        string data,
-        uint256 gasLimit
-    ) public whenNotPaused {
+    function deposit(address tokenAddress, uint256 amount, bytes32 recipientAddress) public whenNotPaused {
         require(whitelistedTokens[tokenAddress], "Unsupported token");
         require(amount >= tokenMinLimits[tokenAddress], "Tried to deposit an amount below the minimum specified limit");
         require(amount <= tokenMaxLimits[tokenAddress], "Tried to deposit an amount above the maximum specified limit");
@@ -167,16 +158,7 @@ contract ERC20Safe is BridgeRole, Pausable {
 
         uint112 depositNonce = depositsCount + 1;
         batchDeposits[batchesCount - 1].push(
-            Deposit(
-                depositNonce,
-                tokenAddress,
-                amount,
-                msg.sender,
-                recipientAddress,
-                DepositStatus.Pending,
-                data,
-                gasLimit
-            )
+            Deposit(depositNonce, tokenAddress, amount, msg.sender, recipientAddress, DepositStatus.Pending)
         );
 
         batch.lastUpdatedBlockNumber = currentBlockNumber;

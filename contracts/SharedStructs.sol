@@ -17,8 +17,6 @@ struct Deposit {
     address depositor;
     bytes32 recipient;
     DepositStatus status;
-    string data;
-    uint256 gasLimit;
 }
 
 struct CrossTransferStatus {
