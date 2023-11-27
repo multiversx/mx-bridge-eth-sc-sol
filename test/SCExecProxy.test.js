@@ -54,6 +54,7 @@ describe("Bridge", async function () {
             genericErc20.address,
             10,
             Buffer.from("c0f0058cea88a2bc1240b60361efb965957038d05f916c42b3f23a2c38ced81e", "hex"),
+            "100",
             "dyr",
           ),
       ).to.be.revertedWith("reverting_safe");
@@ -70,11 +71,12 @@ describe("Bridge", async function () {
             genericErc20.address,
             25,
             Buffer.from("c0f0058cea88a2bc1240b60361efb965957038d05f916c42b3f23a2c38ced81e", "hex"),
+            "100",
             "dyr",
           ),
       )
         .to.emit(scExec, "ERC20SCDeposit")
-        .withArgs("dyr", 1);
+        .withArgs(1, 1, "100", "dyr");
     });
   });
 });

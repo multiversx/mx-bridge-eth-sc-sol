@@ -34,6 +34,7 @@ import "./tasks/scan-for-deposits";
 import "./tasks/deploy/mint-burn-tokens";
 import "./tasks/quorum";
 import "./tasks/get-statuses-after-execution";
+import "./tasks/depositSC";
 
 import "./tasks/deploy";
 

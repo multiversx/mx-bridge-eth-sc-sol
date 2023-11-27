@@ -33,16 +33,28 @@
     "anonymous": false,
     "inputs": [
       {
+        "indexed": true,
+        "internalType": "uint64",
+        "name": "batchNonce",
+        "type": "uint64"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint64",
+        "name": "depositNonce",
+        "type": "uint64"
+      },
+      {
         "indexed": false,
         "internalType": "string",
-        "name": "callData",
+        "name": "mvxGasLimit",
         "type": "string"
       },
       {
         "indexed": false,
-        "internalType": "uint112",
-        "name": "batchNonce",
-        "type": "uint112"
+        "internalType": "string",
+        "name": "callData",
+        "type": "string"
       }
     ],
     "name": "ERC20SCDeposit",
@@ -77,6 +89,11 @@
         "internalType": "bytes32",
         "name": "recipientAddress",
         "type": "bytes32"
+      },
+      {
+        "internalType": "string",
+        "name": "mvxGasLimit",
+        "type": "string"
       },
       {
         "internalType": "string",
