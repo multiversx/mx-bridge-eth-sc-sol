@@ -35,6 +35,7 @@ contract ERC20Safe is BridgeRole, Pausable {
     mapping(address => uint256) public tokenMinLimits;
     mapping(address => uint256) public tokenMaxLimits;
     mapping(address => uint256) public tokenBalances;
+    mapping(address => uint256) public tokenMintedBalances;
     mapping(uint256 => Deposit[]) public batchDeposits;
 
     event ERC20Deposit(uint112 depositNonce, uint112 batchId);
@@ -166,7 +167,16 @@ contract ERC20Safe is BridgeRole, Pausable {
 
         uint112 depositNonce = depositsCount + 1;
         batchDeposits[batchesCount - 1].push(
-            Deposit(depositNonce, tokenAddress, amount, msg.sender, recipientAddress, DepositStatus.Pending, data, gasLimit)
+            Deposit(
+                depositNonce,
+                tokenAddress,
+                amount,
+                msg.sender,
+                recipientAddress,
+                DepositStatus.Pending,
+                data,
+                gasLimit
+            )
         );
 
         batch.lastUpdatedBlockNumber = currentBlockNumber;
@@ -175,6 +185,8 @@ contract ERC20Safe is BridgeRole, Pausable {
 
         if (!whitelistedTokensMintBurn[tokenAddress]) {
             tokenBalances[tokenAddress] += amount;
+        } else {
+            tokenMintedBalances[tokenAddress] -= amount;
         }
 
         IERC20 erc20 = IERC20(tokenAddress);
@@ -209,11 +221,16 @@ contract ERC20Safe is BridgeRole, Pausable {
     ) external onlyBridge returns (bool) {
         IERC20 erc20 = IERC20(tokenAddress);
         bool transferExecuted = erc20.boolTransfer(recipientAddress, amount);
-        if (transferExecuted && !whitelistedTokensMintBurn[tokenAddress]) {
+        if (!transferExecuted) {
+            return false;
+        }
+        if (!whitelistedTokensMintBurn[tokenAddress]) {
             tokenBalances[tokenAddress] -= amount;
+        } else {
+            tokenMintedBalances[tokenAddress] += amount;
         }
 
-        return transferExecuted;
+        return true;
     }
 
     /**
