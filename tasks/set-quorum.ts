@@ -13,6 +13,7 @@ task("set-quorum", "Updates the quorum on the Bridge contract")
     const bridgeContractFactory = await hre.ethers.getContractFactory("Bridge");
     const bridge = bridgeContractFactory.attach(bridgeAddress).connect(adminWallet);
 
-    await bridge.setQuorum(size, getDeployOptions(taskArgs));
+    const tx = await bridge.setQuorum(size, getDeployOptions(taskArgs));
+    console.log("Transaction hash: ", tx.hash);
     console.log("Quorum updated: ", size);
   });
