@@ -46,9 +46,9 @@
       },
       {
         "indexed": false,
-        "internalType": "string",
+        "internalType": "uint64",
         "name": "mvxGasLimit",
-        "type": "string"
+        "type": "uint64"
       },
       {
         "indexed": false,
@@ -91,9 +91,9 @@
         "type": "bytes32"
       },
       {
-        "internalType": "string",
+        "internalType": "uint64",
         "name": "mvxGasLimit",
-        "type": "string"
+        "type": "uint64"
       },
       {
         "internalType": "string",
