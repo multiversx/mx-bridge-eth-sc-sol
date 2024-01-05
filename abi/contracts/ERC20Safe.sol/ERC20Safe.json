@@ -635,6 +635,25 @@
     "inputs": [
       {
         "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "name": "tokenMintedBalances",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
         "name": "tokenAddress",
         "type": "address"
       },
@@ -696,6 +715,11 @@
         "internalType": "uint256",
         "name": "maximumAmount",
         "type": "uint256"
+      },
+      {
+        "internalType": "bool",
+        "name": "mintBurn",
+        "type": "bool"
       }
     ],
     "name": "whitelistToken",
@@ -712,6 +736,25 @@
       }
     ],
     "name": "whitelistedTokens",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "name": "whitelistedTokensMintBurn",
     "outputs": [
       {
         "internalType": "bool",
