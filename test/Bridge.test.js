@@ -6,6 +6,7 @@ const { smock } = require("@defi-wonderland/smock");
 const BridgeContract = require("../artifacts/contracts/Bridge.sol/Bridge.json");
 const ERC20SafeContract = require("../artifacts/contracts/ERC20Safe.sol/ERC20Safe.json");
 const GenericERC20 = require("../artifacts/contracts/GenericERC20.sol/GenericERC20.json");
+const { getSignaturesForExecuteTransfer, getExecuteTransferData } = require("./utils/bridge.utils");
 
 describe("Bridge", async function () {
   const [adminWallet, relayer1, relayer2, relayer3, relayer4, relayer5, relayer6, relayer7, relayer8, otherWallet] =
@@ -175,43 +176,9 @@ describe("Bridge", async function () {
         [amount],
         [1],
         batchNonce,
+        [adminWallet, relayer1, relayer2, relayer3, relayer5, relayer6, relayer7, relayer8],
       );
     });
-
-    function getExecuteTransferData(tokenAddresses, recipientAddresses, amounts, depositNonces, batchNonce) {
-      const signMessageDefinition = ["address[]", "address[]", "uint256[]", "uint256[]", "uint256", "string"];
-      const signMessageData = [
-        recipientAddresses,
-        tokenAddresses,
-        amounts,
-        depositNonces,
-        batchNonce,
-        "ExecuteBatchedTransfer",
-      ];
-
-      const bytesToSign = ethers.utils.defaultAbiCoder.encode(signMessageDefinition, signMessageData);
-      const signData = ethers.utils.keccak256(bytesToSign);
-      return ethers.utils.arrayify(signData);
-    }
-
-    async function getSignaturesForExecuteTransfer(
-      tokenAddresses,
-      recipientAddresses,
-      amounts,
-      depositNonces,
-      batchNonce,
-    ) {
-      dataToSign = getExecuteTransferData(tokenAddresses, recipientAddresses, amounts, depositNonces, batchNonce);
-      signature1 = await adminWallet.signMessage(dataToSign);
-      signature2 = await relayer1.signMessage(dataToSign);
-      signature3 = await relayer2.signMessage(dataToSign);
-      signature4 = await relayer3.signMessage(dataToSign);
-      signature5 = await relayer5.signMessage(dataToSign);
-      signature6 = await relayer6.signMessage(dataToSign);
-      signature7 = await relayer7.signMessage(dataToSign);
-
-      return [signature1, signature2, signature3, signature4, signature5, signature6, signature7];
-    }
 
     describe("when quorum achieved", async function () {
       it("transfers tokens", async function () {

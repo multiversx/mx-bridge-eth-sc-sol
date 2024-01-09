@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 
-pragma solidity ^0.8.4;
+pragma solidity ^0.8.20;
 
 /**
  * @dev Contract module which provides a basic access control mechanism, where

@@ -18,9 +18,9 @@ task("deploy-mint-burn-tokens", "Deploys MintBurnERC20 contracts to use to the b
     const tokenName = taskArgs.name;
     const tokenSymbol = taskArgs.symbol;
 
-    const usdcContract = await mintBurnERC20Factory.deploy(tokenName, tokenSymbol, 18);
+    const usdcContract = await mintBurnERC20Factory.deploy(tokenName, tokenSymbol);
     await usdcContract.deployed();
     console.log("MintBurn token deployed to:", usdcContract.address);
 
-    await usdcContract.setSafe(safeAddress);
+    await usdcContract.grantRole(await usdcContract.MINTER_ROLE(), safeAddress);
   });

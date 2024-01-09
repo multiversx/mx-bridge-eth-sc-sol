@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 
-pragma solidity ^0.8.4;
+pragma solidity ^0.8.20;
 
 import "../utils/structs/EnumerableSet.sol";
 import "./AdminRole.sol";

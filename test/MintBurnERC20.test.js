@@ -5,6 +5,7 @@ const { provider, deployContract } = waffle;
 const ERC20SafeContract = require("../artifacts/contracts/ERC20Safe.sol/ERC20Safe.json");
 const MintBurnERC20Contract = require("../artifacts/contracts/MintBurnERC20.sol/MintBurnERC20.json");
 const BridgeContract = require("../artifacts/contracts/Bridge.sol/Bridge.json");
+const { getSignaturesForExecuteTransfer } = require("./utils/bridge.utils");
 
 describe("ERC20Safe, MintBurnERC20, and Bridge Interaction", function () {
   const [adminWallet, relayer1, relayer2, relayer3, relayer4, relayer5, relayer6, relayer7, relayer8, otherWallet] =
@@ -44,7 +45,6 @@ describe("ERC20Safe, MintBurnERC20, and Bridge Interaction", function () {
 
   describe("should burn tokens on deposit to ERC20Safe", async function () {
     let amount, batchNonce, signatures;
-    let dataToSign, signature1, signature2, signature3, signature4, signature5, signature6, signature7;
     beforeEach(async function () {
       amount = 80;
       batchNonce = 42;
@@ -54,43 +54,9 @@ describe("ERC20Safe, MintBurnERC20, and Bridge Interaction", function () {
         [amount],
         [1],
         batchNonce,
+        [adminWallet, relayer1, relayer2, relayer3, relayer5, relayer6, relayer7, relayer8],
       );
     });
-
-    function getExecuteTransferData(tokenAddresses, recipientAddresses, amounts, depositNonces, batchNonce) {
-      const signMessageDefinition = ["address[]", "address[]", "uint256[]", "uint256[]", "uint256", "string"];
-      const signMessageData = [
-        recipientAddresses,
-        tokenAddresses,
-        amounts,
-        depositNonces,
-        batchNonce,
-        "ExecuteBatchedTransfer",
-      ];
-
-      const bytesToSign = ethers.utils.defaultAbiCoder.encode(signMessageDefinition, signMessageData);
-      const signData = ethers.utils.keccak256(bytesToSign);
-      return ethers.utils.arrayify(signData);
-    }
-
-    async function getSignaturesForExecuteTransfer(
-      tokenAddresses,
-      recipientAddresses,
-      amounts,
-      depositNonces,
-      batchNonce,
-    ) {
-      dataToSign = getExecuteTransferData(tokenAddresses, recipientAddresses, amounts, depositNonces, batchNonce);
-      signature1 = await adminWallet.signMessage(dataToSign);
-      signature2 = await relayer1.signMessage(dataToSign);
-      signature3 = await relayer2.signMessage(dataToSign);
-      signature4 = await relayer3.signMessage(dataToSign);
-      signature5 = await relayer5.signMessage(dataToSign);
-      signature6 = await relayer6.signMessage(dataToSign);
-      signature7 = await relayer7.signMessage(dataToSign);
-
-      return [signature1, signature2, signature3, signature4, signature5, signature6, signature7];
-    }
 
     it("transfer is set as REJECTED when ERC20Safe does not have the minter role", async function () {
       // check that transfer is set as REJECTED when ERC20Safe does not have the minter role
@@ -123,6 +89,7 @@ describe("ERC20Safe, MintBurnERC20, and Bridge Interaction", function () {
       console.log(transfers);
       expect(transfers[0]).to.equal(4);
     });
+
     it("transfer is set as Executed when ERC20Safe does have the minter role", async function () {
       await mintBurnErc20.grantRole(await mintBurnErc20.MINTER_ROLE(), erc20Safe.address);
       await expect(() =>
@@ -139,11 +106,13 @@ describe("ERC20Safe, MintBurnERC20, and Bridge Interaction", function () {
       console.log(transfers);
       expect(transfers[0]).to.equal(3);
     });
-    it("deposit shall reject when ERC20Safe does not have the burner role", async function () {
+
+    it("deposit not should work when ERC20Safe does not have enough allowance", async function () {
       await mintBurnErc20.grantRole(await mintBurnErc20.MINTER_ROLE(), erc20Safe.address);
       await expect(() =>
         bridge.executeTransfer([mintBurnErc20.address], [otherWallet.address], [amount], [1], batchNonce, signatures),
       ).to.changeTokenBalance(mintBurnErc20, otherWallet, amount);
+
       await expect(
         erc20Safe
           .connect(otherWallet)
@@ -152,25 +121,25 @@ describe("ERC20Safe, MintBurnERC20, and Bridge Interaction", function () {
             amount,
             Buffer.from("c0f0058cea88a2bc1240b60361efb965957038d05f916c42b3f23a2c38ced81e", "hex"),
           ),
-      ).to.be.revertedWith("ERC20Safe must have burner role to burn");
+      ).to.revertedWith("ERC20InsufficientAllowance");
     });
-    it("deposit should work when ERC20Safe does have the burner role", async function () {
-      await mintBurnErc20.grantRole(await mintBurnErc20.BURNER_ROLE(), erc20Safe.address);
+
+    it("deposit should work when ERC20Safe has enough allowance", async function () {
       await mintBurnErc20.grantRole(await mintBurnErc20.MINTER_ROLE(), erc20Safe.address);
       await expect(() =>
         bridge.executeTransfer([mintBurnErc20.address], [otherWallet.address], [amount], [1], batchNonce, signatures),
       ).to.changeTokenBalance(mintBurnErc20, otherWallet, amount);
-      await erc20Safe
-        .connect(otherWallet)
-        .deposit(
-          mintBurnErc20.address,
-          amount,
-          Buffer.from("c0f0058cea88a2bc1240b60361efb965957038d05f916c42b3f23a2c38ced81e", "hex"),
-        );
 
-      const initialBalance = await mintBurnErc20.balanceOf(otherWallet.address);
-      // Check that the initial balance was `amount`
-      expect(initialBalance).to.equal(0);
+      await mintBurnErc20.connect(otherWallet).approve(erc20Safe.address, amount);
+      await expect(
+        erc20Safe
+          .connect(otherWallet)
+          .deposit(
+            mintBurnErc20.address,
+            amount,
+            Buffer.from("c0f0058cea88a2bc1240b60361efb965957038d05f916c42b3f23a2c38ced81e", "hex"),
+          ),
+      ).to.changeTokenBalance(mintBurnErc20, otherWallet, -amount);
     });
   });
 });

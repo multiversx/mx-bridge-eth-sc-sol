@@ -1,20 +1,23 @@
 //SPDX-License-Identifier: UNLICENSED
 
-pragma solidity ^0.8.4;
+pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "./SharedStructs.sol";
 import "./access/BridgeRole.sol";
 import "./lib/BoolTokenTransfer.sol";
 import "./lib/Pausable.sol";
 
-interface IMintableBurnableERC20 is IERC20 {
+interface IMintableERC20 is IERC20 {
     function mint(address to, uint256 amount) external;
-    function burn(address from, uint256 amount) external;
     function hasRole(bytes32 role, address account) external view returns (bool);
     function MINTER_ROLE() external view returns (bytes32);
-    function BURNER_ROLE() external view returns (bytes32);
+}
+
+interface IBurnableERC20 is IERC20 {
+    function burnFrom(address account, uint256 amount) external;
 }
 
 /**
@@ -173,13 +176,14 @@ contract ERC20Safe is BridgeRole, Pausable {
         batch.depositsCount++;
         depositsCount++;
 
-        if (!whitelistedTokensMintBurn[tokenAddress]) {
+        if (!_isTokenMintBurn(tokenAddress)) {
             tokenBalances[tokenAddress] += amount;
             IERC20 erc20 = IERC20(tokenAddress);
             erc20.safeTransferFrom(msg.sender, address(this), amount);
         } else {
             tokenMintedBalances[tokenAddress] -= amount;
-            _internalBurn(tokenAddress, msg.sender, amount);
+            IBurnableERC20 erc20 = IBurnableERC20(tokenAddress);
+            erc20.burnFrom(msg.sender, amount);
         }
 
         emit ERC20Deposit(depositNonce, batch.nonce);
@@ -193,14 +197,15 @@ contract ERC20Safe is BridgeRole, Pausable {
     function initSupply(address tokenAddress, uint256 amount) external onlyAdmin {
         require(whitelistedTokens[tokenAddress], "Unsupported token");
 
-        if (!whitelistedTokensMintBurn[tokenAddress]) {
+        if (!_isTokenMintBurn(tokenAddress)) {
             tokenBalances[tokenAddress] += amount;
             IERC20 erc20 = IERC20(tokenAddress);
             erc20.safeTransferFrom(msg.sender, address(this), amount);
             return;
         }
         tokenMintedBalances[tokenAddress] -= amount;
-        _internalBurn(tokenAddress, msg.sender, amount);
+        IBurnableERC20 erc20 = IBurnableERC20(tokenAddress);
+        erc20.burnFrom(msg.sender, amount);
     }
 
     /**
@@ -211,7 +216,7 @@ contract ERC20Safe is BridgeRole, Pausable {
         uint256 amount,
         address recipientAddress
     ) external onlyBridge returns (bool) {
-        if (!whitelistedTokensMintBurn[tokenAddress]) {
+        if (!_isTokenMintBurn(tokenAddress)) {
             IERC20 erc20 = IERC20(tokenAddress);
             bool transferExecuted = erc20.boolTransfer(recipientAddress, amount);
             if (!transferExecuted) {
@@ -318,22 +323,17 @@ contract ERC20Safe is BridgeRole, Pausable {
     }
 
     function _internalMint(address token, address to, uint256 amount) internal returns (bool) {
-        IMintableBurnableERC20 mintableToken = IMintableBurnableERC20(token);
+        IMintableERC20 mintableToken = IMintableERC20(token);
 
         if (!mintableToken.hasRole(mintableToken.MINTER_ROLE(), address(this))) {
             return false;
         }
 
-        try mintableToken.mint(to, amount) {
-            return true;
-        } catch {
-            return false;
-        }
+        mintableToken.mint(to, amount);
+        return true;
     }
 
-    function _internalBurn(address token, address from, uint256 amount) internal {
-        IMintableBurnableERC20 burnableToken = IMintableBurnableERC20(token);
-        //        require(burnableToken.hasRole(burnableToken.BURNER_ROLE(), address(this)), "ERC20Safe does not have burner role");
-        burnableToken.burn(from, amount);
+    function _isTokenMintBurn(address token) internal view returns (bool) {
+        return whitelistedTokensMintBurn[token];
     }
 }
