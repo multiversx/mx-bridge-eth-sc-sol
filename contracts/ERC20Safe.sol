@@ -12,8 +12,6 @@ import "./lib/Pausable.sol";
 
 interface IMintableERC20 is IERC20 {
     function mint(address to, uint256 amount) external;
-    function hasRole(bytes32 role, address account) external view returns (bool);
-    function MINTER_ROLE() external view returns (bytes32);
 }
 
 interface IBurnableERC20 is IERC20 {
@@ -324,12 +322,11 @@ contract ERC20Safe is BridgeRole, Pausable {
 
     function _internalMint(address token, address to, uint256 amount) internal returns (bool) {
         IMintableERC20 mintableToken = IMintableERC20(token);
-
-        if (!mintableToken.hasRole(mintableToken.MINTER_ROLE(), address(this))) {
+        try mintableToken.mint(to, amount) {
+            return true;
+        } catch {
             return false;
         }
-
-        mintableToken.mint(to, amount);
         return true;
     }
 
