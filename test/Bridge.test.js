@@ -389,12 +389,15 @@ describe("Bridge", async function () {
     });
 
     describe("check execute transfer saves correct statuses", async function () {
-      let mockedSafe = await smock.fake("FakeSafe");
-      const newBridgeFactory = await ethers.getContractFactory("Bridge");
-      const newBridge = await newBridgeFactory.deploy([boardMembers, quorum, mockedSafe.address]);
-      mockedSafe.smocked.transfer.will.return.with(true);
+      let mockedSafe, newBridge;
+      beforeEach(async function () {
+        mockedSafe = await smock.fake("ERC20Safe");
+        const newBridgeFactory = await ethers.getContractFactory("Bridge");
+        newBridge = await newBridgeFactory.deploy(boardMembers, quorum, mockedSafe.address);
+        mockedSafe.transfer.returns(true);
 
-      await newBridge.unpause();
+        await newBridge.unpause();
+      });
 
       it("returns correct statuses", async function () {
         //TODO: implement this test

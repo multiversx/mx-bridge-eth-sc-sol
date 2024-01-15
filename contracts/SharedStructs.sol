@@ -30,3 +30,7 @@ struct Batch {
     uint64 lastUpdatedBlockNumber;
     uint16 depositsCount;
 }
+
+struct DepositSCExtension {
+    string depositData;
+}
