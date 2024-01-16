@@ -30,6 +30,8 @@ import "./tasks/remove-from-whitelist";
 import "./tasks/recover-lost-funds";
 import "./tasks/get-batch";
 import "./tasks/get-batch-deposits";
+import "./tasks/deploy/mint-burn-tokens";
+import "./tasks/quorum";
 import "./tasks/get-statuses-after-execution";
 import "./tasks/depositSC";
 
@@ -137,7 +139,7 @@ const config: HardhatUserConfig = {
   defaultNetwork: "hardhat",
   gasReporter: {
     currency: "USD",
-    enabled: process.env.REPORT_GAS ? true : false,
+    enabled: !!process.env.REPORT_GAS,
     coinmarketcap: process.env.CMC_TOKEN || "26043cba-19e3-4a70-8575-916adb54fa12",
     excludeContracts: [],
     src: "./contracts",
@@ -163,7 +165,7 @@ const config: HardhatUserConfig = {
     tests: "./test",
   },
   solidity: {
-    version: "0.8.13",
+    version: "0.8.20",
     settings: {
       metadata: {
         // Not including the metadata hash

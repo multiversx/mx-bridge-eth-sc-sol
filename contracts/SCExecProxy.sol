@@ -1,4 +1,4 @@
-pragma solidity ^0.8.4;
+pragma solidity ^0.8.20;
 
 import "./ERC20Safe.sol";
 import "./SharedStructs.sol";

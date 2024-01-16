@@ -1,13 +1,22 @@
 //SPDX-License-Identifier: UNLICENSED
 
-pragma solidity ^0.8.4;
+pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "./SharedStructs.sol";
 import "./access/BridgeRole.sol";
 import "./lib/BoolTokenTransfer.sol";
 import "./lib/Pausable.sol";
+
+interface IMintableERC20 is IERC20 {
+    function mint(address to, uint256 amount) external;
+}
+
+interface IBurnableERC20 is IERC20 {
+    function burnFrom(address account, uint256 amount) external;
+}
 
 /**
 @title ERC20 Safe for bridging tokens
@@ -31,9 +40,11 @@ contract ERC20Safe is BridgeRole, Pausable {
 
     mapping(uint256 => Batch) public batches;
     mapping(address => bool) public whitelistedTokens;
+    mapping(address => bool) public whitelistedTokensMintBurn;
     mapping(address => uint256) public tokenMinLimits;
     mapping(address => uint256) public tokenMaxLimits;
     mapping(address => uint256) public tokenBalances;
+    mapping(address => uint256) public tokenMintedBalances;
     mapping(uint256 => Deposit[]) public batchDeposits;
 
     event ERC20Deposit(uint112 depositNonce, uint112 batchId);
@@ -48,9 +59,11 @@ contract ERC20Safe is BridgeRole, Pausable {
     function whitelistToken(
         address token,
         uint256 minimumAmount,
-        uint256 maximumAmount
+        uint256 maximumAmount,
+        bool mintBurn
     ) external onlyAdmin {
         whitelistedTokens[token] = true;
+        whitelistedTokensMintBurn[token] = mintBurn;
         tokenMinLimits[token] = minimumAmount;
         tokenMaxLimits[token] = maximumAmount;
     }
@@ -135,11 +148,7 @@ contract ERC20Safe is BridgeRole, Pausable {
       @param recipientAddress address of the receiver of tokens on Elrond Network
       @notice emits {ERC20Deposited} event
 \   */
-    function deposit(
-        address tokenAddress,
-        uint256 amount,
-        bytes32 recipientAddress
-    ) public whenNotPaused {
+    function deposit(address tokenAddress, uint256 amount, bytes32 recipientAddress) public whenNotPaused {
         require(whitelistedTokens[tokenAddress], "Unsupported token");
         require(amount >= tokenMinLimits[tokenAddress], "Tried to deposit an amount below the minimum specified limit");
         require(amount <= tokenMaxLimits[tokenAddress], "Tried to deposit an amount above the maximum specified limit");
@@ -165,10 +174,15 @@ contract ERC20Safe is BridgeRole, Pausable {
         batch.depositsCount++;
         depositsCount++;
 
-        tokenBalances[tokenAddress] += amount;
-
-        IERC20 erc20 = IERC20(tokenAddress);
-        erc20.safeTransferFrom(msg.sender, address(this), amount);
+        if (!_isTokenMintBurn(tokenAddress)) {
+            tokenBalances[tokenAddress] += amount;
+            IERC20 erc20 = IERC20(tokenAddress);
+            erc20.safeTransferFrom(msg.sender, address(this), amount);
+        } else {
+            tokenMintedBalances[tokenAddress] -= amount;
+            IBurnableERC20 erc20 = IBurnableERC20(tokenAddress);
+            erc20.burnFrom(msg.sender, amount);
+        }
 
         emit ERC20Deposit(depositNonce, batch.nonce);
     }
@@ -181,10 +195,15 @@ contract ERC20Safe is BridgeRole, Pausable {
     function initSupply(address tokenAddress, uint256 amount) external onlyAdmin {
         require(whitelistedTokens[tokenAddress], "Unsupported token");
 
-        tokenBalances[tokenAddress] += amount;
-
-        IERC20 erc20 = IERC20(tokenAddress);
-        erc20.safeTransferFrom(msg.sender, address(this), amount);
+        if (!_isTokenMintBurn(tokenAddress)) {
+            tokenBalances[tokenAddress] += amount;
+            IERC20 erc20 = IERC20(tokenAddress);
+            erc20.safeTransferFrom(msg.sender, address(this), amount);
+            return;
+        }
+        tokenMintedBalances[tokenAddress] -= amount;
+        IBurnableERC20 erc20 = IBurnableERC20(tokenAddress);
+        erc20.burnFrom(msg.sender, amount);
     }
 
     /**
@@ -195,13 +214,22 @@ contract ERC20Safe is BridgeRole, Pausable {
         uint256 amount,
         address recipientAddress
     ) external onlyBridge returns (bool) {
-        IERC20 erc20 = IERC20(tokenAddress);
-        bool transferExecuted = erc20.boolTransfer(recipientAddress, amount);
-        if (transferExecuted) {
+        if (!_isTokenMintBurn(tokenAddress)) {
+            IERC20 erc20 = IERC20(tokenAddress);
+            bool transferExecuted = erc20.boolTransfer(recipientAddress, amount);
+            if (!transferExecuted) {
+                return false;
+            }
             tokenBalances[tokenAddress] -= amount;
+            return true;
         }
+        bool mintExecuted = _internalMint(tokenAddress, recipientAddress, amount);
+        if (!mintExecuted) {
+            return false;
+        }
+        tokenMintedBalances[tokenAddress] += amount;
 
-        return transferExecuted;
+        return true;
     }
 
     /**
@@ -290,5 +318,19 @@ contract ERC20Safe is BridgeRole, Pausable {
 
         Batch memory batch = batches[batchesCount - 1];
         return _isBatchProgessOver(batch.depositsCount, batch.blockNumber) || batch.depositsCount >= batchSize;
+    }
+
+    function _internalMint(address token, address to, uint256 amount) internal returns (bool) {
+        IMintableERC20 mintableToken = IMintableERC20(token);
+        try mintableToken.mint(to, amount) {
+            return true;
+        } catch {
+            return false;
+        }
+        return true;
+    }
+
+    function _isTokenMintBurn(address token) internal view returns (bool) {
+        return whitelistedTokensMintBurn[token];
     }
 }

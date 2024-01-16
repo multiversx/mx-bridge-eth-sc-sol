@@ -1,6 +1,6 @@
 //SPDX-License-Identifier: UNLICENSED
 
-pragma solidity ^0.8.4;
+pragma solidity ^0.8.20;
 
 import "./SharedStructs.sol";
 import "./ERC20Safe.sol";
@@ -48,11 +48,7 @@ contract Bridge is RelayerRole, Pausable {
      *   - add/remove relayers
      *   - add/remove tokens that can be bridged
      */
-    constructor(
-        address[] memory board,
-        uint256 initialQuorum,
-        ERC20Safe erc20Safe
-    ) {
+    constructor(address[] memory board, uint256 initialQuorum, ERC20Safe erc20Safe) {
         require(initialQuorum >= minimumQuorum, "Quorum is too low.");
         require(board.length >= initialQuorum, "The board should be at least the quorum size.");
 
