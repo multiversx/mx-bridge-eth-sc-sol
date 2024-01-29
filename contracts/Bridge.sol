@@ -25,6 +25,7 @@ relayers with the execute call, in order to save gas.
 contract Bridge is RelayerRole, Pausable {
     /*============================ EVENTS ============================*/
     event QuorumChanged(uint256 quorum);
+    event BatchExecuted(uint256 batchNonceElrondETH);
 
     /*========================= CONTRACT STATE =========================*/
     string private constant action = "CurrentPendingBatch";
@@ -135,6 +136,8 @@ contract Bridge is RelayerRole, Pausable {
         CrossTransferStatus storage crossStatus = crossTransferStatuses[batchNonceElrondETH];
         crossStatus.statuses = statuses;
         crossStatus.createdBlockNumber = block.number;
+
+        emit BatchExecuted(batchNonceElrondETH);
     }
 
     /**
