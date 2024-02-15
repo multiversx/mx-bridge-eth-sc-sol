@@ -44,6 +44,19 @@
     "inputs": [
       {
         "indexed": false,
+        "internalType": "bool",
+        "name": "isPause",
+        "type": "bool"
+      }
+    ],
+    "name": "Pause",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
         "internalType": "uint256",
         "name": "quorum",
         "type": "uint256"
