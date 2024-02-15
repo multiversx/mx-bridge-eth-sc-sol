@@ -6,6 +6,7 @@ import "../access/AdminRole.sol";
 
 contract Pausable is AdminRole {
     bool private _paused;
+    event Pause(bool isPause);
 
     /**
      * @dev Initializes the contract in paused state.
@@ -54,6 +55,7 @@ contract Pausable is AdminRole {
      */
     function pause() external onlyAdmin {
         _paused = true;
+        emit Pause(true);
     }
 
     /**
@@ -65,5 +67,6 @@ contract Pausable is AdminRole {
      */
     function unpause() external onlyAdmin {
         _paused = false;
+        emit Pause(false);
     }
 }
