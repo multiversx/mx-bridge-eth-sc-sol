@@ -6,12 +6,12 @@ task("add-to-whitelist", "Whitelists a new address in the bridge.")
   .addOptionalParam("max", "Maximum amount allowed to transfer this token to Elrond")
   .addOptionalParam("address", "address to be whitelisted")
   .addOptionalParam("price", "Gas price in gwei for this transaction", undefined)
-  .addOptionalParam("mintBurn", "flag if the token is mintable/burnable")
+  .addOptionalParam("mintburn", "flag if the token is mintable/burnable")
   .setAction(async (taskArgs, hre) => {
     const minAmount = taskArgs.min ?? 25;
     const maxAmount = taskArgs.max ?? 100;
     const address = taskArgs.address;
-    const mintBurn = taskArgs.mintBurn ?? false;
+    const mintBurn = taskArgs.mintburn ?? false;
     const [adminWallet] = await hre.ethers.getSigners();
     const fs = require("fs");
     const filename = "setup.config.json";
