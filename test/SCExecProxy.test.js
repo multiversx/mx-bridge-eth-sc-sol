@@ -1,6 +1,7 @@
 const { waffle } = require("hardhat");
 const { expect } = require("chai");
 const { provider, deployContract } = waffle;
+const { encodeCallData } = require("mx-sdk-js-bridge");
 
 const BridgeContract = require("../artifacts/contracts/Bridge.sol/Bridge.json");
 const ERC20SafeContract = require("../artifacts/contracts/ERC20Safe.sol/ERC20Safe.json");
@@ -41,6 +42,8 @@ describe("Bridge", async function () {
     await setupContracts();
   });
 
+  const callData = encodeCallData("depositEndpoint", 500000, [25, "someArgument"]); // Example usage, adjust according to actual requirements
+
   describe("depost", function () {
     it("should revert when safe reverts", async function () {
       const revertingSafe = await deployContract(adminWallet, RevertingSafe, []);
@@ -53,7 +56,7 @@ describe("Bridge", async function () {
             genericErc20.address,
             10,
             Buffer.from("c0f0058cea88a2bc1240b60361efb965957038d05f916c42b3f23a2c38ced81e", "hex"),
-            "dyr",
+            callData,
           ),
       ).to.be.revertedWith("reverting_safe");
 
@@ -69,11 +72,11 @@ describe("Bridge", async function () {
             genericErc20.address,
             25,
             Buffer.from("c0f0058cea88a2bc1240b60361efb965957038d05f916c42b3f23a2c38ced81e", "hex"),
-            "dyr",
+            callData,
           ),
       )
         .to.emit(scExec, "ERC20SCDeposit")
-        .withArgs(1, 1, "dyr");
+        .withArgs(1, 1, callData);
     });
   });
 });

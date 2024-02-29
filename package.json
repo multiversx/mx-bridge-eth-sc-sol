@@ -86,6 +86,7 @@
     "size": "cross-env TS_NODE_TRANSPILE_ONLY=true hardhat compile; hardhat size-contracts"
   },
   "dependencies": {
+    "mx-sdk-js-bridge": "github:multiversx/mx-sdk-js-bridge#add-encodeCallData",
     "yarn": "^1.22.18"
   }
 }
