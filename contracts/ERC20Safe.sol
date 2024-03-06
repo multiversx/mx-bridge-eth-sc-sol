@@ -40,11 +40,13 @@ contract ERC20Safe is BridgeRole, Pausable {
 
     mapping(uint256 => Batch) public batches;
     mapping(address => bool) public whitelistedTokens;
-    mapping(address => bool) public whitelistedTokensMintBurn;
+    mapping(address => bool) public mintBurnTokens;
+    mapping(address => bool) public nativeTokens;
     mapping(address => uint256) public tokenMinLimits;
     mapping(address => uint256) public tokenMaxLimits;
-    mapping(address => uint256) public tokenBalances;
-    mapping(address => uint256) public tokenMintedBalances;
+    mapping(address => uint256) public totalBalances;
+    mapping(address => uint256) public mintBalances;
+    mapping(address => uint256) public burnBalances;
     mapping(uint256 => Deposit[]) public batchDeposits;
 
     event ERC20Deposit(uint112 depositNonce, uint112 batchId);
@@ -60,10 +62,15 @@ contract ERC20Safe is BridgeRole, Pausable {
         address token,
         uint256 minimumAmount,
         uint256 maximumAmount,
-        bool mintBurn
+        bool mintBurn,
+        bool native
     ) external onlyAdmin {
+        if (!mintBurn) {
+            require(native, "Only native tokens can be stored!");
+        }
         whitelistedTokens[token] = true;
-        whitelistedTokensMintBurn[token] = mintBurn;
+        mintBurnTokens[token] = mintBurn;
+        nativeTokens[token] = native;
         tokenMinLimits[token] = minimumAmount;
         tokenMaxLimits[token] = maximumAmount;
     }
@@ -175,11 +182,14 @@ contract ERC20Safe is BridgeRole, Pausable {
         depositsCount++;
 
         if (!_isTokenMintBurn(tokenAddress)) {
-            tokenBalances[tokenAddress] += amount;
+            totalBalances[tokenAddress] += amount;
             IERC20 erc20 = IERC20(tokenAddress);
             erc20.safeTransferFrom(msg.sender, address(this), amount);
         } else {
-            tokenMintedBalances[tokenAddress] -= amount;
+            if (!nativeTokens[tokenAddress]) {
+                require(mintBalances[tokenAddress] >= burnBalances[tokenAddress] + amount, "Not enough minted tokens");
+            }
+            burnBalances[tokenAddress] += amount;
             IBurnableERC20 erc20 = IBurnableERC20(tokenAddress);
             erc20.burnFrom(msg.sender, amount);
         }
@@ -196,14 +206,18 @@ contract ERC20Safe is BridgeRole, Pausable {
         require(whitelistedTokens[tokenAddress], "Unsupported token");
 
         if (!_isTokenMintBurn(tokenAddress)) {
-            tokenBalances[tokenAddress] += amount;
+            totalBalances[tokenAddress] += amount;
             IERC20 erc20 = IERC20(tokenAddress);
             erc20.safeTransferFrom(msg.sender, address(this), amount);
             return;
         }
-        tokenMintedBalances[tokenAddress] -= amount;
-        IBurnableERC20 erc20 = IBurnableERC20(tokenAddress);
-        erc20.burnFrom(msg.sender, amount);
+
+        if (!nativeTokens[tokenAddress]) {
+            require(mintBalances[tokenAddress] >= burnBalances[tokenAddress] + amount, "Not enough minted tokens");
+        }
+        burnBalances[tokenAddress] += amount;
+        IBurnableERC20 burnableErc20 = IBurnableERC20(tokenAddress);
+        burnableErc20.burnFrom(msg.sender, amount);
     }
 
     /**
@@ -220,14 +234,17 @@ contract ERC20Safe is BridgeRole, Pausable {
             if (!transferExecuted) {
                 return false;
             }
-            tokenBalances[tokenAddress] -= amount;
+            totalBalances[tokenAddress] -= amount;
             return true;
+        }
+        if (nativeTokens[tokenAddress]) {
+            require(burnBalances[tokenAddress] >= mintBalances[tokenAddress] + amount, "Not enough burned tokens");
         }
         bool mintExecuted = _internalMint(tokenAddress, recipientAddress, amount);
         if (!mintExecuted) {
             return false;
         }
-        tokenMintedBalances[tokenAddress] += amount;
+        mintBalances[tokenAddress] += amount;
 
         return true;
     }
@@ -241,7 +258,7 @@ contract ERC20Safe is BridgeRole, Pausable {
         uint256 mainBalance = erc20.balanceOf(address(this));
         uint256 availableForRecovery;
         if (whitelistedTokens[tokenAddress]) {
-            availableForRecovery = mainBalance - tokenBalances[tokenAddress];
+            availableForRecovery = mainBalance - totalBalances[tokenAddress];
         } else {
             availableForRecovery = mainBalance;
         }
@@ -327,10 +344,9 @@ contract ERC20Safe is BridgeRole, Pausable {
         } catch {
             return false;
         }
-        return true;
     }
 
     function _isTokenMintBurn(address token) internal view returns (bool) {
-        return whitelistedTokensMintBurn[token];
+        return mintBurnTokens[token];
     }
 }
