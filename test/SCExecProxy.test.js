@@ -34,7 +34,7 @@ describe("Bridge", async function () {
     await genericErc20.mint(adminWallet.address, 1000);
     await genericErc20.approve(erc20Safe.address, 1000);
     await genericErc20.approve(scExec.address, 1000);
-    await erc20Safe.whitelistToken(genericErc20.address, 0, 100, false);
+    await erc20Safe.whitelistToken(genericErc20.address, 0, 100, false, true);
     await erc20Safe.unpause();
   }
 
