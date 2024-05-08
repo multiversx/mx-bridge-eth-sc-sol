@@ -1,4 +1,4 @@
-import { task } from "hardhat/config";
+import { task, types } from "hardhat/config";
 import { getDeployOptions } from "./args/deployOptions";
 
 task("add-to-whitelist", "Whitelists a new address in the bridge.")
@@ -6,8 +6,8 @@ task("add-to-whitelist", "Whitelists a new address in the bridge.")
   .addOptionalParam("max", "Maximum amount allowed to transfer this token to Elrond")
   .addOptionalParam("address", "address to be whitelisted")
   .addOptionalParam("price", "Gas price in gwei for this transaction", undefined)
-  .addOptionalParam("mintburn", "flag if the token is mintable/burnable")
-  .addOptionalParam("native", "flag if the token is native")
+  .addOptionalParam("mintburn", "flag if the token is mintable/burnable", false, types.boolean)
+  .addOptionalParam("native", "flag if the token is native", true, types.boolean)
   .setAction(async (taskArgs, hre) => {
     const minAmount = taskArgs.min ?? 25;
     const maxAmount = taskArgs.max ?? 100;
