@@ -1,5 +1,5 @@
 const { expect } = require("chai");
-const { ethers, waffle, network } = require("hardhat");
+const { waffle, network } = require("hardhat");
 const { provider, deployContract } = waffle;
 
 const ERC20SafeContract = require("../artifacts/contracts/ERC20Safe.sol/ERC20Safe.json");
@@ -35,7 +35,7 @@ describe("ERC20Safe, MintBurnERC20, and Bridge Interaction", function () {
 
   async function setupErc20Token() {
     mintBurnErc20 = await deployContract(adminWallet, MintBurnERC20Contract, ["Test Token", "TST"]);
-    await erc20Safe.whitelistToken(mintBurnErc20.address, 0, 100, true);
+    await erc20Safe.whitelistToken(mintBurnErc20.address, 0, 100, true, false);
     await erc20Safe.unpause();
   }
 

@@ -86,6 +86,7 @@
     "size": "cross-env TS_NODE_TRANSPILE_ONLY=true hardhat compile; hardhat size-contracts"
   },
   "dependencies": {
+    "@multiversx/sdk-js-bridge": "^0.1.0",
     "yarn": "^1.22.18"
   }
 }

@@ -1,4 +1,4 @@
-import { task } from "hardhat/config";
+import { task, types } from "hardhat/config";
 import { getDeployOptions } from "./args/deployOptions";
 
 task("add-to-whitelist", "Whitelists a new address in the bridge.")
@@ -6,12 +6,14 @@ task("add-to-whitelist", "Whitelists a new address in the bridge.")
   .addOptionalParam("max", "Maximum amount allowed to transfer this token to Elrond")
   .addOptionalParam("address", "address to be whitelisted")
   .addOptionalParam("price", "Gas price in gwei for this transaction", undefined)
-  .addOptionalParam("mintBurn", "flag if the token is mintable/burnable")
+  .addOptionalParam("mintburn", "flag if the token is mintable/burnable", false, types.boolean)
+  .addOptionalParam("native", "flag if the token is native", true, types.boolean)
   .setAction(async (taskArgs, hre) => {
     const minAmount = taskArgs.min ?? 25;
     const maxAmount = taskArgs.max ?? 100;
     const address = taskArgs.address;
-    const mintBurn = taskArgs.mintBurn ?? false;
+    const mintBurn = taskArgs.mintburn ?? false;
+    const native = taskArgs.native ?? false;
     const [adminWallet] = await hre.ethers.getSigners();
     const fs = require("fs");
     const filename = "setup.config.json";
@@ -20,7 +22,7 @@ task("add-to-whitelist", "Whitelists a new address in the bridge.")
     const safeContractFactory = await hre.ethers.getContractFactory("ERC20Safe");
     const safe = safeContractFactory.attach(safeAddress).connect(adminWallet);
 
-    await safe.whitelistToken(address, minAmount, maxAmount, mintBurn, getDeployOptions(taskArgs));
+    await safe.whitelistToken(address, minAmount, maxAmount, mintBurn, native, getDeployOptions(taskArgs));
 
     if (config.tokens === undefined) {
       config.tokens = {};

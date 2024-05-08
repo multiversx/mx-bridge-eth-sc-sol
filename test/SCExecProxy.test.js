@@ -1,7 +1,7 @@
-const { waffle, ethers, network } = require("hardhat");
+const { waffle } = require("hardhat");
 const { expect } = require("chai");
 const { provider, deployContract } = waffle;
-const { smock } = require("@defi-wonderland/smock");
+const { encodeCallData } = require("@multiversx/sdk-js-bridge");
 
 const BridgeContract = require("../artifacts/contracts/Bridge.sol/Bridge.json");
 const ERC20SafeContract = require("../artifacts/contracts/ERC20Safe.sol/ERC20Safe.json");
@@ -10,7 +10,7 @@ const SCExecProxy = require("../artifacts/contracts/SCExecProxy.sol/SCExecProxy.
 const RevertingSafe = require("../artifacts/contracts/test/SafeMock/RevertingSafe.sol/RevertingSafe.json");
 
 describe("Bridge", async function () {
-  const [adminWallet, relayer1, relayer2, relayer3, relayer4, relayer5, relayer6, relayer7, relayer8, otherWallet] =
+  const [adminWallet, relayer1, relayer2, relayer3, relayer4, relayer5, relayer6, relayer7, relayer8] =
     provider.getWallets();
   const boardMembers = [adminWallet, relayer1, relayer2, relayer3, relayer5, relayer6, relayer7, relayer8].map(
     m => m.address,
@@ -34,13 +34,15 @@ describe("Bridge", async function () {
     await genericErc20.mint(adminWallet.address, 1000);
     await genericErc20.approve(erc20Safe.address, 1000);
     await genericErc20.approve(scExec.address, 1000);
-    await erc20Safe.whitelistToken(genericErc20.address, 0, 100, false);
+    await erc20Safe.whitelistToken(genericErc20.address, 0, 100, false, true);
     await erc20Safe.unpause();
   }
 
   beforeEach(async function () {
     await setupContracts();
   });
+
+  const callData = encodeCallData("depositEndpoint", 500000, [25, "someArgument"]); // Example usage, adjust according to actual requirements
 
   describe("depost", function () {
     it("should revert when safe reverts", async function () {
@@ -54,8 +56,7 @@ describe("Bridge", async function () {
             genericErc20.address,
             10,
             Buffer.from("c0f0058cea88a2bc1240b60361efb965957038d05f916c42b3f23a2c38ced81e", "hex"),
-            "100",
-            "dyr",
+            callData,
           ),
       ).to.be.revertedWith("reverting_safe");
 
@@ -71,12 +72,11 @@ describe("Bridge", async function () {
             genericErc20.address,
             25,
             Buffer.from("c0f0058cea88a2bc1240b60361efb965957038d05f916c42b3f23a2c38ced81e", "hex"),
-            "100",
-            "dyr",
+            callData,
           ),
       )
         .to.emit(scExec, "ERC20SCDeposit")
-        .withArgs(1, 1, "100", "dyr");
+        .withArgs(1, 1, callData);
     });
   });
 });
