@@ -1,7 +1,7 @@
 const { waffle } = require("hardhat");
 const { expect } = require("chai");
 const { provider, deployContract } = waffle;
-const { encodeCallData } = require("mx-sdk-js-bridge");
+const { encodeCallData } = require("@multiversx/sdk-js-bridge");
 
 const BridgeContract = require("../artifacts/contracts/Bridge.sol/Bridge.json");
 const ERC20SafeContract = require("../artifacts/contracts/ERC20Safe.sol/ERC20Safe.json");
