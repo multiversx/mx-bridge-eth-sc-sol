@@ -221,6 +221,18 @@ contract ERC20Safe is BridgeRole, Pausable {
     }
 
     /**
+     @notice Set the mint balances for a token
+     @param tokenAddress Address of the contract for the ERC20 token that will be deposited
+     @param amount number of tokens that need to be deposited
+    */
+    function setMintBalances(address tokenAddress, uint256 amount) external onlyAdmin {
+        require(whitelistedTokens[tokenAddress], "Unsupported token");
+        require(_isTokenMintBurn(tokenAddress), "Token is not mintable");
+        require(mintBalances[tokenAddress] == 0, "Mint balance already set");
+        mintBalances[tokenAddress] = amount;
+    }
+
+    /**
      @notice Endpoint used by the bridge to perform transfers coming from another chain
     */
     function transfer(
@@ -296,6 +308,51 @@ contract ERC20Safe is BridgeRole, Pausable {
         }
 
         return batchDeposits[type(uint256).max];
+    }
+
+    /**
+     @notice Computes the total deposited amount for each token address starting from a specified batch index
+     @param startIndex The batch index from which to start the computation
+     @return tokenAddresses An array of token addresses for which deposits were found and computed
+     @return amounts An array of total amounts deposited for each token address, matching the order of `tokenAddresses`
+    */
+    function computeTotalAmountsFromIndex(uint256 startIndex, uint256 endIndex) public view returns (address[] memory, uint256[] memory) {
+        uint256 currentIndex = startIndex;
+        uint256 maxSize = endIndex - startIndex;
+
+        address[] memory tokenAddresses = new address[](maxSize);
+        uint256[] memory amounts = new uint256[](maxSize);
+        uint256 uniqueTokens = 0;
+
+        while (currentIndex < endIndex) {
+            Deposit[] memory deposits = batchDeposits[currentIndex];
+            for (uint i = 0; i < deposits.length; i++) {
+                bool tokenFound = false;
+                for (uint j = 0; j < uniqueTokens; j++) {
+                    if (deposits[i].tokenAddress == tokenAddresses[j]) {
+                        amounts[j] += deposits[i].amount;
+                        tokenFound = true;
+                        break;
+                    }
+                }
+                if (!tokenFound) {
+                    tokenAddresses[uniqueTokens] = deposits[i].tokenAddress;
+                    amounts[uniqueTokens] = deposits[i].amount;
+                    uniqueTokens++;
+                }
+            }
+            currentIndex++;
+        }
+
+        // Trimming the arrays to the correct size
+        address[] memory trimmedTokenAddresses = new address[](uniqueTokens);
+        uint256[] memory trimmedAmounts = new uint256[](uniqueTokens);
+        for (uint i = 0; i < uniqueTokens; i++) {
+            trimmedTokenAddresses[i] = tokenAddresses[i];
+            trimmedAmounts[i] = amounts[i];
+        }
+
+        return (trimmedTokenAddresses, trimmedAmounts);
     }
 
     /**
