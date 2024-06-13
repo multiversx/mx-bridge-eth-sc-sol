@@ -212,12 +212,11 @@ contract ERC20Safe is BridgeRole, Pausable {
             return;
         }
 
-        if (!nativeTokens[tokenAddress]) {
-            require(mintBalances[tokenAddress] >= burnBalances[tokenAddress] + amount, "Not enough minted tokens");
-        }
-        burnBalances[tokenAddress] += amount;
+        require(nativeTokens[tokenAddress], "Cannot init for non native tokens!");
+
         IBurnableERC20 burnableErc20 = IBurnableERC20(tokenAddress);
         burnableErc20.burnFrom(msg.sender, amount);
+        burnBalances[tokenAddress] += amount;
     }
 
     /**
