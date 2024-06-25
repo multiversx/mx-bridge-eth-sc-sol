@@ -21,13 +21,11 @@ task("deposit-sc", "Deposits token and sends to safe")
     const amount = taskArgs.amount;
     const receiver = taskArgs.receiversc;
     const callData = taskArgs.callData;
-    const mvxGasLimit = taskArgs.mvxGasLimit;
 
     await scExecContract.deposit(
       address,
       amount,
       Buffer.from(receiver, "hex"),
-      mvxGasLimit,
       callData,
       getDeployOptions(taskArgs),
     );
