@@ -85,14 +85,14 @@ contract Bridge is RelayerRole, Pausable {
         - depositsCount
         @dev Even if there are deposits in the Safe, the current batch might still return the count as 0. This is because it might not be final (not full, and not enough blocks elapsed)
     */
-    function getBatch(uint256 batchNonce) external view returns (Batch memory) {
+    function getBatch(uint256 batchNonce) external view returns (Batch memory, bool) {
         return safe.getBatch(batchNonce);
     }
 
     /**
         @notice Gets information about the deposits from a batch
     */
-    function getBatchDeposits(uint256 batchNonce) external view returns (Deposit[] memory) {
+    function getBatchDeposits(uint256 batchNonce) external view returns (Deposit[] memory, bool) {
         return safe.getDeposits(batchNonce);
     }
 
