@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 export PATH=$PATH:$GOBIN:$GOPATH/bin
 . $HOME/.nvm/nvm.sh
