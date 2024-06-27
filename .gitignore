@@ -1,5 +1,6 @@
 # directories
 .yarn/*
+.idea/*
 !.yarn/patches
 !.yarn/releases
 !.yarn/plugins
