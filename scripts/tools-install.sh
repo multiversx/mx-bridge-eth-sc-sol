@@ -19,7 +19,7 @@ sudo apt-get update
 sudo apt-get install solc
 go install github.com/ethereum/go-ethereum/cmd/abigen@latest
 curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash
-. $HOME/.nvm/nvm.sh
+export NVM_DIR="$HOME/.nvm" && [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
 nvm install 20
 
 if test -f ../.env; then

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 export PATH=$PATH:$GOBIN:$GOPATH/bin
-. $HOME/.nvm/nvm.sh
+export NVM_DIR="$HOME/.nvm" && [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
 
 mkdir -p ../built-artifacts/
 mkdir -p ../built-artifacts/go-wrappers
