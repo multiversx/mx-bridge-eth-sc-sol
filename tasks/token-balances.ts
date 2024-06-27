@@ -8,7 +8,7 @@ task("token-balances", "Deposits token and sends to safe")
     const address = taskArgs.address;
     const safeAddress = taskArgs.safe;
     const fs = require("fs");
-    const abi = JSON.parse(fs.readFileSync("abi/contracts/ERC20Safe.sol/ERC20Safe.json", "utf8"));
+    const abi = JSON.parse(fs.readFileSync("abi/contracts/ERC20Safe/ERC20Safe.abi.json", "utf8"));
     const contract = new hre.ethers.Contract(safeAddress, abi);
 
     await contract
