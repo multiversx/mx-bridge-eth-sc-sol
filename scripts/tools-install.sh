@@ -21,6 +21,7 @@ go install github.com/ethereum/go-ethereum/cmd/abigen@latest
 curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash
 export NVM_DIR="$HOME/.nvm" && [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
 nvm install 20
+yarn set version 3.6.4
 
 if test -f ../.env; then
   echo ".env file exists."

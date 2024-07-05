@@ -88,5 +88,6 @@
   "dependencies": {
     "@multiversx/sdk-js-bridge": "^0.1.0",
     "yarn": "^1.22.18"
-  }
+  },
+  "packageManager": "yarn@3.6.4"
 }
