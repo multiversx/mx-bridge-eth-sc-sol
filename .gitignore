@@ -17,6 +17,7 @@
 **/node_modules
 **/typechain
 **/.DS_Store
+**/.idea
 
 # files
 *.env
