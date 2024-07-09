@@ -30,7 +30,7 @@ describe("Bridge", async function () {
   }
 
   async function setupErc20Token() {
-    genericErc20 = await deployContract(adminWallet, GenericERC20, ["TSC", "TSC"]);
+    genericErc20 = await deployContract(adminWallet, GenericERC20, ["TSC", "TSC", 6]);
     await genericErc20.mint(adminWallet.address, 1000);
     await genericErc20.approve(erc20Safe.address, 1000);
     await genericErc20.approve(scExec.address, 1000);

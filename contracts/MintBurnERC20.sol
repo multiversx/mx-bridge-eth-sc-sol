@@ -9,10 +9,12 @@ import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
 contract MintBurnERC20 is ERC20, AccessControl, ERC20Burnable {
     // Create a new role identifier for the minter role
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
+    uint8 private numDecimals;
 
     error CallerNotMinter(address caller);
 
-    constructor(string memory name, string memory symbol) ERC20(name, symbol) {
+    constructor(string memory name, string memory symbol, uint8 providedNumDecimals) ERC20(name, symbol) {
+        numDecimals = providedNumDecimals;
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
 
@@ -22,5 +24,9 @@ contract MintBurnERC20 is ERC20, AccessControl, ERC20Burnable {
             revert CallerNotMinter(msg.sender);
         }
         _mint(to, amount);
+    }
+
+    function decimals() public view virtual override returns (uint8) {
+        return numDecimals;
     }
 }
