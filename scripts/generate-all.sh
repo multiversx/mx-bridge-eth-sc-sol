@@ -7,7 +7,6 @@ nvm use 20
 cd ..
 npm install
 
-yarn set version 3.6.4
 yarn install
 yarn compile
 
