@@ -371,11 +371,15 @@ describe("Bridge", async function () {
           await network.provider.send("evm_mine");
         }
 
-        await expect(bridge.getStatusesAfterExecution(batchNonce)).to.be.revertedWith("Statuses not final yet");
+        const [firstStatuses, firstIsFinal] = await bridge.getStatusesAfterExecution(batchNonce);
+        expect(firstStatuses).to.eql([3]);
+        expect(firstIsFinal).to.be.false
 
         await network.provider.send("evm_mine");
 
-        expect(await bridge.getStatusesAfterExecution(batchNonce)).to.eql([3]);
+        const [secondStatuses, secondIsFinal] = await bridge.getStatusesAfterExecution(batchNonce);
+        expect(secondStatuses).to.eql([3]);
+        expect(secondIsFinal).to.be.true
       });
 
       it("saves refund items", async function () {
@@ -392,11 +396,15 @@ describe("Bridge", async function () {
           await network.provider.send("evm_mine");
         }
 
-        await expect(bridge.getStatusesAfterExecution(batchNonce)).to.be.revertedWith("Statuses not final yet");
+        const [firstStatuses, firstIsFinal] = await bridge.getStatusesAfterExecution(batchNonce);
+        expect(firstStatuses).to.eql([3]);
+        expect(firstIsFinal).to.be.false
 
         await network.provider.send("evm_mine");
 
-        expect(await bridge.getStatusesAfterExecution(batchNonce)).to.eql([3]);
+        const [secondStatuses, secondIsFinal] = await bridge.getStatusesAfterExecution(batchNonce);
+        expect(secondStatuses).to.eql([3]);
+        expect(secondIsFinal).to.be.true
       });
     });
 

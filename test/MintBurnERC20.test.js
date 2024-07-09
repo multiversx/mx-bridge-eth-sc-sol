@@ -85,9 +85,9 @@ describe("ERC20Safe, MintBurnERC20, and Bridge Interaction", function () {
       }
 
       // check that the transfer is set as REJECTED
-      const transfers = await bridge.getStatusesAfterExecution(batchNonce);
-      console.log(transfers);
+      const [transfers, isFinal] = await bridge.getStatusesAfterExecution(batchNonce);
       expect(transfers[0]).to.equal(4);
+      expect(isFinal).to.be.true
     });
 
     it("transfer is set as Executed when ERC20Safe does have the minter role", async function () {
@@ -102,9 +102,10 @@ describe("ERC20Safe, MintBurnERC20, and Bridge Interaction", function () {
       }
 
       // check that the transfer is set as Executed
-      const transfers = await bridge.getStatusesAfterExecution(batchNonce);
+      const [transfers, isFinal] = await bridge.getStatusesAfterExecution(batchNonce);
       console.log(transfers);
       expect(transfers[0]).to.equal(3);
+      expect(isFinal).to.be.true
     });
 
     it("deposit not should work when ERC20Safe does not have enough allowance", async function () {

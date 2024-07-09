@@ -142,12 +142,17 @@ contract Bridge is RelayerRole, Pausable {
         @param batchNonceElrondETH Nonce for the batch
         @return a list of statuses for each transfer in the batch provided
      */
-    function getStatusesAfterExecution(uint256 batchNonceElrondETH) external view returns (DepositStatus[] memory) {
+    function getStatusesAfterExecution(uint256 batchNonceElrondETH) external view returns (DepositStatus[] memory, bool) {
         CrossTransferStatus memory crossStatus = crossTransferStatuses[batchNonceElrondETH];
-        require(crossStatus.createdBlockNumber > 0, "Invalid nonce requested");
-        require((crossStatus.createdBlockNumber + batchSettleBlockCount) <= block.number, "Statuses not final yet");
+        return (crossStatus.statuses, _isMvxBatchFinal(crossStatus.createdBlockNumber));
+    }
 
-        return crossStatus.statuses;
+    function _isMvxBatchFinal(uint256 createdBlockNumber) private view returns (bool) {
+        if (createdBlockNumber == 0) {
+            return false;
+        }
+
+        return (createdBlockNumber + batchSettleBlockCount) <= block.number;
     }
 
     function wasBatchExecuted(uint256 batchNonceElrondETH) external view returns (bool) {

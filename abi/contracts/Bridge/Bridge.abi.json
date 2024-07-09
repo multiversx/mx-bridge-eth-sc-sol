@@ -379,6 +379,11 @@
         "internalType": "enum DepositStatus[]",
         "name": "",
         "type": "uint8[]"
+      },
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
       }
     ],
     "stateMutability": "view",
