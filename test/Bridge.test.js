@@ -387,7 +387,7 @@ describe("Bridge", async function () {
           batchNonce,
           signatures,
         );
-        const settleBlockCount = await newBridge.batchSettleBlockCount();
+        const settleBlockCount = await bridge.batchSettleBlockCount();
         for (let i = 0; i < settleBlockCount - 1; i++) {
           await network.provider.send("evm_mine");
         }

@@ -7,6 +7,7 @@ nvm use 20
 cd ..
 npm install
 
+yarn set version 1.22.22
 yarn install
 yarn compile
 
