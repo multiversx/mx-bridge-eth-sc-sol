@@ -15,7 +15,7 @@ describe("ERC20Safe", async function () {
 
   let safe, genericERC20, bridge;
   beforeEach(async function () {
-    genericERC20 = await deployContract(adminWallet, GenericERC20Artifact, ["TSC", "TSC"]);
+    genericERC20 = await deployContract(adminWallet, GenericERC20Artifact, ["TSC", "TSC", 6]);
     safe = await deployContract(adminWallet, ERC20SafeArtifact);
     bridge = await deployContract(adminWallet, BridgeArtifact, [boardMembers.map(m => m.address), 3, safe.address]);
 
@@ -345,7 +345,7 @@ describe("ERC20Safe", async function () {
 
   describe("ERC20Safe - recovering of funds works as expected", async function () {
     beforeEach(async function () {
-      await genericERC20.mint(adminWallet.address, "1000000");
+      await genericERC20.mint(adminWallet.address, "1000000000000");
     });
 
     it("reverts for non admin", async function () {

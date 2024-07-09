@@ -27,7 +27,7 @@ describe("Bridge", async function () {
   }
 
   async function setupErc20Token() {
-    genericErc20 = await deployContract(adminWallet, GenericERC20, ["TSC", "TSC"]);
+    genericErc20 = await deployContract(adminWallet, GenericERC20, ["TSC", "TSC", 6]);
     await genericErc20.mint(adminWallet.address, 1000);
     await genericErc20.approve(erc20Safe.address, 1000);
     await erc20Safe.whitelistToken(genericErc20.address, 0, 100, false, true);
@@ -356,19 +356,9 @@ describe("Bridge", async function () {
     });
 
     describe("check execute transfer saves correct statuses", async function () {
-      let mockedSafe, newBridge;
-      beforeEach(async function () {
-        mockedSafe = await smock.fake("ERC20Safe");
-        const newBridgeFactory = await ethers.getContractFactory("Bridge");
-        newBridge = await newBridgeFactory.deploy(boardMembers, quorum, mockedSafe.address);
-        mockedSafe.transfer.returns(true);
-
-        await newBridge.unpause();
-      });
-
       it("returns correct statuses", async function () {
         //TODO: implement this test
-        await newBridge.executeTransfer(
+        await bridge.executeTransfer(
           [genericErc20.address],
           [otherWallet.address],
           [amount],
@@ -376,20 +366,20 @@ describe("Bridge", async function () {
           batchNonce,
           signatures,
         );
-        const settleBlockCount = await newBridge.batchSettleBlockCount();
+        const settleBlockCount = await bridge.batchSettleBlockCount();
         for (let i = 0; i < settleBlockCount - 1; i++) {
           await network.provider.send("evm_mine");
         }
 
-        await expect(newBridge.getStatusesAfterExecution(batchNonce)).to.be.revertedWith("Statuses not final yet");
+        await expect(bridge.getStatusesAfterExecution(batchNonce)).to.be.revertedWith("Statuses not final yet");
 
         await network.provider.send("evm_mine");
 
-        expect(await newBridge.getStatusesAfterExecution(batchNonce)).to.eql([3]);
+        expect(await bridge.getStatusesAfterExecution(batchNonce)).to.eql([3]);
       });
 
       it("saves refund items", async function () {
-        await newBridge.executeTransfer(
+        await bridge.executeTransfer(
           [genericErc20.address],
           [otherWallet.address],
           [amount],
@@ -402,11 +392,11 @@ describe("Bridge", async function () {
           await network.provider.send("evm_mine");
         }
 
-        await expect(newBridge.getStatusesAfterExecution(batchNonce)).to.be.revertedWith("Statuses not final yet");
+        await expect(bridge.getStatusesAfterExecution(batchNonce)).to.be.revertedWith("Statuses not final yet");
 
         await network.provider.send("evm_mine");
 
-        expect(await newBridge.getStatusesAfterExecution(batchNonce)).to.eql([3]);
+        expect(await bridge.getStatusesAfterExecution(batchNonce)).to.eql([3]);
       });
     });
 
