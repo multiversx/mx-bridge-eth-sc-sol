@@ -3,40 +3,34 @@
 export PATH=$PATH:$GOBIN:$GOPATH/bin
 export NVM_DIR="$HOME/.nvm" && [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
 
-mkdir -p ../built-artifacts/
-mkdir -p ../built-artifacts/go-wrappers
-mkdir -p ../built-artifacts/hex
-mkdir -p ../built-artifacts/abi
-
-abigen --abi=../abi/contracts/Bridge.sol/Bridge.json --pkg=contract --out=Bridge.go --type=Bridge
-mv Bridge.go ../built-artifacts/go-wrappers
-cp ../abi/contracts/Bridge.sol/Bridge.json ../built-artifacts/abi
-
-abigen --abi=../abi/contracts/ERC20Safe.sol/ERC20Safe.json --pkg=contract --out=ERC20Safe.go --type=ERC20Safe
-mv ERC20Safe.go ../built-artifacts/go-wrappers/ERC20Safe.go
-cp ../abi/contracts/ERC20Safe.sol/ERC20Safe.json ../built-artifacts/abi
-
-abigen --abi=../abi/contracts/GenericERC20.sol/GenericERC20.json --pkg=contract --out=GenericERC20.go --type=GenericERC20
-mv GenericERC20.go ../built-artifacts/go-wrappers
-cp ../abi/contracts/GenericERC20.sol/GenericERC20.json ../built-artifacts/abi
-
-abigen --abi=../abi/contracts/MintBurnERC20.sol/MintBurnERC20.json --pkg=contract --out=MintBurnERC20.go --type=MintBurnERC20
-mv MintBurnERC20.go ../built-artifacts/go-wrappers
-cp ../abi/contracts/MintBurnERC20.sol/MintBurnERC20.json ../built-artifacts/abi
-
-abigen --abi=../abi/contracts/SCExecProxy.sol/SCExecProxy.json --pkg=contract --out=SCExecProxy.go --type=SCExecProxy
-mv SCExecProxy.go ../built-artifacts/go-wrappers
-cp ../abi/contracts/SCExecProxy.sol/SCExecProxy.json ../built-artifacts/abi
-
 nvm use 20
 cd ..
 npm install
-npm run compile
 
-cd artifacts/contracts
-jq -r '.bytecode' Bridge.sol/Bridge.json > Bridge.hex
-jq -r '.bytecode' ERC20Safe.sol/ERC20Safe.json > ERC20Safe.hex
-jq -r '.bytecode' GenericERC20.sol/GenericERC20.json > GenericERC20.hex
-jq -r '.bytecode' MintBurnERC20.sol/MintBurnERC20.json > MintBurnERC20.hex
-jq -r '.bytecode' SCExecProxy.sol/SCExecProxy.json > SCExecProxy.hex
-mv *.hex ../../built-artifacts/hex/
+yarn set version 1.22.22
+yarn install
+yarn compile
+
+cp artifacts/contracts/Bridge.sol/Bridge.json abi/contracts/Bridge/Bridge.json
+cp artifacts/contracts/ERC20Safe.sol/ERC20Safe.json abi/contracts/ERC20Safe/ERC20Safe.json
+cp artifacts/contracts/GenericERC20.sol/GenericERC20.json abi/contracts/GenericERC20/GenericERC20.json
+cp artifacts/contracts/MintBurnERC20.sol/MintBurnERC20.json abi/contracts/MintBurnERC20/MintBurnERC20.json
+cp artifacts/contracts/SCExecProxy.sol/SCExecProxy.json abi/contracts/SCExecProxy/SCExecProxy.json
+
+jq -r '.abi' abi/contracts/Bridge/Bridge.json > abi/contracts/Bridge/Bridge.abi.json
+jq -r '.abi' abi/contracts/ERC20Safe/ERC20Safe.json > abi/contracts/ERC20Safe/ERC20Safe.abi.json
+jq -r '.abi' abi/contracts/GenericERC20/GenericERC20.json > abi/contracts/GenericERC20/GenericERC20.abi.json
+jq -r '.abi' abi/contracts/MintBurnERC20/MintBurnERC20.json > abi/contracts/MintBurnERC20/MintBurnERC20.abi.json
+jq -r '.abi' abi/contracts/SCExecProxy/SCExecProxy.json > abi/contracts/SCExecProxy/SCExecProxy.abi.json
+
+abigen --abi=abi/contracts/Bridge/Bridge.abi.json --pkg=contract --out=abi/contracts/Bridge/Bridge.go --type=Bridge
+abigen --abi=abi/contracts/ERC20Safe/ERC20Safe.abi.json --pkg=contract --out=abi/contracts/ERC20Safe/ERC20Safe.go --type=ERC20Safe
+abigen --abi=abi/contracts/GenericERC20/GenericERC20.abi.json --pkg=contract --out=abi/contracts/GenericERC20/GenericERC20.go --type=GenericERC20
+abigen --abi=abi/contracts/MintBurnERC20/MintBurnERC20.abi.json --pkg=contract --out=abi/contracts/MintBurnERC20/MintBurnERC20.go --type=MintBurnERC20
+abigen --abi=abi/contracts/SCExecProxy/SCExecProxy.abi.json --pkg=contract --out=abi/contracts/SCExecProxy/SCExecProxy.go --type=SCExecProxy
+
+jq -r '.bytecode' abi/contracts/Bridge/Bridge.json > abi/contracts/Bridge/Bridge.hex
+jq -r '.bytecode' abi/contracts/ERC20Safe/ERC20Safe.json > abi/contracts/ERC20Safe/ERC20Safe.hex
+jq -r '.bytecode' abi/contracts/GenericERC20/GenericERC20.json > abi/contracts/GenericERC20/GenericERC20.hex
+jq -r '.bytecode' abi/contracts/MintBurnERC20/MintBurnERC20.json > abi/contracts/MintBurnERC20/MintBurnERC20.hex
+jq -r '.bytecode' abi/contracts/SCExecProxy/SCExecProxy.json > abi/contracts/SCExecProxy/SCExecProxy.hex

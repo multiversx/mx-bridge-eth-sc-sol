@@ -16,6 +16,7 @@
     "@ethersproject/bignumber": "^5.4.1",
     "@ethersproject/bytes": "^5.4.0",
     "@ethersproject/providers": "^5.4.5",
+    "@multiversx/sdk-core": "13.2.1",
     "@nomiclabs/ethereumjs-vm": "^4",
     "@nomiclabs/hardhat-ethers": "^2.0.2",
     "@nomiclabs/hardhat-waffle": "^2.0.6",
@@ -88,5 +89,6 @@
   "dependencies": {
     "@multiversx/sdk-js-bridge": "^0.1.0",
     "yarn": "^1.22.18"
-  }
+  },
+  "packageManager": "yarn@1.22.22"
 }
