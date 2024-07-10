@@ -11,7 +11,7 @@ jobs:
     strategy:
       matrix:
         runs-on: [ ubuntu-latest ]
-        node-version: [10.x]
+        node-version: [20.x]
         yarn: [1.22.22]
     runs-on: ${{ matrix.runs-on }}
     name: Tests
