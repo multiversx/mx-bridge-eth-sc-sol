@@ -7,7 +7,7 @@ on:
     branches: [ main, feat/* ]
 
 jobs:
-  build:
+  test:
     strategy:
       matrix:
         runs-on: [ ubuntu-latest ]
