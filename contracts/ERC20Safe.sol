@@ -275,7 +275,7 @@ contract ERC20Safe is BridgeRole, Pausable {
         - lastUpdatedTimestamp
         - depositsCount
     */
-    function getBatch(uint256 batchNonce) public view returns (Batch memory, bool) {
+    function getBatch(uint256 batchNonce) public view returns (Batch memory, bool isBatchFinal) {
         Batch memory batch = batches[batchNonce - 1];
         return (batch, _isBatchFinal(batch));
     }
@@ -285,7 +285,7 @@ contract ERC20Safe is BridgeRole, Pausable {
      @param batchNonce Identifier for the batchsetBatchSettleLimit
      @return a list of deposits included in this batch
     */
-    function getDeposits(uint256 batchNonce) public view returns (Deposit[] memory, bool) {
+    function getDeposits(uint256 batchNonce) public view returns (Deposit[] memory, bool areDepositsFinal) {
         Batch memory batch = batches[batchNonce - 1];
         return (batchDeposits[batchNonce - 1], _isBatchFinal(batch));
     }
