@@ -2,8 +2,8 @@ import { task, types } from "hardhat/config";
 import { getDeployOptions } from "./args/deployOptions";
 
 task("add-to-whitelist", "Whitelists a new address in the bridge.")
-  .addOptionalParam("min", "Minimum amount allowed to transfer this token to Elrond")
-  .addOptionalParam("max", "Maximum amount allowed to transfer this token to Elrond")
+  .addOptionalParam("min", "Minimum amount allowed to transfer this token to MultiversX")
+  .addOptionalParam("max", "Maximum amount allowed to transfer this token to MultiversX")
   .addOptionalParam("address", "address to be whitelisted")
   .addOptionalParam("price", "Gas price in gwei for this transaction", undefined)
   .addOptionalParam("mintburn", "flag if the token is mintable/burnable", false, types.boolean)

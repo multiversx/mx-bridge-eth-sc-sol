@@ -5,7 +5,7 @@ pragma solidity ^0.8.20;
 enum DepositStatus {
     None,
     Pending,
-    InProgress, //This is not used. It is here to have 1on1 mapping with statuses of deposits on the smartcontracts from Elrond
+    InProgress, //This is not used. It is here to have 1on1 mapping with statuses of deposits on the smartcontracts from MultiversX
     Executed,
     Rejected
 }

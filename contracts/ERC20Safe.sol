@@ -20,7 +20,7 @@ interface IBurnableERC20 is IERC20 {
 
 /**
 @title ERC20 Safe for bridging tokens
-@author Elrond
+@author MultiversX
 @notice Contract to be used by the users to make deposits that will be bridged
 In order to use it:
 - The Bridge.sol must be deployed and must be whitelisted for the Safe contract.
@@ -152,7 +152,7 @@ contract ERC20Safe is BridgeRole, Pausable {
       @notice Entrypoint for the user in the bridge. Will create a new deposit
       @param tokenAddress Address of the contract for the ERC20 token that will be deposited
       @param amount number of tokens that need to be deposited
-      @param recipientAddress address of the receiver of tokens on Elrond Network
+      @param recipientAddress address of the receiver of tokens on MultiversX Network
       @notice emits {ERC20Deposited} event
 \   */
     function deposit(address tokenAddress, uint256 amount, bytes32 recipientAddress) public whenNotPaused {
@@ -198,7 +198,7 @@ contract ERC20Safe is BridgeRole, Pausable {
     }
 
     /**
-      @notice Deposit initial supply for an ESDT token already deployed on Elrond
+      @notice Deposit initial supply for an ESDT token already deployed on MultiversX
       @param tokenAddress Address of the contract for the ERC20 token that will be deposited
       @param amount number of tokens that need to be deposited
 \   */

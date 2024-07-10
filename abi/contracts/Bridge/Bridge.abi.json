@@ -185,7 +185,7 @@
       },
       {
         "internalType": "uint256",
-        "name": "batchNonceElrondETH",
+        "name": "batchNonceMvx",
         "type": "uint256"
       },
       {
@@ -369,7 +369,7 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "batchNonceElrondETH",
+        "name": "batchNonceMvx",
         "type": "uint256"
       }
     ],
@@ -382,7 +382,7 @@
       },
       {
         "internalType": "bool",
-        "name": "",
+        "name": "isFinal",
         "type": "bool"
       }
     ],
@@ -524,7 +524,7 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "batchNonceElrondETH",
+        "name": "batchNonceMvx",
         "type": "uint256"
       }
     ],

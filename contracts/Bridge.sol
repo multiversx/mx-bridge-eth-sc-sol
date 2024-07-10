@@ -9,7 +9,7 @@ import "./lib/Pausable.sol";
 
 /**
 @title Bridge
-@author Elrond & AgileFreaks
+@author MultiversX
 @notice Contract to be used by the bridge relayers,
 to get information and execute batches of transactions
 to be bridged.
@@ -98,12 +98,12 @@ contract Bridge is RelayerRole, Pausable {
 
     /**
         @notice Executes transfers that were signed by the relayers.
-        @dev This is for the Elrond to Ethereum flow
+        @dev This is for the MultiversX to Ethereum flow
         @dev Arrays here try to mimmick the structure of a batch. A batch represents the values from the same index in all the arrays.
         @param tokens Array containing all the token addresses that the batch interacts with. Can even contain duplicates.
         @param recipients Array containing all the destinations from the batch. Can be duplicates.
         @param amounts Array containing all the amounts that will be transfered.
-        @param batchNonceElrondETH Nonce for the batch. This identifies a batch created on the Elrond chain that bridges tokens from Elrond to Ethereum
+        @param batchNonceMvx Nonce for the batch. This identifies a batch created on the MultiversX chain that bridges tokens from MultiversX to Ethereum
         @param signatures Signatures from all the relayers for the execution. This mimics a delegated multisig contract. For the execution to take place, there must be enough valid signatures to achieve quorum.
     */
     function executeTransfer(
@@ -111,17 +111,17 @@ contract Bridge is RelayerRole, Pausable {
         address[] calldata recipients,
         uint256[] calldata amounts,
         uint256[] calldata depositNonces,
-        uint256 batchNonceElrondETH,
+        uint256 batchNonceMvx,
         bytes[] calldata signatures
     ) public whenNotPaused onlyRelayer {
         require(signatures.length >= quorum, "Not enough signatures to achieve quorum");
-        require(executedBatches[batchNonceElrondETH] == false, "Batch already executed");
-        executedBatches[batchNonceElrondETH] = true;
+        require(executedBatches[batchNonceMvx] == false, "Batch already executed");
+        executedBatches[batchNonceMvx] = true;
 
         _validateQuorum(
             signatures,
             _getHashedDepositData(
-                abi.encode(recipients, tokens, amounts, depositNonces, batchNonceElrondETH, executeTransferAction)
+                abi.encode(recipients, tokens, amounts, depositNonces, batchNonceMvx, executeTransferAction)
             )
         );
 
@@ -132,18 +132,18 @@ contract Bridge is RelayerRole, Pausable {
                 : DepositStatus.Rejected;
         }
 
-        CrossTransferStatus storage crossStatus = crossTransferStatuses[batchNonceElrondETH];
+        CrossTransferStatus storage crossStatus = crossTransferStatuses[batchNonceMvx];
         crossStatus.statuses = statuses;
         crossStatus.createdBlockNumber = block.number;
     }
 
     /**
         @notice Only returns values if the cross transfers were executed some predefined time ago to ensure finality
-        @param batchNonceElrondETH Nonce for the batch
+        @param batchNonceMvx Nonce for the batch
         @return a list of statuses for each transfer in the batch provided
      */
-    function getStatusesAfterExecution(uint256 batchNonceElrondETH) external view returns (DepositStatus[] memory, bool) {
-        CrossTransferStatus memory crossStatus = crossTransferStatuses[batchNonceElrondETH];
+    function getStatusesAfterExecution(uint256 batchNonceMvx) external view returns (DepositStatus[] memory, bool isFinal) {
+        CrossTransferStatus memory crossStatus = crossTransferStatuses[batchNonceMvx];
         return (crossStatus.statuses, _isMvxBatchFinal(crossStatus.createdBlockNumber));
     }
 
@@ -155,8 +155,8 @@ contract Bridge is RelayerRole, Pausable {
         return (createdBlockNumber + batchSettleBlockCount) <= block.number;
     }
 
-    function wasBatchExecuted(uint256 batchNonceElrondETH) external view returns (bool) {
-        return executedBatches[batchNonceElrondETH];
+    function wasBatchExecuted(uint256 batchNonceMvx) external view returns (bool) {
+        return executedBatches[batchNonceMvx];
     }
 
     /*========================= PRIVATE API =========================*/

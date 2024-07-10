@@ -1,8 +1,8 @@
 ## Main differences
 
-**Old version**: https://github.com/ElrondNetwork/elrond-eth-bridge/tree/437947a0c447b80f78f578bd5fb0f13b74c6fcde
+**Old version**: https://github.com/multiversx/mx-bridge-eth-go/tree/437947a0c447b80f78f578bd5fb0f13b74c6fcde
 
-**New version**: https://github.com/ElrondNetwork/sc-bridge-ethereum-sol/tree/bd5a9b63dd869a99470469385d2b15896d40908e
+**New version**: https://github.com/multiversx/mx-bridge-eth-sc-sol/tree/bd5a9b63dd869a99470469385d2b15896d40908e
 
 ### Functionality diff
 
