@@ -11,6 +11,8 @@ else
   cp ../.env.example ../.env
 fi
 
+cd ..
+pwd
 nvm use 20
 yarn set version 1.22.22
 yarn test
