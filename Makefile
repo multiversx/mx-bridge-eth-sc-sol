@@ -3,3 +3,6 @@ tools-install:
 
 generate-all:
 	cd ./scripts && bash ./generate-all.sh
+
+run-tests:
+	cd ./scripts && bash ./tests.sh
