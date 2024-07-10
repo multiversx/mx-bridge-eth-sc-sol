@@ -15,7 +15,7 @@ describe("ERC20Safe", async function () {
 
   let safe, genericERC20, bridge;
   beforeEach(async function () {
-    genericERC20 = await deployContract(adminWallet, GenericERC20Artifact, ["TSC", "TSC"]);
+    genericERC20 = await deployContract(adminWallet, GenericERC20Artifact, ["TSC", "TSC", 6]);
     safe = await deployContract(adminWallet, ERC20SafeArtifact);
     bridge = await deployContract(adminWallet, BridgeArtifact, [boardMembers.map(m => m.address), 3, safe.address]);
 
@@ -242,7 +242,7 @@ describe("ERC20Safe", async function () {
           Buffer.from("c0f0058cea88a2bc1240b60361efb965957038d05f916c42b3f23a2c38ced81e", "hex"),
         );
         const batchNonce = await safe.batchesCount();
-        const batchAfterFirstTx = await safe.getBatch(batchNonce);
+        const [batchAfterFirstTx, isFirstFinal] = await safe.getBatch(batchNonce);
 
         // Manually increase block time, it doesn't happen by default
         await network.provider.send("evm_increaseTime", [3600]);
@@ -256,9 +256,11 @@ describe("ERC20Safe", async function () {
           Buffer.from("c0f0058cea88a2bc1240b60361efb965957038d05f916c42b3f23a2c38ced81e", "hex"),
         );
         await network.provider.send("evm_mine");
-        const batchAfterSecondTx = await safe.getBatch(batchNonce);
+        const [batchAfterSecondTx, isSecondFinal] = await safe.getBatch(batchNonce);
 
-        expect(batchAfterFirstTx.lastUpdatedBlockNumber).to.not.equal(batchAfterSecondTx.lastUpdatedBlockNumber);
+        expect(batchAfterFirstTx.lastUpdatedBlockNumber).to.equal(batchAfterSecondTx.lastUpdatedBlockNumber);
+        expect(isFirstFinal).to.equal(false);
+        expect(isSecondFinal).to.equal(true);
       });
 
       it("creates new batches by batchSize", async function () {
@@ -343,7 +345,7 @@ describe("ERC20Safe", async function () {
 
   describe("ERC20Safe - recovering of funds works as expected", async function () {
     beforeEach(async function () {
-      await genericERC20.mint(adminWallet.address, "1000000");
+      await genericERC20.mint(adminWallet.address, "1000000000000");
     });
 
     it("reverts for non admin", async function () {
@@ -436,9 +438,13 @@ describe("ERC20Safe", async function () {
         defaultMinAmount,
         Buffer.from("c0f0058cea88a2bc1240b60361efb965957038d05f916c42b3f23a2c38ced81e", "hex"),
       );
+      let [batch, isFinal] = await safe.getBatch(1);
+      let [deposits, areDepositsFinal] = await safe.getDeposits(1);
       // Just after deposit
-      expect((await safe.getBatch(1)).depositsCount).to.be.eq(0);
-      expect((await safe.getDeposits(1)).length).to.be.eq(0);
+      expect(isFinal).to.be.eq(false);
+      expect(isFinal).to.be.eq(areDepositsFinal);
+      expect(batch.depositsCount).to.be.eq(deposits.length);
+      expect(batch.depositsCount).to.be.eq(1);
 
       await network.provider.send("evm_increaseTime", [batchBlockLimit - 1]);
       for (let i = 0; i < batchBlockLimit - 1; i++) {
@@ -457,14 +463,24 @@ describe("ERC20Safe", async function () {
       }
 
       // Enough time has passed since the creation of the batch but not since last deposit
-      expect((await safe.getBatch(1)).depositsCount).to.be.eq(0);
-      expect((await safe.getDeposits(1)).length).to.be.eq(0);
+      [batch, isFinal] = await safe.getBatch(1);
+      [deposits, areDepositsFinal] = await safe.getDeposits(1);
+      expect(isFinal).to.be.eq(false);
+      expect(isFinal).to.be.eq(areDepositsFinal);
+      expect(batch.depositsCount).to.be.eq(deposits.length);
+      expect(batch.depositsCount).to.be.eq(2);
+
       await network.provider.send("evm_increaseTime", [2]);
       for (let i = 0; i < 2; i++) {
         await network.provider.send("evm_mine");
       }
-      expect((await safe.getBatch(1)).depositsCount).to.be.eq(2);
-      expect((await safe.getDeposits(1)).length).to.be.eq(2);
+
+      [batch, isFinal] = await safe.getBatch(1);
+      [deposits, areDepositsFinal] = await safe.getDeposits(1);
+      expect(isFinal).to.be.eq(true);
+      expect(isFinal).to.be.eq(areDepositsFinal);
+      expect(batch.depositsCount).to.be.eq(deposits.length);
+      expect(batch.depositsCount).to.be.eq(2);
     });
   });
 });

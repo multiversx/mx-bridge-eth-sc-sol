@@ -1,5 +1,6 @@
 # directories
 .yarn/*
+.idea/*
 !.yarn/patches
 !.yarn/releases
 !.yarn/plugins
@@ -16,6 +17,7 @@
 **/node_modules
 **/typechain
 **/.DS_Store
+**/.idea
 
 # files
 *.env

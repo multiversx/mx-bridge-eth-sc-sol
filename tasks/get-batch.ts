@@ -10,12 +10,14 @@ task("get-batch", "Get batch information")
     const safeContractFactory = await hre.ethers.getContractFactory("ERC20Safe");
     const safe = safeContractFactory.attach(safeAddress).connect(adminWallet);
     const batchId = taskArgs.batch;
-    let result = await safe.getBatch(batchId);
-    console.log(result);
+    let [batch, isFinal] = await safe.getBatch(batchId);
+    console.log("batch:", batch);
+    console.log("isFinal:", isFinal);
 
     const bridgeAddress = config["bridge"];
     const bridgeContractFactory = await hre.ethers.getContractFactory("Bridge");
     const bridge = bridgeContractFactory.attach(bridgeAddress).connect(adminWallet);
-    result = await bridge.getBatch(batchId);
-    console.log(result);
+    [batch, isFinal] = await bridge.getBatch(batchId);
+    console.log("batch:", batch);
+    console.log("isFinal:", isFinal);
   });
