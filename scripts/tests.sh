@@ -3,7 +3,6 @@
 export PATH=$PATH:$GOBIN:$GOPATH/bin
 export NVM_DIR="$HOME/.nvm" && [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
 
-pwd
 if test -f ../.env; then
   echo ".env file exists. Nothing to do"
 else
@@ -11,8 +10,7 @@ else
   cp ../.env.example ../.env
 fi
 
-cd ..
-pwd
 nvm use 20
 yarn set version 1.22.22
+yarn install
 yarn test
