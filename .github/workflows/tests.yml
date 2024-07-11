@@ -1,0 +1,28 @@
+name: Tests
+
+on:
+  push:
+    branches: [ main, feat/* ]
+  pull_request:
+    branches: [ main, feat/* ]
+
+jobs:
+  test:
+    strategy:
+      matrix:
+        runs-on: [ ubuntu-latest ]
+        node-version: [20.x]
+        yarn: [1.22.22]
+    runs-on: ${{ matrix.runs-on }}
+    name: Tests
+    steps:
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Check out code
+        uses: actions/checkout@v3
+
+      - name: Unit tests
+        run: make run-tests
