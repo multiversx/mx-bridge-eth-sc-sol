@@ -224,6 +224,26 @@ describe("ERC20Safe", async function () {
         ).to.be.revertedWith("Tried to deposit an amount above the maximum specified limit");
       });
 
+      it("should emit event in case of deposit success", async function () {
+        await expect(
+          safe
+            .connect(adminWallet)
+            .depositWithSCExecution(
+              genericERC20.address,
+              25,
+              Buffer.from("c0f0058cea88a2bc1240b60361efb965957038d05f916c42b3f23a2c38ced81e", "hex"),
+              "depositEndpoint",
+              500000,
+              ["25", "someArgument"]
+            ),
+        )
+          .to.emit(safe, "ERC20SCDeposit")
+          .withArgs(1, 1,
+            "depositEndpoint",
+            500000,
+            ["25", "someArgument"]);
+      });
+
       it("increments depositsCount", async () => {
         await safe.deposit(
           genericERC20.address,
