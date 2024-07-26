@@ -50,7 +50,7 @@ contract ERC20Safe is BridgeRole, Pausable {
     mapping(uint256 => Deposit[]) public batchDeposits;
 
     event ERC20Deposit(uint112 depositNonce, uint112 batchId);
-    event ERC20SCDeposit(uint112 depositNonce, uint112 batchId, string callEndpoint, uint64 callGasLimit, string[] callArgs);
+    event ERC20SCDeposit(uint112 depositNonce, uint112 batchId, string callData);
 
     /**
       @notice Whitelist a token. Only whitelisted tokens can be bridged.
@@ -170,15 +170,16 @@ contract ERC20Safe is BridgeRole, Pausable {
      * @param tokenAddress The address of the ERC20 token to deposit.
      * @param amount The amount of tokens to deposit.
      * @param recipientAddress The address on the target chain to receive the tokens.
-     * @param callEndpoint The endpoint that will be called on the receiver SC.
-     * @param callGasLimit The gasLimit that will be used for the execution of the SC.
-     * @param callArgs The arguments that will be passed to the SC.
+     * @param callData The encoded data specifying the cross-chain call details. The expected format is:
+     *        0x01 + endpoint_name_length (4 bytes) + endpoint_name + gas_limit (8 bytes) +
+     *        num_arguments_length (4 bytes) + [argument_length (4 bytes) + argument]...
+     *        This payload includes the endpoint name, gas limit for the execution, and the arguments for the call.
      */
-    function depositWithSCExecution(address tokenAddress, uint256 amount, bytes32 recipientAddress, string calldata callEndpoint, uint64 callGasLimit, string[] calldata callArgs) public whenNotPaused {
+    function depositWithSCExecution(address tokenAddress, uint256 amount, bytes32 recipientAddress, string calldata callData) public whenNotPaused {
         uint112 batchNonce;
         uint112 depositNonce;
         (batchNonce, depositNonce) = _deposit_common(tokenAddress, amount, recipientAddress);
-        emit ERC20SCDeposit(depositNonce, batchNonce, callEndpoint, callGasLimit, callArgs);
+        emit ERC20SCDeposit(depositNonce, batchNonce, callData);
     }
 
 

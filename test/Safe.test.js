@@ -6,6 +6,7 @@ const GenericERC20Artifact = require("../artifacts/contracts/GenericERC20.sol/Ge
 const ERC20SafeArtifact = require("../artifacts/contracts/ERC20Safe.sol/ERC20Safe.json");
 const BridgeArtifact = require("../artifacts/contracts/Bridge.sol/Bridge.json");
 const BridgeMockArtifact = require("../artifacts/contracts/test/BridgeMock.sol/BridgeMock.json");
+const {encodeCallData} = require("@multiversx/sdk-js-bridge");
 
 describe("ERC20Safe", async function () {
   const defaultMinAmount = 25;
@@ -225,6 +226,7 @@ describe("ERC20Safe", async function () {
       });
 
       it("should emit event in case of deposit success", async function () {
+        const callData = encodeCallData("depositEndpoint", 500000, [25, "someArgument"]);
         await expect(
           safe
             .connect(adminWallet)
@@ -232,16 +234,11 @@ describe("ERC20Safe", async function () {
               genericERC20.address,
               25,
               Buffer.from("c0f0058cea88a2bc1240b60361efb965957038d05f916c42b3f23a2c38ced81e", "hex"),
-              "depositEndpoint",
-              500000,
-              ["25", "someArgument"]
+              callData,
             ),
         )
           .to.emit(safe, "ERC20SCDeposit")
-          .withArgs(1, 1,
-            "depositEndpoint",
-            500000,
-            ["25", "someArgument"]);
+          .withArgs(1, 1, callData);
       });
 
       it("increments depositsCount", async () => {
