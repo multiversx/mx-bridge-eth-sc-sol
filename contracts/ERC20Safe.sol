@@ -50,7 +50,7 @@ contract ERC20Safe is BridgeRole, Pausable {
     mapping(uint256 => Deposit[]) public batchDeposits;
 
     event ERC20Deposit(uint112 depositNonce, uint112 batchId);
-    event ERC20SCDeposit(uint112 depositNonce, uint112 batchId, string callData);
+    event ERC20SCDeposit(uint112 indexed batchId, uint112 depositNonce, string callData);
 
     /**
       @notice Whitelist a token. Only whitelisted tokens can be bridged.
@@ -179,7 +179,7 @@ contract ERC20Safe is BridgeRole, Pausable {
         uint112 batchNonce;
         uint112 depositNonce;
         (batchNonce, depositNonce) = _deposit_common(tokenAddress, amount, recipientAddress);
-        emit ERC20SCDeposit(depositNonce, batchNonce, callData);
+        emit ERC20SCDeposit(batchNonce, depositNonce, callData);
     }
 
 

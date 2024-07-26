@@ -98,15 +98,15 @@
     "anonymous": false,
     "inputs": [
       {
-        "indexed": false,
+        "indexed": true,
         "internalType": "uint112",
-        "name": "depositNonce",
+        "name": "batchId",
         "type": "uint112"
       },
       {
         "indexed": false,
         "internalType": "uint112",
-        "name": "batchId",
+        "name": "depositNonce",
         "type": "uint112"
       },
       {
