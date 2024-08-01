@@ -50,6 +50,7 @@ contract ERC20Safe is BridgeRole, Pausable {
     mapping(uint256 => Deposit[]) public batchDeposits;
 
     event ERC20Deposit(uint112 depositNonce, uint112 batchId);
+    event ERC20SCDeposit(uint112 indexed batchId, uint112 depositNonce, string callData);
 
     /**
       @notice Whitelist a token. Only whitelisted tokens can be bridged.
@@ -156,6 +157,33 @@ contract ERC20Safe is BridgeRole, Pausable {
       @notice emits {ERC20Deposited} event
 \   */
     function deposit(address tokenAddress, uint256 amount, bytes32 recipientAddress) public whenNotPaused {
+        uint112 batchNonce;
+        uint112 depositNonce;
+        (batchNonce, depositNonce) = _deposit_common(tokenAddress, amount, recipientAddress);
+        emit ERC20Deposit(depositNonce, batchNonce);
+    }
+
+    /*
+     * @notice Entrypoint for the user in the bridge. Will create a new deposit
+     * @dev The `callData` parameter is structured to include the endpoint name, gas limit, and arguments for the cross-chain call.
+     *
+     * @param tokenAddress The address of the ERC20 token to deposit.
+     * @param amount The amount of tokens to deposit.
+     * @param recipientAddress The address on the target chain to receive the tokens.
+     * @param callData The encoded data specifying the cross-chain call details. The expected format is:
+     *        0x01 + endpoint_name_length (4 bytes) + endpoint_name + gas_limit (8 bytes) +
+     *        num_arguments_length (4 bytes) + [argument_length (4 bytes) + argument]...
+     *        This payload includes the endpoint name, gas limit for the execution, and the arguments for the call.
+     */
+    function depositWithSCExecution(address tokenAddress, uint256 amount, bytes32 recipientAddress, string calldata callData) public whenNotPaused {
+        uint112 batchNonce;
+        uint112 depositNonce;
+        (batchNonce, depositNonce) = _deposit_common(tokenAddress, amount, recipientAddress);
+        emit ERC20SCDeposit(batchNonce, depositNonce, callData);
+    }
+
+
+    function _deposit_common(address tokenAddress, uint256 amount, bytes32 recipientAddress) internal returns (uint112 batchNonce, uint112) {
         require(whitelistedTokens[tokenAddress], "Unsupported token");
         require(amount >= tokenMinLimits[tokenAddress], "Tried to deposit an amount below the minimum specified limit");
         require(amount <= tokenMaxLimits[tokenAddress], "Tried to deposit an amount above the maximum specified limit");
@@ -193,8 +221,7 @@ contract ERC20Safe is BridgeRole, Pausable {
             IBurnableERC20 erc20 = IBurnableERC20(tokenAddress);
             erc20.burnFrom(msg.sender, amount);
         }
-
-        emit ERC20Deposit(depositNonce, batch.nonce);
+        return (batch.nonce, depositNonce);
     }
 
     /**
