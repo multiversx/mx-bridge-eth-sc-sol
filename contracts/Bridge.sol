@@ -22,7 +22,7 @@ In order to use it:
 @dev This contract mimics a multisign contract by sending the signatures from all
 relayers with the execute call, in order to save gas.
  */
-contract Bridge is RelayerRole, Pausable {
+contract Bridge is Initializable, OwnableUpgradeable, RelayerRole, Pausable {
     /*============================ EVENTS ============================*/
     event QuorumChanged(uint256 quorum);
 
@@ -34,7 +34,7 @@ contract Bridge is RelayerRole, Pausable {
     uint256 public batchSettleBlockCount = 40;
 
     uint256 public quorum;
-    ERC20Safe internal immutable safe;
+    ERC20Safe internal safe;
 
     mapping(uint256 => bool) public executedBatches;
     mapping(uint256 => CrossTransferStatus) public crossTransferStatuses;
@@ -48,11 +48,13 @@ contract Bridge is RelayerRole, Pausable {
      *   - add/remove relayers
      *   - add/remove tokens that can be bridged
      */
-    constructor(address[] memory board, uint256 initialQuorum, ERC20Safe erc20Safe) {
+    function initialize(address[] memory board, uint256 initialQuorum, address initialOwner, ERC20Safe erc20Safe) public override(Pausable, RelayerRole) initializer {
         require(initialQuorum >= minimumQuorum, "Quorum is too low.");
         require(board.length >= initialQuorum, "The board should be at least the quorum size.");
 
-        _addRelayers(board);
+        OwnableUpgradeable.__Ownable_init(initialOwner);
+        Pausable.initialize();
+        RelayerRole.initialize(board);
 
         quorum = initialQuorum;
         safe = erc20Safe;

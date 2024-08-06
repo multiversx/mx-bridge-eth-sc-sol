@@ -4,15 +4,16 @@ pragma solidity ^0.8.20;
 
 import "../access/AdminRole.sol";
 
-contract Pausable is AdminRole {
+contract Pausable is Initializable, AdminRole {
     bool private _paused;
     event Pause(bool isPause);
 
     /**
      * @dev Initializes the contract in paused state.
      */
-    constructor() {
-        _paused = true;
+    function initialize() public virtual override initializer {
+        AdminRole.initialize();
+        _paused = false;
     }
 
     /**

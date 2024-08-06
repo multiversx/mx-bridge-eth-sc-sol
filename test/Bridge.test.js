@@ -1,26 +1,28 @@
-const { waffle, ethers, network } = require("hardhat");
-const { expect } = require("chai");
-const { provider, deployContract } = waffle;
-const { smock } = require("@defi-wonderland/smock");
-
+const { ethers, network, upgrades } = require("hardhat");
+// waffle, ethers, network, upgrades
 const BridgeContract = require("../artifacts/contracts/Bridge.sol/Bridge.json");
 const ERC20SafeContract = require("../artifacts/contracts/ERC20Safe.sol/ERC20Safe.json");
 const GenericERC20 = require("../artifacts/contracts/GenericERC20.sol/GenericERC20.json");
 const { getSignaturesForExecuteTransfer, getExecuteTransferData } = require("./utils/bridge.utils");
 
-describe("Bridge", async function () {
-  const [adminWallet, relayer1, relayer2, relayer3, relayer4, relayer5, relayer6, relayer7, relayer8, otherWallet] =
-    provider.getWallets();
-  const boardMembers = [adminWallet, relayer1, relayer2, relayer3, relayer5, relayer6, relayer7, relayer8].map(
-    m => m.address,
-  );
+describe("Bridge", function () {
+  let adminWallet, relayer1, relayer2, relayer3, relayer4, relayer5, relayer6, relayer7, relayer8, otherWallet, boardMembers;
+  let erc20Safe, bridge, genericErc20;
   const quorum = 7;
 
-  let erc20Safe, bridge, genericErc20;
+
 
   async function setupContracts() {
-    erc20Safe = await deployContract(adminWallet, ERC20SafeContract);
-    bridge = await deployContract(adminWallet, BridgeContract, [boardMembers, quorum, erc20Safe.address]);
+    const signers = await ethers.getSigners();
+    [adminWallet, relayer1, relayer2, relayer3, relayer4, relayer5, relayer6, relayer7, relayer8, otherWallet] = signers;
+    boardMembers = [adminWallet, relayer1, relayer2, relayer3, relayer5, relayer6, relayer7, relayer8].map(
+      (m) => m.address
+    );
+
+    const ERC20SafeFactory = await ethers.getContractFactory("ERC20Safe");
+    erc20Safe = await upgrades.deployProxy(ERC20SafeFactory, [adminWallet], { initializer: "initialize" });
+    const BridgeFactory = await ethers.getContractFactory("Bridge");
+    const bridge = await upgrades.deployProxy(BridgeFactory, [boardMembers, quorum, erc20Safe.address], { initializer: "initialize" });
     await erc20Safe.setBridge(bridge.address);
     await bridge.unpause();
     await setupErc20Token();
@@ -67,7 +69,7 @@ describe("Bridge", async function () {
     });
 
     it("reverts when not called by admin", async function () {
-      nonAdminBridge = bridge.connect(otherWallet);
+      const nonAdminBridge = bridge.connect(otherWallet);
       await expect(nonAdminBridge.addRelayer(relayer4.address)).to.be.revertedWith(
         "Access Control: sender is not Admin",
       );
@@ -111,7 +113,7 @@ describe("Bridge", async function () {
     });
 
     it("reverts when not called by admin", async function () {
-      nonAdminBridge = bridge.connect(otherWallet);
+      const nonAdminBridge = bridge.connect(otherWallet);
       await expect(nonAdminBridge.removeRelayer(relayer4.address)).to.be.revertedWith(
         "Access Control: sender is not Admin",
       );
@@ -138,7 +140,7 @@ describe("Bridge", async function () {
     });
 
     it("reverts when not called by admin", async function () {
-      nonAdminBridge = bridge.connect(otherWallet);
+      const nonAdminBridge = bridge.connect(otherWallet);
       await expect(nonAdminBridge.setQuorum(newQuorum)).to.be.revertedWith("Access Control: sender is not Admin");
     });
 

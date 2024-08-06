@@ -1,41 +1,10 @@
-import "@nomiclabs/hardhat-waffle";
-import "@typechain/hardhat";
+import "@nomicfoundation/hardhat-toolbox";
+import "@openzeppelin/hardhat-upgrades";
 import "hardhat-gas-reporter";
 import "hardhat-contract-sizer";
 import "hardhat-log-remover";
 import "hardhat-tracer";
 import "hardhat-abi-exporter";
-import "solidity-coverage";
-
-import "./tasks/accounts";
-import "./tasks/clean";
-import "./tasks/add-to-whitelist";
-import "./tasks/mint-test-tokens";
-import "./tasks/set-quorum";
-import "./tasks/approve";
-import "./tasks/deposit";
-import "./tasks/set-min-amount";
-import "./tasks/set-max-amount";
-import "./tasks/set-batch-block-limit";
-import "./tasks/set-batch-size";
-import "./tasks/fill-nonce-gap";
-import "./tasks/add-relayer";
-import "./tasks/remove-relayer";
-import "./tasks/pause-bridge";
-import "./tasks/unpause-bridge";
-import "./tasks/pause-safe";
-import "./tasks/unpause-safe";
-import "./tasks/init-supply";
-import "./tasks/remove-from-whitelist";
-import "./tasks/recover-lost-funds";
-import "./tasks/get-batch";
-import "./tasks/get-batch-deposits";
-import "./tasks/deploy/mint-burn-tokens";
-import "./tasks/quorum";
-import "./tasks/get-statuses-after-execution";
-import "./tasks/depositSC";
-
-import "./tasks/deploy";
 
 import { resolve } from "path";
 

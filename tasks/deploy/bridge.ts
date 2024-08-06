@@ -1,5 +1,5 @@
 import { task, types } from "hardhat/config";
-import { ethers } from "ethers";
+import { ethers, upgrades } from "hardhat";
 import fs from "fs";
 import { getDeployOptions } from "../args/deployOptions";
 
@@ -18,13 +18,11 @@ task("deploy-bridge", "Deploys the Bridge contract")
     const [adminWallet] = await hre.ethers.getSigners();
     console.log("Admin Public Address:", adminWallet.address);
 
-    const fs = require("fs");
     const filename = "setup.config.json";
     const config = JSON.parse(fs.readFileSync(filename, "utf8"));
 
     const Bridge = await hre.ethers.getContractFactory("Bridge");
-    let bridgeContract;
-    bridgeContract = await Bridge.deploy(relayerAddresses, quorum, config.erc20Safe, getDeployOptions(taskArgs));
+    const bridgeContract = await upgrades.deployProxy(Bridge, [relayerAddresses, quorum, config.erc20Safe], { initializer: "initialize" });
 
     await bridgeContract.deployed();
     console.log("Bridge deployed to:", bridgeContract.address);

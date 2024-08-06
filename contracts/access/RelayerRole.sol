@@ -17,6 +17,11 @@ contract RelayerRole is AdminRole {
 
     EnumerableSet.AddressSet private _relayers;
 
+    function initialize(address[] memory initialRelayers) public virtual override initializer {
+        AdminRole.initialize();
+        _addRelayers(initialRelayers);
+    }
+
     /**
      * @dev Throws if called by any account other than the bridge.
      */
