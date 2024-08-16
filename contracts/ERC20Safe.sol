@@ -171,9 +171,12 @@ contract ERC20Safe is BridgeRole, Pausable {
      * @param amount The amount of tokens to deposit.
      * @param recipientAddress The address on the target chain to receive the tokens.
      * @param callData The encoded data specifying the cross-chain call details. The expected format is:
-     *        0x01 + endpoint_name_length (4 bytes) + endpoint_name + gas_limit (8 bytes) +
-     *        num_arguments_length (4 bytes) + [argument_length (4 bytes) + argument]...
+     *        0x + endpoint_name_length (4 bytes) + endpoint_name + gas_limit (8 bytes) +
+     *        01 (ArgumentsPresentProtocolMarker) + num_arguments_length (4 bytes) + [argument_length (4 bytes) + argument]...
      *        This payload includes the endpoint name, gas limit for the execution, and the arguments for the call.
+     *        In case of no arguments, only the ArgumentsMissingProtocolMarker should be included. The expected format is:
+     *        0x + endpoint_name_length (4 bytes) + endpoint_name + gas_limit (8 bytes) +
+     *        00 (ArgumentsPresentProtocolMarker)
      */
     function depositWithSCExecution(address tokenAddress, uint256 amount, bytes32 recipientAddress, bytes calldata callData) public whenNotPaused {
         uint112 batchNonce;
