@@ -111,9 +111,9 @@
       },
       {
         "indexed": false,
-        "internalType": "string",
+        "internalType": "bytes",
         "name": "callData",
-        "type": "string"
+        "type": "bytes"
       }
     ],
     "name": "ERC20SCDeposit",
@@ -353,9 +353,9 @@
         "type": "bytes32"
       },
       {
-        "internalType": "string",
+        "internalType": "bytes",
         "name": "callData",
-        "type": "string"
+        "type": "bytes"
       }
     ],
     "name": "depositWithSCExecution",
