@@ -11,7 +11,7 @@ const {encodeCallData} = require("@multiversx/sdk-js-bridge");
 async function deployContract(wallet, name, params = []) {
   let factory = await ethers.getContractFactory(name);
   let contract = await ethers.deployContract(name, params);
-  
+
   // Hacky way to update the property on the contract - should remove and replace with target in the end
   contract["address"] = contract.target;
   return contract;
@@ -368,10 +368,10 @@ describe("ERC20Safe", function () {
             defaultMinAmount,
             Buffer.from("c0f0058cea88a2bc1240b60361efb965957038d05f916c42b3f23a2c38ced81e", "hex"),
           );
-          
-          console.log(depositResp);
 
-          expect(depositResp.gasLimit).to.be.lt(400000);
+          let receipt = await depositResp.wait();
+          
+          expect(receipt.gasUsed).to.be.lt(400000);
         }
       });
     });
