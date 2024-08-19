@@ -368,6 +368,8 @@ describe("ERC20Safe", function () {
             defaultMinAmount,
             Buffer.from("c0f0058cea88a2bc1240b60361efb965957038d05f916c42b3f23a2c38ced81e", "hex"),
           );
+          
+          console.log(depositResp);
 
           expect(depositResp.gasLimit).to.be.lt(400000);
         }
