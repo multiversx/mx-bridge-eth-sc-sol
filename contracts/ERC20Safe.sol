@@ -363,6 +363,8 @@ contract ERC20Safe is BridgeRole, Pausable {
         } catch {
             return false;
         }
+
+        return true;
     }
 
     function _isTokenMintBurn(address token) internal view returns (bool) {

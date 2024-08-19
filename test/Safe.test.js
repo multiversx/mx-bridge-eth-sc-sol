@@ -1,24 +1,39 @@
 const { expect } = require("chai");
-const { waffle, network } = require("hardhat");
-const { provider, deployContract } = waffle;
+const { ethers } = require("hardhat");
 
-const GenericERC20Artifact = require("../artifacts/contracts/GenericERC20.sol/GenericERC20.json");
-const ERC20SafeArtifact = require("../artifacts/contracts/ERC20Safe.sol/ERC20Safe.json");
-const BridgeArtifact = require("../artifacts/contracts/Bridge.sol/Bridge.json");
-const BridgeMockArtifact = require("../artifacts/contracts/test/BridgeMock.sol/BridgeMock.json");
+// const GenericERC20Artifact = require("../artifacts/contracts/GenericERC20.sol/GenericERC20.json");
+// const ERC20SafeArtifact = require("../artifacts/contracts/ERC20Safe.sol/ERC20Safe.json");
+// const BridgeArtifact = require("../artifacts/contracts/Bridge.sol/Bridge.json");
+// const BridgeMockArtifact = require("../artifacts/contracts/test/BridgeMock.sol/BridgeMock.json");
+
 const {encodeCallData} = require("@multiversx/sdk-js-bridge");
 
-describe("ERC20Safe", async function () {
+async function deployContract(wallet, name, params = []) {
+  let factory = await ethers.getContractFactory(name);
+  let contract = await ethers.deployContract(name, params);
+  
+  // Hacky way to update the property on the contract - should remove and replace with target in the end
+  contract["address"] = contract.target;
+  return contract;
+}
+
+describe("ERC20Safe", function () {
   const defaultMinAmount = 25;
   const defaultMaxAmount = 100;
-  const [adminWallet, otherWallet, simpleBoardMember] = provider.getWallets();
-  const boardMembers = [adminWallet, otherWallet, simpleBoardMember];
+
+  let adminWallet, otherWallet, simpleBoardMember;
+  let boardMembers;
+
+  before(async function() {
+    [adminWallet, otherWallet, simpleBoardMember] = await ethers.getSigners();
+    boardMembers = [adminWallet, otherWallet, simpleBoardMember];
+  });
 
   let safe, genericERC20, bridge;
   beforeEach(async function () {
-    genericERC20 = await deployContract(adminWallet, GenericERC20Artifact, ["TSC", "TSC", 6]);
-    safe = await deployContract(adminWallet, ERC20SafeArtifact);
-    bridge = await deployContract(adminWallet, BridgeArtifact, [boardMembers.map(m => m.address), 3, safe.address]);
+    genericERC20 = await deployContract(adminWallet, "GenericERC20", ["TSC", "TSC", 6]);
+    safe = await deployContract(adminWallet, "ERC20Safe");
+    bridge = await deployContract(adminWallet, "Bridge", [boardMembers.map(m => m.address), 3, safe.address]);
 
     await genericERC20.approve(safe.address, 1000);
     await safe.setBridge(bridge.address);
@@ -409,7 +424,7 @@ describe("ERC20Safe", async function () {
       await safe.whitelistToken(genericERC20.address, defaultMinAmount, defaultMaxAmount, false, true);
       await genericERC20.approve(safe.address, "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
 
-      const mockBridge = await deployContract(adminWallet, BridgeMockArtifact, [
+      const mockBridge = await deployContract(adminWallet, "BridgeMock", [
         boardMembers.map(m => m.address),
         3,
         safe.address,
