@@ -367,18 +367,18 @@ describe("Bridge", async function () {
           signatures,
         );
         const settleBlockCount = await bridge.batchSettleBlockCount();
-        for (let i = 0; i < settleBlockCount - 1; i++) {
+        for (let i = 0; i < settleBlockCount - 1n; i++) {
           await network.provider.send("evm_mine");
         }
 
         const [firstStatuses, firstIsFinal] = await bridge.getStatusesAfterExecution(batchNonce);
-        expect(firstStatuses).to.eql([3]);
+        expect(firstStatuses).to.eql([3n]);
         expect(firstIsFinal).to.be.false
 
         await network.provider.send("evm_mine");
 
         const [secondStatuses, secondIsFinal] = await bridge.getStatusesAfterExecution(batchNonce);
-        expect(secondStatuses).to.eql([3]);
+        expect(secondStatuses).to.eql([3n]);
         expect(secondIsFinal).to.be.true
       });
 
@@ -392,18 +392,18 @@ describe("Bridge", async function () {
           signatures,
         );
         const settleBlockCount = await bridge.batchSettleBlockCount();
-        for (let i = 0; i < settleBlockCount - 1; i++) {
+        for (let i = 0; i < settleBlockCount - 1n; i++) {
           await network.provider.send("evm_mine");
         }
 
         const [firstStatuses, firstIsFinal] = await bridge.getStatusesAfterExecution(batchNonce);
-        expect(firstStatuses).to.eql([3]);
+        expect(firstStatuses).to.eql([3n]);
         expect(firstIsFinal).to.be.false
 
         await network.provider.send("evm_mine");
 
         const [secondStatuses, secondIsFinal] = await bridge.getStatusesAfterExecution(batchNonce);
-        expect(secondStatuses).to.eql([3]);
+        expect(secondStatuses).to.eql([3n]);
         expect(secondIsFinal).to.be.true
       });
     });
