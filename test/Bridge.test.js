@@ -1,38 +1,38 @@
-const { waffle, ethers, network } = require("hardhat");
+const { ethers } = require("hardhat");
 const { expect } = require("chai");
-const { provider, deployContract } = waffle;
-const { smock } = require("@defi-wonderland/smock");
 
-const BridgeContract = require("../artifacts/contracts/Bridge.sol/Bridge.json");
-const ERC20SafeContract = require("../artifacts/contracts/ERC20Safe.sol/ERC20Safe.json");
-const GenericERC20 = require("../artifacts/contracts/GenericERC20.sol/GenericERC20.json");
+const { deployContract } = require("./utils/deploy.utils");
 const { getSignaturesForExecuteTransfer, getExecuteTransferData } = require("./utils/bridge.utils");
 
 describe("Bridge", async function () {
-  const [adminWallet, relayer1, relayer2, relayer3, relayer4, relayer5, relayer6, relayer7, relayer8, otherWallet] =
-    provider.getWallets();
-  const boardMembers = [adminWallet, relayer1, relayer2, relayer3, relayer5, relayer6, relayer7, relayer8].map(
-    m => m.address,
-  );
+  let adminWallet, relayer1, relayer2, relayer3, relayer4, relayer5, relayer6, relayer7, relayer8, otherWallet;
+  let boardMembers;
   const quorum = 7;
 
   let erc20Safe, bridge, genericErc20;
 
   async function setupContracts() {
-    erc20Safe = await deployContract(adminWallet, ERC20SafeContract);
-    bridge = await deployContract(adminWallet, BridgeContract, [boardMembers, quorum, erc20Safe.address]);
+    erc20Safe = await deployContract(adminWallet, "ERC20Safe");
+    bridge = await deployContract(adminWallet, "Bridge", [boardMembers, quorum, erc20Safe.address]);
     await erc20Safe.setBridge(bridge.address);
     await bridge.unpause();
     await setupErc20Token();
   }
 
   async function setupErc20Token() {
-    genericErc20 = await deployContract(adminWallet, GenericERC20, ["TSC", "TSC", 6]);
+    genericErc20 = await deployContract(adminWallet, "GenericERC20", ["TSC", "TSC", 6]);
     await genericErc20.mint(adminWallet.address, 1000);
     await genericErc20.approve(erc20Safe.address, 1000);
     await erc20Safe.whitelistToken(genericErc20.address, 0, 100, false, true);
     await erc20Safe.unpause();
   }
+
+  before(async function() {
+    [adminWallet, relayer1, relayer2, relayer3, relayer4, relayer5, relayer6, relayer7, relayer8, otherWallet] = await ethers.getSigners();
+    boardMembers = [adminWallet, relayer1, relayer2, relayer3, relayer5, relayer6, relayer7, relayer8].map(
+      m => m.address,
+    );
+  });
 
   beforeEach(async function () {
     await setupContracts();
@@ -54,14 +54,14 @@ describe("Bridge", async function () {
     it("reverts", async function () {
       const invalidQuorumValue = 1;
       await expect(
-        deployContract(adminWallet, BridgeContract, [boardMembers, invalidQuorumValue, erc20Safe.address]),
+        deployContract(adminWallet, "Bridge", [boardMembers, invalidQuorumValue, erc20Safe.address]),
       ).to.be.revertedWith("Quorum is too low.");
     });
   });
 
   describe("addRelayer", async function () {
     it("reverts when called with an empty address", async function () {
-      await expect(bridge.addRelayer(ethers.constants.AddressZero)).to.be.revertedWith(
+      await expect(bridge.addRelayer(ethers.ZeroAddress)).to.be.revertedWith(
         "RelayerRole: account cannot be the 0 address",
       );
     });

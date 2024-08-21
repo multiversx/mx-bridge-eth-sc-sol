@@ -11,10 +11,17 @@ function getExecuteTransferData(tokenAddresses, recipientAddresses, amounts, dep
     "ExecuteBatchedTransfer",
   ];
 
-  const bytesToSign = ethers.utils.defaultAbiCoder.encode(signMessageDefinition, signMessageData);
-  const signData = ethers.utils.keccak256(bytesToSign);
-  return ethers.utils.arrayify(signData);
+  console.log("1", signMessageData);
+  const abiCoder = new ethers.AbiCoder();
+  const bytesToSign = abiCoder.encode(signMessageDefinition, signMessageData);
+  console.log("2", bytesToSign);
+  const signData = ethers.keccak256(bytesToSign);
+  console.log("3", signMessageData);
+  console.log("4", ethers.toUtf8Bytes(signData));
+  throw "thrown";
+  return ethers.toUtf8Bytes(signData);
 }
+
 async function getSignaturesForExecuteTransfer(
   tokenAddresses,
   recipientAddresses,

@@ -1,21 +1,8 @@
 const { expect } = require("chai");
 const { ethers } = require("hardhat");
+const { encodeCallData } = require("@multiversx/sdk-js-bridge");
 
-// const GenericERC20Artifact = require("../artifacts/contracts/GenericERC20.sol/GenericERC20.json");
-// const ERC20SafeArtifact = require("../artifacts/contracts/ERC20Safe.sol/ERC20Safe.json");
-// const BridgeArtifact = require("../artifacts/contracts/Bridge.sol/Bridge.json");
-// const BridgeMockArtifact = require("../artifacts/contracts/test/BridgeMock.sol/BridgeMock.json");
-
-const {encodeCallData} = require("@multiversx/sdk-js-bridge");
-
-async function deployContract(wallet, name, params = []) {
-  let factory = await ethers.getContractFactory(name);
-  let contract = await ethers.deployContract(name, params);
-
-  // Hacky way to update the property on the contract - should remove and replace with target in the end
-  contract["address"] = contract.target;
-  return contract;
-}
+const { deployContract } = require("./utils/deploy.utils");
 
 describe("ERC20Safe", function () {
   const defaultMinAmount = 25;
