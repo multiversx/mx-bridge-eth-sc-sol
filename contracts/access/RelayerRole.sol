@@ -22,6 +22,7 @@ contract RelayerRole is Initializable, AdminRole {
      */
     function __RelayerRole_init() internal onlyInitializing {
         __AdminRole_init();
+        __RelayerRole_init_unchained();
     }
 
     function __RelayerRole_init_unchained() internal onlyInitializing {

@@ -43,6 +43,7 @@ contract BridgeRole is Initializable, AdminRole {
      */
     function __BridgeRole_init() internal onlyInitializing {
         __AdminRole_init();
+        __BridgeRole_init_unchained();
     }
 
     function __BridgeRole_init_unchained() internal onlyInitializing {
