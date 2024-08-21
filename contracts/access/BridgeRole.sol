@@ -2,6 +2,8 @@
 
 pragma solidity ^0.8.20;
 
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+
 import "./AdminRole.sol";
 
 /**
@@ -29,12 +31,22 @@ library AddressLib {
  * @title Operator Role Contract
  * @dev Simple role contract. Used for adding/removing operators
  */
-contract BridgeRole is AdminRole {
+contract BridgeRole is Initializable, AdminRole {
     using AddressLib for address;
 
     address private _bridge;
 
     event BridgeTransferred(address indexed previousBridge, address indexed newBridge);
+
+    /**
+     * @dev Initializes the bridge role and it's dependencies
+     */
+    function __BridgeRole_init() internal onlyInitializing {
+        __AdminRole_init();
+    }
+
+    function __BridgeRole_init_unchained() internal onlyInitializing {
+    }
 
     /**
      * @dev Returns the address of the current bridge.

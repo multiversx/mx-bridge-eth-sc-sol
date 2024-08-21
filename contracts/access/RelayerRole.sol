@@ -9,13 +9,23 @@ import "./AdminRole.sol";
  * @title Operator Role Contract
  * @dev Simple role contract. Used for adding/removing operators
  */
-contract RelayerRole is AdminRole {
+contract RelayerRole is Initializable, AdminRole {
     using EnumerableSet for EnumerableSet.AddressSet;
 
     event RelayerAdded(address indexed account, address indexed sender);
     event RelayerRemoved(address indexed account, address indexed sender);
 
     EnumerableSet.AddressSet private _relayers;
+
+    /**
+     * @dev Initializes the relayer role's dependencies
+     */
+    function __RelayerRole_init() internal onlyInitializing {
+        __AdminRole_init();
+    }
+
+    function __RelayerRole_init_unchained() internal onlyInitializing {
+    }
 
     /**
      * @dev Throws if called by any account other than the bridge.

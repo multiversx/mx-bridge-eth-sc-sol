@@ -1,12 +1,6 @@
 import "@nomiclabs/hardhat-ethers";
-// import "@nomicfoundation/hardhat-ethers";
 import "@nomicfoundation/hardhat-toolbox";
 import "@openzeppelin/hardhat-upgrades";
-
-// import "hardhat-contract-sizer";
-// import "hardhat-log-remover";
-// import "hardhat-tracer";
-// import "hardhat-abi-exporter";
 
 import "./tasks/accounts";
 import "./tasks/clean";

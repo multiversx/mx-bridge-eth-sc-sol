@@ -3,12 +3,13 @@
 pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20BurnableUpgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "./SharedStructs.sol";
 import "./access/BridgeRole.sol";
-import "./lib/BoolTokenTransfer.sol";
 import "./lib/Pausable.sol";
+import "./lib/BoolTokenTransfer.sol";
 
 interface IMintableERC20 is IERC20 {
     function mint(address to, uint256 amount) external;
@@ -27,16 +28,16 @@ In order to use it:
 @dev The deposits are requested by the Bridge, and in order to save gas spent by the relayers
 they will be batched either by time (batchTimeLimit) or size (batchSize).
  */
-contract ERC20Safe is BridgeRole, Pausable {
+contract ERC20Safe is Initializable, BridgeRole, Pausable {
     using SafeERC20 for IERC20;
     using BoolTokenTransfer for IERC20;
 
     uint64 public batchesCount;
     uint64 public depositsCount;
-    uint16 public batchSize = 10;
+    uint16 public batchSize;
     uint16 private constant maxBatchSize = 100;
-    uint8 public batchBlockLimit = 40;
-    uint8 public batchSettleLimit = 40;
+    uint8 public batchBlockLimit;
+    uint8 public batchSettleLimit;
 
     mapping(uint256 => Batch) public batches;
     mapping(address => bool) public whitelistedTokens;
@@ -51,6 +52,18 @@ contract ERC20Safe is BridgeRole, Pausable {
 
     event ERC20Deposit(uint112 depositNonce, uint112 batchId);
     event ERC20SCDeposit(uint112 indexed batchId, uint112 depositNonce, string callData);
+
+    function initialize() public initializer {
+        __BridgeRole_init();
+        __Pausable_init();
+        __ERC20Safe__init_unchained();
+    }
+
+    function __ERC20Safe__init_unchained() internal onlyInitializing {
+        batchSize = 10;
+        batchBlockLimit = 40;
+        batchSettleLimit = 40;
+    }
 
     /**
       @notice Whitelist a token. Only whitelisted tokens can be bridged.
@@ -363,8 +376,6 @@ contract ERC20Safe is BridgeRole, Pausable {
         } catch {
             return false;
         }
-
-        return true;
     }
 
     function _isTokenMintBurn(address token) internal view returns (bool) {
