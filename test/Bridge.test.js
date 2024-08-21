@@ -1,7 +1,7 @@
 const { ethers } = require("hardhat");
 const { expect } = require("chai");
 
-const { deployContract } = require("./utils/deploy.utils");
+const { deployContract, deployUpgradableContract } = require("./utils/deploy.utils");
 const { getSignaturesForExecuteTransfer, getExecuteTransferData } = require("./utils/bridge.utils");
 
 describe("Bridge", async function () {
@@ -12,8 +12,8 @@ describe("Bridge", async function () {
   let erc20Safe, bridge, genericErc20;
 
   async function setupContracts() {
-    erc20Safe = await deployContract(adminWallet, "ERC20Safe");
-    bridge = await deployContract(adminWallet, "Bridge", [boardMembers, quorum, erc20Safe.address]);
+    erc20Safe = await deployUpgradableContract(adminWallet, "ERC20Safe");
+    bridge = await deployUpgradableContract(adminWallet, "Bridge", [boardMembers, quorum, erc20Safe.address]);
     await erc20Safe.setBridge(bridge.address);
     await bridge.unpause();
     await setupErc20Token();
@@ -54,7 +54,7 @@ describe("Bridge", async function () {
     it("reverts", async function () {
       const invalidQuorumValue = 1;
       await expect(
-        deployContract(adminWallet, "Bridge", [boardMembers, invalidQuorumValue, erc20Safe.address]),
+        deployUpgradableContract(adminWallet, "Bridge", [boardMembers, invalidQuorumValue, erc20Safe.address]),
       ).to.be.revertedWith("Quorum is too low.");
     });
   });

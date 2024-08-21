@@ -2,7 +2,7 @@ const { expect } = require("chai");
 const { ethers } = require("hardhat");
 const { encodeCallData } = require("@multiversx/sdk-js-bridge");
 
-const { deployContract } = require("./utils/deploy.utils");
+const { deployContract, deployUpgradableContract } = require("./utils/deploy.utils");
 
 describe("ERC20Safe", function () {
   const defaultMinAmount = 25;
@@ -19,8 +19,8 @@ describe("ERC20Safe", function () {
   let safe, genericERC20, bridge;
   beforeEach(async function () {
     genericERC20 = await deployContract(adminWallet, "GenericERC20", ["TSC", "TSC", 6]);
-    safe = await deployContract(adminWallet, "ERC20Safe");
-    bridge = await deployContract(adminWallet, "Bridge", [boardMembers.map(m => m.address), 3, safe.address]);
+    safe = await deployUpgradableContract(adminWallet, "ERC20Safe");
+    bridge = await deployUpgradableContract(adminWallet, "Bridge", [boardMembers.map(m => m.address), 3, safe.address]);
 
     await genericERC20.approve(safe.address, 1000);
     await safe.setBridge(bridge.address);
@@ -357,7 +357,7 @@ describe("ERC20Safe", function () {
           );
 
           let receipt = await depositResp.wait();
-          
+
           expect(receipt.gasUsed).to.be.lt(400000);
         }
       });
@@ -413,7 +413,7 @@ describe("ERC20Safe", function () {
       await safe.whitelistToken(genericERC20.address, defaultMinAmount, defaultMaxAmount, false, true);
       await genericERC20.approve(safe.address, "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
 
-      const mockBridge = await deployContract(adminWallet, "BridgeMock", [
+      const mockBridge = await deployUpgradableContract(adminWallet, "BridgeMock", [
         boardMembers.map(m => m.address),
         3,
         safe.address,

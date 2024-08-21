@@ -1,7 +1,7 @@
 const { expect } = require("chai");
 const { ethers } = require("hardhat");
 
-const { deployContract } = require("./utils/deploy.utils");
+const { deployContract, deployUpgradableContract } = require("./utils/deploy.utils");
 const { getSignaturesForExecuteTransfer } = require("./utils/bridge.utils");
 
 describe("ERC20Safe, MintBurnERC20, and Bridge Interaction", function () {
@@ -12,15 +12,15 @@ describe("ERC20Safe, MintBurnERC20, and Bridge Interaction", function () {
   let erc20Safe, bridge, mintBurnErc20;
 
   async function setupContracts() {
-    erc20Safe = await deployContract(adminWallet, "ERC20Safe");
-    bridge = await deployContract(adminWallet, "Bridge", [boardMembers, quorum, erc20Safe.address]);
+    erc20Safe = await deployUpgradableContract(adminWallet, "ERC20Safe");
+    bridge = await deployUpgradableContract(adminWallet, "Bridge", [boardMembers, quorum, erc20Safe.address]);
     await erc20Safe.setBridge(bridge.address);
     await bridge.unpause();
     await setupErc20Token();
   }
 
   async function setupErc20Token() {
-    mintBurnErc20 = await deployContract(adminWallet, "MintBurnERC20", ["Test Token", "TST", 6]);
+    mintBurnErc20 = await deployUpgradableContract(adminWallet, "MintBurnERC20", ["Test Token", "TST", 6]);
     await erc20Safe.whitelistToken(mintBurnErc20.address, 0, 100, true, false);
     await erc20Safe.unpause();
   }

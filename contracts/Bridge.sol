@@ -50,7 +50,7 @@ contract Bridge is RelayerRole, Pausable {
      *   - add/remove relayers
      *   - add/remove tokens that can be bridged
      */
-    function initialize(address[] memory board, uint256 initialQuorum, ERC20Safe erc20Safe) public initializer {
+    function initialize(address[] memory board, uint256 initialQuorum, ERC20Safe erc20Safe) public virtual initializer {
         __RelayerRole_init();
         __Bridge__init_unchained(board, initialQuorum, erc20Safe);
     }
