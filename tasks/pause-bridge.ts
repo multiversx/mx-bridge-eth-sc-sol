@@ -1,4 +1,4 @@
-import { task } from "hardhat/config";
+require("@nomicfoundation/hardhat-toolbox");
 import { getDeployOptions } from "./args/deployOptions";
 
 task("pause-bridge", "Pause the bridge SC")

@@ -1,4 +1,4 @@
-import { task } from "hardhat/config";
+require("@nomicfoundation/hardhat-toolbox");
 import { getDeployOptions } from "./args/deployOptions";
 
 task("add-relayer", "Add relayer with given address")

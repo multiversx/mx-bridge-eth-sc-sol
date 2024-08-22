@@ -1,4 +1,4 @@
-import { task, types } from "hardhat/config";
+require("@nomicfoundation/hardhat-toolbox");
 import { getDeployOptions } from "../args/deployOptions";
 
 task("set-bridge-on-safe", "Set")

@@ -1,4 +1,4 @@
-import { task } from "hardhat/config";
+require("@nomicfoundation/hardhat-toolbox");
 import { getDeployOptions } from "./args/deployOptions";
 
 task("set-batch-block-limit", "Sets a new batch block limit")

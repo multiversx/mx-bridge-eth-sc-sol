@@ -1,4 +1,4 @@
-import { task } from "hardhat/config";
+require("@nomicfoundation/hardhat-toolbox");
 
 task("get-batch-deposits", "Get deposits of the given batch ID")
   .addParam("batch", "Id of the batch")

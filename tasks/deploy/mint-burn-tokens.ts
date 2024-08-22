@@ -1,4 +1,5 @@
-import { task } from "hardhat/config";
+require("@nomicfoundation/hardhat-toolbox");
+import { getDeployOptions } from "../args/deployOptions";
 
 task("deploy-mint-burn-tokens", "Deploys MintBurnERC20 contracts to use to the bridge")
   .addParam("name", "Name of the token to deploy")
@@ -10,19 +11,17 @@ task("deploy-mint-burn-tokens", "Deploys MintBurnERC20 contracts to use to the b
     const config = JSON.parse(fs.readFileSync(filename, "utf8"));
     console.log("Current contract addresses");
     const safeAddress = config["erc20Safe"];
-    const safeContractFactory = await hre.ethers.getContractFactory("ERC20Safe");
-    const safe = safeContractFactory.attach(safeAddress);
-    console.log("Safe at: ", safe.address);
+    const [adminWallet] = await hre.ethers.getSigners();
     //deploy contracts
-    const mintBurnERC20Factory = await hre.ethers.getContractFactory("MintBurnERC20");
 
     const tokenName = taskArgs.name;
     const tokenSymbol = taskArgs.symbol;
     const decimals = taskArgs.decimals;
 
-    const usdcContract = await mintBurnERC20Factory.deploy(tokenName, tokenSymbol, decimals);
-    await usdcContract.deployed();
-    console.log("MintBurn token deployed to:", usdcContract.address);
+    const factory = (await hre.ethers.getContractFactory("MintBurnERC20")).connect(adminWallet);
+    const usdcContract = await hre.upgrades.deployProxy(factory, [tokenName, tokenSymbol, decimals] ,{ kind: "transparent", ...getDeployOptions(taskArgs) });
+    await usdcContract.waitForDeployment();
+    console.log("MintBurn token deployed to:", usdcContract.target);
 
     await usdcContract.grantRole(await usdcContract.MINTER_ROLE(), safeAddress);
   });

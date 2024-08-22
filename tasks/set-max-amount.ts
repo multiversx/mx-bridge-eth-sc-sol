@@ -1,5 +1,4 @@
-import { task } from "hardhat/config";
-import { ethers } from "ethers";
+require("@nomicfoundation/hardhat-toolbox");
 import { getDeployOptions } from "./args/deployOptions";
 
 task("set-max-amount", "Updates minimum amount for depositing an ERC20 token")

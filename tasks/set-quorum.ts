@@ -1,4 +1,4 @@
-import { task } from "hardhat/config";
+require("@nomicfoundation/hardhat-toolbox");
 import { getDeployOptions } from "./args/deployOptions";
 
 task("set-quorum", "Updates the quorum on the Bridge contract")

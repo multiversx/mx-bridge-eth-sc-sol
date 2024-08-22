@@ -1,4 +1,4 @@
-import { task } from "hardhat/config";
+require("@nomicfoundation/hardhat-toolbox");
 
 async function trySend(
   signer: { sendTransaction: (arg0: { to: any; value: number; nonce: any; gasPrice: number }) => any },

@@ -1,5 +1,4 @@
-import { task } from "hardhat/config";
-import { address } from "hardhat/internal/core/config/config-validation";
+require("@nomicfoundation/hardhat-toolbox");
 import { getDeployOptions } from "./args/deployOptions";
 
 task("init-supply", "Deposit the initial supply on a new SC from an old one")

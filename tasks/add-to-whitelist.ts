@@ -1,4 +1,4 @@
-import { task, types } from "hardhat/config";
+require("@nomicfoundation/hardhat-toolbox");
 import { getDeployOptions } from "./args/deployOptions";
 
 task("add-to-whitelist", "Whitelists a new address in the bridge.")

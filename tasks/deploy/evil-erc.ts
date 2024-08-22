@@ -1,4 +1,4 @@
-import { task } from "hardhat/config";
+require("@nomicfoundation/hardhat-toolbox");
 
 task("deploy-evil-erc", "Deploys EvilERC20 contract to use to test the bridge").setAction(async (_, hre) => {
   const fs = require("fs");
@@ -13,9 +13,8 @@ task("deploy-evil-erc", "Deploys EvilERC20 contract to use to test the bridge").
   const evilERC20Factory = await hre.ethers.getContractFactory("EvilERC20");
 
   const usdcContract = await evilERC20Factory.deploy("EVILUSDC", "EVILUSDC");
-  await usdcContract.deployed();
 
   //whitelist tokens in safe
-  console.log("Whitelisting token ", usdcContract.address);
-  await safe.whitelistToken(usdcContract.address, "25000000", "100000000000", false, true);
+  console.log("Whitelisting token ", usdcContract.target);
+  await safe.whitelistToken(usdcContract.target, "25000000", "100000000000", false, true);
 });

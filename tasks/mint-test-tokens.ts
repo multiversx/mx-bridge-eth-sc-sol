@@ -1,4 +1,4 @@
-import { task } from "hardhat/config";
+require("@nomicfoundation/hardhat-toolbox");
 
 task("mint-test-tokens", "Mints tests tokens and sends them to the recipientAddress")
   .addParam("address", "Address of wallet to be funded")

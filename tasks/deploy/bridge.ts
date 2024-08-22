@@ -1,6 +1,4 @@
-import { task, types } from "hardhat/config";
-import { ethers } from "ethers";
-import fs from "fs";
+require("@nomicfoundation/hardhat-toolbox");
 import { getDeployOptions } from "../args/deployOptions";
 
 task("deploy-bridge", "Deploys the Bridge contract")
@@ -22,14 +20,13 @@ task("deploy-bridge", "Deploys the Bridge contract")
     const filename = "setup.config.json";
     const config = JSON.parse(fs.readFileSync(filename, "utf8"));
 
-    const Bridge = await hre.ethers.getContractFactory("Bridge");
-    let bridgeContract;
-    bridgeContract = await Bridge.deploy(relayerAddresses, quorum, config.erc20Safe, getDeployOptions(taskArgs));
+    const Bridge = (await hre.ethers.getContractFactory("Bridge")).connect(adminWallet);
+    const bridgeContract = await hre.upgrades.deployProxy(Bridge, [relayerAddresses, quorum, config.erc20Safe] ,{ kind: "transparent", ...getDeployOptions(taskArgs) });
+    await bridgeContract.waitForDeployment();
+    console.log("Bridge deployed to:", bridgeContract.target);
 
-    await bridgeContract.deployed();
-    console.log("Bridge deployed to:", bridgeContract.address);
 
-    config.bridge = bridgeContract.address;
+    config.bridge = bridgeContract.target;
     config.relayers = relayerAddresses;
 
     fs.writeFileSync(filename, JSON.stringify(config));
