@@ -34,3 +34,18 @@ struct Batch {
 struct DepositSCExtension {
     string depositData;
 }
+
+struct MvxTransaction {
+    address token;
+    bytes32 sender;
+    address recipient;
+    uint256 amount;
+    uint256 depositNonce;
+    bytes callData;
+    bool isScRecipient;
+}
+
+struct TokenPayment {
+    address tokenAddress;
+    uint256 value;
+}
