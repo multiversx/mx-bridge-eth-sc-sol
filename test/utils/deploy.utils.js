@@ -17,7 +17,22 @@ async function deployUpgradableContract(wallet, name, params = []) {
   return contract;
 }
 
+async function upgradeContract(wallet, proxyAddress, name, params = []) {
+  let factory = (await ethers.getContractFactory(name)).connect(wallet);
+
+  const upgraded = await upgrades.upgradeProxy(proxyAddress, factory, {
+    call: {
+      fn: "initializeV2",
+      args: params, // Pass the new variable value for initialization
+    },
+  });
+
+  upgraded["address"] = upgraded.target;
+  return upgraded;
+}
+
 module.exports = {
   deployContract,
-  deployUpgradableContract
+  deployUpgradableContract,
+  upgradeContract
 }

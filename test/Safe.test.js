@@ -2,7 +2,7 @@ const { expect } = require("chai");
 const { ethers } = require("hardhat");
 const { encodeCallData } = require("@multiversx/sdk-js-bridge");
 
-const { deployContract, deployUpgradableContract } = require("./utils/deploy.utils");
+const { deployContract, deployUpgradableContract, upgradeContract } = require("./utils/deploy.utils");
 
 describe("ERC20Safe", function () {
   const defaultMinAmount = 25;
@@ -502,6 +502,23 @@ describe("ERC20Safe", function () {
       expect(isFinal).to.be.eq(areDepositsFinal);
       expect(batch.depositsCount).to.be.eq(deposits.length);
       expect(batch.depositsCount).to.be.eq(2);
+    });
+  });
+
+  describe("ERC20Safe - upgrade works as expected", async function() {
+    it("upgrades and has new functions", async function () {
+      let valueToCheckAgainst = 100n;
+
+      // First change something in the safe to check state persistence
+      let currentBatchSize = await safe.batchSize();
+      await safe.setBatchSize(currentBatchSize - 1n);
+
+      let newSafe = await upgradeContract(adminWallet, safe.address, "SafeUpgrade", [valueToCheckAgainst]);
+
+      expect(await newSafe.afterUpgrade()).to.be.eq(valueToCheckAgainst);
+      expect(await newSafe.batchSize()).to.be.eq(currentBatchSize - 1n);
+
+      await safe.setBatchSize(currentBatchSize);
     });
   });
 });
