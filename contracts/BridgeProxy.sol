@@ -11,12 +11,6 @@ contract BridgeProxy is Pausable {
     MvxTransaction[] private pendingTransactions;
     mapping(uint256 => TokenPayment) private payments;
     uint256 private lowestTxId;
-    uint256 private txId;
-
-    struct TokenPayment {
-        address tokenAddress;
-        uint256 value;
-    }
 
     constructor(address _multiTransferAddress) Pausable() {
         multiTransferAddress = _multiTransferAddress;
