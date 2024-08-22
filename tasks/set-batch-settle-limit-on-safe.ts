@@ -1,4 +1,5 @@
 import { task } from "hardhat/config";
+import { getDeployOptions } from "./args/deployOptions";
 
 task("set-batch-settle-limit-on-safe", "Sets a new batch settle limit")
   .addParam("blocks", "new batch settle limit")
@@ -12,11 +13,8 @@ task("set-batch-settle-limit-on-safe", "Sets a new batch settle limit")
     const safeContractFactory = await hre.ethers.getContractFactory("ERC20Safe");
     const safe = safeContractFactory.attach(safeAddress).connect(adminWallet);
 
-    if (taskArgs.price) {
-      await safe.setBatchBlockLimit(taskArgs.blocks, { gasPrice: taskArgs.price * 1000000000 });
-    } else {
-      await safe.setBatchBlockLimit(taskArgs.blocks);
-    }
+    await safe.setBatchSettleLimit(taskArgs.blocks, getDeployOptions(taskArgs));
+
     config.batchBlockLimit = taskArgs.blocks;
     fs.writeFileSync(filename, JSON.stringify(config));
   });
