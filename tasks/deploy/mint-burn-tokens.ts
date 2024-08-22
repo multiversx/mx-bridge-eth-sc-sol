@@ -1,4 +1,4 @@
-require("@nomicfoundation/hardhat-toolbox");
+import "@nomicfoundation/hardhat-toolbox";
 import { getDeployOptions } from "../args/deployOptions";
 
 task("deploy-mint-burn-tokens", "Deploys MintBurnERC20 contracts to use to the bridge")

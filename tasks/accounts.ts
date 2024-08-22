@@ -1,5 +1,5 @@
 import { Signer } from "@ethersproject/abstract-signer";
-require("@nomicfoundation/hardhat-toolbox");
+import "@nomicfoundation/hardhat-toolbox";
 
 task("accounts", "Prints the list of accounts", async (_taskArgs, hre) => {
   const accounts: Signer[] = await hre.ethers.getSigners();

@@ -1,4 +1,5 @@
-require("@nomicfoundation/hardhat-toolbox");
+import "@nomicfoundation/hardhat-toolbox";
+
 task("token-balances", "Deposits token and sends to safe")
   .addParam("address", "Address of the token to be sent")
   .addParam("safe", "Address of the token to be sent")

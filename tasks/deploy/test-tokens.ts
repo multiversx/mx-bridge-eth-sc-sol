@@ -1,4 +1,4 @@
-require("@nomicfoundation/hardhat-toolbox");
+import "@nomicfoundation/hardhat-toolbox";
 
 task("deploy-test-tokens", "Deploys ERC20 contracts to use to test the bridge")
   .addParam("name", "Name of the token to deploy")

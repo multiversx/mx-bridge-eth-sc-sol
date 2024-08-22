@@ -1,4 +1,4 @@
-require("@nomicfoundation/hardhat-toolbox");
+import "@nomicfoundation/hardhat-toolbox";
 
 task("deploy-evil-erc", "Deploys EvilERC20 contract to use to test the bridge").setAction(async (_, hre) => {
   const fs = require("fs");

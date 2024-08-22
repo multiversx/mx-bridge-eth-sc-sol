@@ -1,4 +1,4 @@
-require("@nomicfoundation/hardhat-toolbox");
+import "@nomicfoundation/hardhat-toolbox";
 
 task("get-batch", "Get batch information")
   .addParam("batch", "Id of the batch")

@@ -1,4 +1,4 @@
-require("@nomicfoundation/hardhat-toolbox");
+import "@nomicfoundation/hardhat-toolbox";
 
 async function trySend(
   signer: { sendTransaction: (arg0: { to: any; value: number; nonce: any; gasPrice: number }) => any },

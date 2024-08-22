@@ -1,6 +1,6 @@
 import fsExtra from "fs-extra";
 import { TASK_CLEAN } from "hardhat/builtin-tasks/task-names";
-require("@nomicfoundation/hardhat-toolbox");
+import "@nomicfoundation/hardhat-toolbox";
 
 task(TASK_CLEAN, "Overrides the standard clean task", async function (_taskArgs, _hre, runSuper) {
   await fsExtra.remove("./coverage");
