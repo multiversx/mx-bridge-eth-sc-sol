@@ -1,4 +1,4 @@
-import { task } from "hardhat/config";
+import "@nomicfoundation/hardhat-toolbox";
 import { getDeployOptions } from "./args/deployOptions";
 
 task("set-batch-settle-limit-on-safe", "Sets a new batch settle limit")

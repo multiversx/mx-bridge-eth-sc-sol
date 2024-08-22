@@ -1,4 +1,3 @@
-import { task } from "hardhat/config";
 import { getDeployOptions } from "./args/deployOptions";
 import { encodeCallData } from "@multiversx/sdk-js-bridge";
 task("deposit-sc", "Deposits token and sends to safe")
@@ -26,7 +25,7 @@ task("deposit-sc", "Deposits token and sends to safe")
     const args = JSON.parse(taskArgs.args);
 
     const callData = encodeCallData(endpoint, gaslimit, args);
-   await safe.depositWithSCExecution(
+    await safe.depositWithSCExecution(
       address,
       amount,
       Buffer.from(receiver, "hex"),

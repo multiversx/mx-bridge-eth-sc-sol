@@ -2,16 +2,23 @@
 
 pragma solidity ^0.8.20;
 
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+
 import "../access/AdminRole.sol";
 
-contract Pausable is AdminRole {
+contract Pausable is Initializable, AdminRole {
     bool private _paused;
     event Pause(bool isPause);
 
     /**
      * @dev Initializes the contract in paused state.
      */
-    constructor() {
+    function __Pausable_init() internal onlyInitializing {
+        __AdminRole_init();
+        __Pausable_init_unchained();
+    }
+
+    function __Pausable_init_unchained() internal onlyInitializing {
         _paused = true;
     }
 
