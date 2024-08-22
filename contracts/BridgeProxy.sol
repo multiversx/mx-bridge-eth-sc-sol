@@ -50,7 +50,7 @@ contract BridgeProxy is Pausable {
             (bool success, ) = txn.recipient.call{ gas: gasLimit }(data);
 
             if (!success) {
-                _executeCallback(txId);
+                _finishExecuteGracefully(txId);
                 return;
             }
         } else {
@@ -58,7 +58,7 @@ contract BridgeProxy is Pausable {
         }
     }
 
-    function _executeCallback(uint256 txId) private {
+    function _finishExecuteGracefully(uint256 txId) private {
         _refundTransaction(txId);
 
         if (txId < lowestTxId) {
@@ -67,8 +67,6 @@ contract BridgeProxy is Pausable {
 
         delete pendingTransactions[txId];
     }
-
-    function _finishExecuteGracefully(uint256 txId) private {}
 
     function _refundTransaction(uint256 txId) private {}
 }
