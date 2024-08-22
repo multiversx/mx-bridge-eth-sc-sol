@@ -106,6 +106,30 @@ function getBSCConfig(network: string): NetworkUserConfig {
   return config;
 }
 
+function getOnefinityConfig(network: string): NetworkUserConfig {
+  let config = {
+    accounts: {
+      count: 12,
+      mnemonic,
+      path: "m/44'/60'/0'/0",
+    },
+    url: `https://testnet-gateway-erc20.onefinity.network`,
+  };
+
+  switch (network) {
+    case "testnet":
+      config.url = "https://testnet-gateway-erc20.onefinity.network";
+      break;
+    case "mainnet":
+      config.url = "tbd";
+      break;
+    default:
+      throw new Error("invalid config option for bsc chain");
+  }
+
+  return config;
+}
+
 function getPolygonConfig(network: string): NetworkUserConfig {
   let config = {
     accounts: {
@@ -150,6 +174,7 @@ const config: HardhatUserConfig = {
     mainnet_eth: getETHConfig("mainnet"),
     testnet_bsc: getBSCConfig("testnet"),
     mainnet_bsc: getBSCConfig("mainnet"),
+    testnet_onefinity: getOnefinityConfig("testnet"),
     mumbai: getPolygonConfig("testnet"),
     mainnet_polygon: getPolygonConfig("mainnet"),
   },
