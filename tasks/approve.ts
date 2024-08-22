@@ -1,4 +1,3 @@
-import { ethers } from "ethers";
 import { task } from "hardhat/config";
 import { getDeployOptions } from "./args/deployOptions";
 
@@ -11,7 +10,6 @@ task("approve", "Approve token")
     const filename = "setup.config.json";
     let config = JSON.parse(fs.readFileSync(filename, "utf8"));
     const safeAddress = config["erc20Safe"];
-    const scExecAddress = config["execProxy"];
     const address = taskArgs.address;
     const signersCount = taskArgs.signers ?? 1;
     const signers = await hre.ethers.getSigners();
@@ -20,11 +18,6 @@ task("approve", "Approve token")
       const tokenContract = (await hre.ethers.getContractFactory("GenericERC20")).attach(address).connect(signer);
       await tokenContract.approve(
         safeAddress,
-        "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
-        getDeployOptions(taskArgs),
-      );
-      await tokenContract.approve(
-        scExecAddress,
         "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
         getDeployOptions(taskArgs),
       );

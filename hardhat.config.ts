@@ -29,7 +29,7 @@ import "./tasks/deploy/mint-burn-tokens";
 import "./tasks/quorum";
 import "./tasks/get-statuses-after-execution";
 import "./tasks/depositSC";
-
+import "./tasks/set-batch-settle-limit-on-safe"
 import "./tasks/deploy";
 
 import { resolve } from "path";
