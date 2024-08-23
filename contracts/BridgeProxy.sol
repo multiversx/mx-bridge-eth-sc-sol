@@ -43,7 +43,12 @@ contract BridgeProxy is Pausable {
                 return;
             }
 
-            bytes memory data = args.length > 0 ? abi.encodePacked(endpoint, args) : endpoint;
+            bytes memory data;
+            if (args.length > 0) {
+                data = abi.encodePacked(endpoint, args);
+            } else {
+                data = endpoint;
+            }
 
             (bool success, ) = txn.recipient.call{ gas: gasLimit }(data);
 
