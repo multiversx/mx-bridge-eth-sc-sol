@@ -23,7 +23,7 @@ contract BridgeProxy is Pausable {
         lowestTxId = 1;
     }
 
-    function setBridgeAddress(address _bridgeAddress) external onlyAdmin {
+    function setBridge(address _bridgeAddress) external onlyAdmin {
         bridgeAddress = _bridgeAddress;
     }
 

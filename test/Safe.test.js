@@ -6,7 +6,8 @@ const GenericERC20Artifact = require("../artifacts/contracts/GenericERC20.sol/Ge
 const ERC20SafeArtifact = require("../artifacts/contracts/ERC20Safe.sol/ERC20Safe.json");
 const BridgeArtifact = require("../artifacts/contracts/Bridge.sol/Bridge.json");
 const BridgeMockArtifact = require("../artifacts/contracts/test/BridgeMock.sol/BridgeMock.json");
-const {encodeCallData} = require("@multiversx/sdk-js-bridge");
+const BridgeProxy = require("../artifacts/contracts/BridgeProxy.sol/BridgeProxy.json");
+const { encodeCallData } = require("@multiversx/sdk-js-bridge");
 
 describe("ERC20Safe", async function () {
   const defaultMinAmount = 25;
@@ -14,11 +15,17 @@ describe("ERC20Safe", async function () {
   const [adminWallet, otherWallet, simpleBoardMember] = provider.getWallets();
   const boardMembers = [adminWallet, otherWallet, simpleBoardMember];
 
-  let safe, genericERC20, bridge;
+  let safe, genericERC20, bridge, bridgeProxy;
   beforeEach(async function () {
     genericERC20 = await deployContract(adminWallet, GenericERC20Artifact, ["TSC", "TSC", 6]);
     safe = await deployContract(adminWallet, ERC20SafeArtifact);
-    bridge = await deployContract(adminWallet, BridgeArtifact, [boardMembers.map(m => m.address), 3, safe.address]);
+    bridgeProxy = await deployContract(adminWallet, BridgeProxy);
+    bridge = await deployContract(adminWallet, BridgeArtifact, [
+      boardMembers.map(m => m.address),
+      3,
+      safe.address,
+      bridgeProxy.address,
+    ]);
 
     await genericERC20.approve(safe.address, 1000);
     await safe.setBridge(bridge.address);
@@ -413,6 +420,7 @@ describe("ERC20Safe", async function () {
         boardMembers.map(m => m.address),
         3,
         safe.address,
+        bridgeProxy.address,
       ]);
       await safe.setBridge(mockBridge.address);
 
