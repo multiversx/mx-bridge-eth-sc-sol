@@ -6,6 +6,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./lib/Pausable.sol";
 import "./SharedStructs.sol";
 import "./lib/BoolTokenTransfer.sol";
+import "./access/AdminRole.sol";
 
 contract BridgeProxy is Pausable {
     using BoolTokenTransfer for IERC20;
@@ -18,9 +19,12 @@ contract BridgeProxy is Pausable {
     uint256 private lowestTxId;
     uint256 private currentTxId;
 
-    constructor(address _bridgeAddress) Pausable() {
-        bridgeAddress = _bridgeAddress;
+    constructor() Pausable() AdminRole() {
         lowestTxId = 1;
+    }
+
+    function setBridgeAddress(address _bridgeAddress) external onlyAdmin {
+        bridgeAddress = _bridgeAddress;
     }
 
     function deposit(MvxTransaction calldata txn) external payable whenNotPaused {
