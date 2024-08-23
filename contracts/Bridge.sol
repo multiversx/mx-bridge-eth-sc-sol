@@ -101,7 +101,15 @@ contract Bridge is RelayerRole, Pausable {
 
     /**
         @notice Executes a batch of transfers
-        @param mvxTransactions List of transactions to be executed
+        @param mvxTransactions List of transactions ffrom MultiversX side. Each transaction consists of:
+        - token address
+        - sender
+        - recipient
+        - amount
+        - deposit nonce
+        - call data
+        - true, if recipient a smart contract
+          false, otherwise
         @param batchNonceMvx Nonce for the batch
         @param signatures List of signatures from the relayers
     */
@@ -159,7 +167,12 @@ contract Bridge is RelayerRole, Pausable {
     }
 
     function _processDeposit(MvxTransaction calldata mvxTransaction) private returns (DepositStatus) {
-        address recipient = mvxTransaction.isScRecipient ? address(bridgeProxy) : mvxTransaction.recipient;
+        address recipient;
+        if (mvxTransaction.isScRecipient) {
+            recipient = address(bridgeProxy);
+        } else {
+            recipient = mvxTransaction.recipient;
+        }
 
         DepositStatus status = safe.transfer(mvxTransaction.token, mvxTransaction.amount, recipient)
             ? DepositStatus.Executed

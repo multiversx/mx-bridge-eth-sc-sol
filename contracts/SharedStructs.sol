@@ -44,8 +44,3 @@ struct MvxTransaction {
     bytes callData;
     bool isScRecipient;
 }
-
-struct TokenPayment {
-    address token;
-    uint256 amount;
-}

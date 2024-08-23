@@ -15,7 +15,6 @@ contract BridgeProxy is Pausable {
 
     address public bridgeAddress;
     mapping(uint256 => MvxTransaction) private pendingTransactions;
-    mapping(uint256 => TokenPayment) private payments;
     uint256 private lowestTxId;
     uint256 private currentTxId;
 
@@ -27,15 +26,14 @@ contract BridgeProxy is Pausable {
     function deposit(MvxTransaction calldata txn) external payable whenNotPaused {
         require(msg.sender == bridgeAddress, "BridgeProxy: Only Bridge contract can do deposits");
         pendingTransactions[currentTxId] = txn;
-        payments[currentTxId++] = TokenPayment(txn.token, txn.amount);
+        currentTxId++;
     }
 
     function execute(uint256 txId) external whenNotPaused {
         require(txId >= 0 && txId < currentTxId, "BridgeProxy: Invalid transaction ID");
         MvxTransaction memory txn = pendingTransactions[txId];
-        TokenPayment memory payment = payments[txId];
 
-        require(payment.amount != 0, "BridgeProxy: No amount bridged");
+        require(txn.amount != 0, "BridgeProxy: No amount bridged");
 
         if (txn.callData.length > 0) {
             (bytes memory endpoint, uint256 gasLimit, bytes memory args) = abi.decode(
@@ -72,10 +70,9 @@ contract BridgeProxy is Pausable {
     }
 
     function _refundTransaction(uint256 txId) private {
-        TokenPayment memory payment = payments[txId];
         MvxTransaction memory txn = pendingTransactions[txId];
 
-        IERC20 erc20 = IERC20(payment.token);
+        IERC20 erc20 = IERC20(txn.token);
         bool transferExecuted = erc20.boolTransfer(bridgeAddress, txn.amount);
         require(transferExecuted, "BridgeProxy: Refund failed");
     }
