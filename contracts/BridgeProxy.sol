@@ -2,27 +2,30 @@
 
 pragma solidity ^0.8.20;
 
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./lib/Pausable.sol";
 import "./SharedStructs.sol";
+import "./lib/BoolTokenTransfer.sol";
 
 contract BridgeProxy is Pausable {
+    using BoolTokenTransfer for IERC20;
+
     uint256 public constant MIN_GAS_LIMIT_FOR_SC_CALL = 10_000_000;
     uint256 public constant DEFAULT_GAS_LIMIT_FOR_REFUND_CALLBACK = 20_000_000;
 
-    address public multiTransferAddress;
-    address public bridgedTokensWrapperAddress;
+    address public bridgeAddress;
     mapping(uint256 => MvxTransaction) private pendingTransactions;
     mapping(uint256 => TokenPayment) private payments;
     uint256 private lowestTxId;
     uint256 private currentTxId;
 
-    constructor(address _multiTransferAddress) Pausable() {
-        multiTransferAddress = _multiTransferAddress;
+    constructor(address _bridgeAddress) Pausable() {
+        bridgeAddress = _bridgeAddress;
         lowestTxId = 1;
     }
 
     function deposit(MvxTransaction calldata txn) external payable whenNotPaused {
-        require(msg.sender == multiTransferAddress, "BridgeProxy: Only MultiTransfer can do deposits");
+        require(msg.sender == bridgeAddress, "BridgeProxy: Only Bridge contract can do deposits");
         pendingTransactions[currentTxId] = txn;
         payments[currentTxId++] = TokenPayment(txn.token, txn.amount);
     }
@@ -68,5 +71,38 @@ contract BridgeProxy is Pausable {
         delete pendingTransactions[txId];
     }
 
-    function _refundTransaction(uint256 txId) private {}
+    function _refundTransaction(uint256 txId) private {
+        TokenPayment memory payment = payments[txId];
+        MvxTransaction memory txn = pendingTransactions[txId];
+
+        IERC20 erc20 = IERC20(payment.token);
+        bool transferExecuted = erc20.boolTransfer(bridgeAddress, txn.amount);
+        require(transferExecuted, "BridgeProxy: Refund failed");
+    }
+
+    function getPendingTransactionById(uint256 txId) public view returns (MvxTransaction memory) {
+        return pendingTransactions[txId];
+    }
+
+    function getPendingTransaction() public view returns (MvxTransaction[] memory) {
+        // Calculate the number of valid transactions
+        uint256 validCount = 0;
+        for (uint256 i = lowestTxId; i < currentTxId; i++) {
+            if (pendingTransactions[i].amount != 0) {
+                validCount++;
+            }
+        }
+
+        MvxTransaction[] memory txns = new MvxTransaction[](validCount);
+        uint256 index = 0;
+
+        for (uint256 i = lowestTxId; i < currentTxId; i++) {
+            if (pendingTransactions[i].amount != 0) {
+                txns[index] = pendingTransactions[i];
+                index++;
+            }
+        }
+
+        return txns;
+    }
 }

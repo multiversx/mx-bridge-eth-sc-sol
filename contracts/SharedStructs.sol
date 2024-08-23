@@ -46,6 +46,6 @@ struct MvxTransaction {
 }
 
 struct TokenPayment {
-    address tokenAddress;
+    address token;
     uint256 amount;
 }
