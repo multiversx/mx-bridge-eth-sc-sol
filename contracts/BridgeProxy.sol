@@ -15,7 +15,6 @@ contract BridgeProxy is Pausable, BridgeRole {
     uint256 public constant MIN_GAS_LIMIT_FOR_SC_CALL = 10_000_000;
     uint256 public constant DEFAULT_GAS_LIMIT_FOR_REFUND_CALLBACK = 20_000_000;
 
-    address public bridgeAddress;
     mapping(uint256 => MvxTransaction) private pendingTransactions;
     uint256 private lowestTxId;
     uint256 private currentTxId;
@@ -78,7 +77,7 @@ contract BridgeProxy is Pausable, BridgeRole {
         MvxTransaction memory txn = pendingTransactions[txId];
 
         IERC20 erc20 = IERC20(txn.token);
-        bool transferExecuted = erc20.boolTransfer(bridgeAddress, txn.amount);
+        bool transferExecuted = erc20.boolTransfer(this.bridge(), txn.amount);
         require(transferExecuted, "BridgeProxy: Refund failed");
     }
 
