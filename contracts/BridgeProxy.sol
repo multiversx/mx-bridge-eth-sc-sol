@@ -29,9 +29,8 @@ contract BridgeProxy is Pausable {
     function execute(uint256 txId) external whenNotPaused {
         require(txId >= 0 && txId < currentTxId, "BridgeProxy: Invalid transaction ID");
         MvxTransaction memory txn = pendingTransactions[txId];
-        TokenPayment memory payment = payments[txId];
 
-        require(payment.amount != 0, "BridgeProxy: No amount bridged");
+        require(txn.amount != 0, "BridgeProxy: No amount bridged");
 
         if (txn.callData.length > 0) {
             (bytes memory endpoint, uint256 gasLimit, bytes memory args) = abi.decode(
@@ -44,7 +43,12 @@ contract BridgeProxy is Pausable {
                 return;
             }
 
-            bytes memory data = args.length > 0 ? abi.encodePacked(endpoint, args) : endpoint;
+            bytes memory data;
+            if (args.length > 0) {
+                data = abi.encodePacked(endpoint, args);
+            } else {
+                data = endpoint;
+            }
 
             (bool success, ) = txn.recipient.call{ gas: gasLimit }(data);
 
