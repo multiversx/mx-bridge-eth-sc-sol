@@ -7,8 +7,9 @@ import "./lib/Pausable.sol";
 import "./SharedStructs.sol";
 import "./lib/BoolTokenTransfer.sol";
 import "./access/AdminRole.sol";
+import "./access/BridgeRole.sol";
 
-contract BridgeProxy is Pausable {
+contract BridgeProxy is Pausable, BridgeRole {
     using BoolTokenTransfer for IERC20;
 
     uint256 public constant MIN_GAS_LIMIT_FOR_SC_CALL = 10_000_000;
@@ -19,16 +20,11 @@ contract BridgeProxy is Pausable {
     uint256 private lowestTxId;
     uint256 private currentTxId;
 
-    constructor() Pausable() AdminRole() {
+    constructor() Pausable() {
         lowestTxId = 1;
     }
 
-    function setBridge(address _bridgeAddress) external onlyAdmin {
-        bridgeAddress = _bridgeAddress;
-    }
-
-    function deposit(MvxTransaction calldata txn) external payable whenNotPaused {
-        require(msg.sender == bridgeAddress, "BridgeProxy: Only Bridge contract can do deposits");
+    function deposit(MvxTransaction calldata txn) external payable whenNotPaused onlyBridge {
         pendingTransactions[currentTxId] = txn;
         currentTxId++;
     }
