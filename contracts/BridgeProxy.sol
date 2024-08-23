@@ -11,8 +11,7 @@ contract BridgeProxy is Pausable {
 
     address public multiTransferAddress;
     address public bridgedTokensWrapperAddress;
-    mapping(uint256 => MvxTransaction) private pendingTransactions;
-    mapping(uint256 => TokenPayment) private payments;
+    mapping(uint256 => MvxTransaction) public pendingTransactions;
     uint256 private lowestTxId;
     uint256 private currentTxId;
 
@@ -24,7 +23,7 @@ contract BridgeProxy is Pausable {
     function deposit(MvxTransaction calldata txn) external payable whenNotPaused {
         require(msg.sender == multiTransferAddress, "BridgeProxy: Only MultiTransfer can do deposits");
         pendingTransactions[currentTxId] = txn;
-        payments[currentTxId++] = TokenPayment(txn.token, txn.amount);
+        currentTxId++;
     }
 
     function execute(uint256 txId) external whenNotPaused {
