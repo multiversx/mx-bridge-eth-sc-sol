@@ -86,15 +86,8 @@ contract BridgeProxy is Pausable, BridgeRole {
     }
 
     function getPendingTransaction() public view returns (MvxTransaction[] memory) {
-        // Calculate the number of valid transactions
-        uint256 validCount = 0;
-        for (uint256 i = lowestTxId; i < currentTxId; i++) {
-            if (pendingTransactions[i].amount != 0) {
-                validCount++;
-            }
-        }
-
-        MvxTransaction[] memory txns = new MvxTransaction[](validCount);
+        uint256 pendingTransactionsCount = currentTxId - lowestTxId;
+        MvxTransaction[] memory txns = new MvxTransaction[](pendingTransactionsCount);
         uint256 index = 0;
 
         for (uint256 i = lowestTxId; i < currentTxId; i++) {
@@ -102,6 +95,10 @@ contract BridgeProxy is Pausable, BridgeRole {
                 txns[index] = pendingTransactions[i];
                 index++;
             }
+        }
+
+        assembly {
+            mstore(txns, index)
         }
 
         return txns;
