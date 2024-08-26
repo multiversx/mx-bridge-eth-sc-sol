@@ -63,7 +63,6 @@ describe("BridgeProxy", function () {
     await bridge.executeTransfer(arrayOfTxn, batchNonce, signatures);
   };
 
-  // Generic function to generate calldata
   function generateCallData(functionSignature, gasLimit, argTypes, argValues) {
     // Compute the function selector
     const functionSelector = ethers.utils.id(functionSignature).slice(0, 10); // First 4 bytes of the hash

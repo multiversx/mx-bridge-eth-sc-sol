@@ -35,37 +35,27 @@ contract BridgeProxy is Pausable, BridgeRole {
         require(txn.amount != 0, "BridgeProxy: No amount bridged");
 
         if (txn.callData.length > 0) {
-            (bytes memory endpoint, uint256 gasLimit, bytes memory args) = abi.decode(
+            (bytes memory selector, uint256 gasLimit, bytes memory args) = abi.decode(
                 txn.callData,
                 (bytes, uint256, bytes)
             );
 
-            if (endpoint.length == 0 || gasLimit == 0 || gasLimit < MIN_GAS_LIMIT_FOR_SC_CALL) {
+            if (selector.length == 0 || gasLimit == 0 || gasLimit < MIN_GAS_LIMIT_FOR_SC_CALL) {
                 _finishExecuteGracefully(txId);
                 return;
-            }
-
-            // Convert endpoint from bytes to bytes4 (function selector)
-            bytes4 selector;
-            assembly {
-                selector := mload(add(endpoint, 32))
             }
 
             bytes memory data;
             if (args.length > 0) {
                 data = abi.encodePacked(selector, args);
             } else {
-                // Create a bytes memory array with the length of 4 (for bytes4)
-                data = new bytes(4);
-                assembly {
-                    mstore(add(data, 32), selector) // Store the selector in the bytes array
-                }
+                data = selector;
             }
+
             (bool success, ) = txn.recipient.call{ gas: gasLimit }(data);
 
             if (!success) {
                 _finishExecuteGracefully(txId);
-                return;
             }
         } else {
             _finishExecuteGracefully(txId);
