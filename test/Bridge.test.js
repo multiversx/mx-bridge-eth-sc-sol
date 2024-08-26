@@ -6,6 +6,7 @@ const { smock } = require("@defi-wonderland/smock");
 const BridgeContract = require("../artifacts/contracts/Bridge.sol/Bridge.json");
 const ERC20SafeContract = require("../artifacts/contracts/ERC20Safe.sol/ERC20Safe.json");
 const GenericERC20 = require("../artifacts/contracts/GenericERC20.sol/GenericERC20.json");
+const BridgeProxy = require("../artifacts/contracts/BridgeProxy.sol/BridgeProxy.json");
 const { getSignaturesForExecuteTransfer, getExecuteTransferData } = require("./utils/bridge.utils");
 
 describe("Bridge", async function () {
@@ -15,17 +16,21 @@ describe("Bridge", async function () {
     m => m.address,
   );
   const quorum = 7;
-
-  let erc20Safe, bridge, genericErc20;
-
+  let erc20Safe, bridge, genericErc20, bridgeProxy;
   async function setupContracts() {
     erc20Safe = await deployContract(adminWallet, ERC20SafeContract);
-    bridge = await deployContract(adminWallet, BridgeContract, [boardMembers, quorum, erc20Safe.address]);
+    bridgeProxy = await deployContract(adminWallet, BridgeProxy);
+    bridge = await deployContract(adminWallet, BridgeContract, [
+      boardMembers,
+      quorum,
+      erc20Safe.address,
+      bridgeProxy.address,
+    ]);
     await erc20Safe.setBridge(bridge.address);
+    await bridgeProxy.setBridge(bridge.address);
     await bridge.unpause();
     await setupErc20Token();
   }
-
   async function setupErc20Token() {
     genericErc20 = await deployContract(adminWallet, GenericERC20, ["TSC", "TSC", 6]);
     await genericErc20.mint(adminWallet.address, 1000);
@@ -33,124 +38,105 @@ describe("Bridge", async function () {
     await erc20Safe.whitelistToken(genericErc20.address, 0, 100, false, true);
     await erc20Safe.unpause();
   }
-
   beforeEach(async function () {
     await setupContracts();
   });
-
   it("sets creator as admin", async function () {
     expect(await bridge.admin()).to.equal(adminWallet.address);
   });
-
   it("sets the quorum", async function () {
     expect(await bridge.quorum()).to.equal(quorum);
   });
-
   it("Sets the board members with relayer rights", async function () {
     expect(await bridge.getRelayers()).to.eql(boardMembers);
   });
-
   describe("when initialized with a quorum that is lower than the minimum", async function () {
     it("reverts", async function () {
       const invalidQuorumValue = 1;
       await expect(
-        deployContract(adminWallet, BridgeContract, [boardMembers, invalidQuorumValue, erc20Safe.address]),
+        deployContract(adminWallet, BridgeContract, [
+          boardMembers,
+          invalidQuorumValue,
+          erc20Safe.address,
+          bridgeProxy.address,
+        ]),
       ).to.be.revertedWith("Quorum is too low.");
     });
   });
-
   describe("addRelayer", async function () {
     it("reverts when called with an empty address", async function () {
       await expect(bridge.addRelayer(ethers.constants.AddressZero)).to.be.revertedWith(
         "RelayerRole: account cannot be the 0 address",
       );
     });
-
     it("reverts when not called by admin", async function () {
       nonAdminBridge = bridge.connect(otherWallet);
       await expect(nonAdminBridge.addRelayer(relayer4.address)).to.be.revertedWith(
         "Access Control: sender is not Admin",
       );
     });
-
     it("adds the address as a relayer", async function () {
       await bridge.addRelayer(relayer4.address);
-
       expect(await bridge.isRelayer(relayer4.address)).to.be.true;
     });
-
     it("emits event that a relayer was added", async function () {
       await expect(bridge.addRelayer(relayer4.address))
         .to.emit(bridge, "RelayerAdded")
         .withArgs(relayer4.address, adminWallet.address);
     });
-
     it("reverts if new relayer is already a relayer", async function () {
       await bridge.addRelayer(relayer4.address);
-
       await expect(bridge.addRelayer(relayer4.address)).to.be.revertedWith("RelayerRole: address is already a relayer");
     });
   });
-
   describe("removeRelayer", async function () {
     beforeEach(async function () {
       await bridge.addRelayer(relayer4.address);
     });
-
     it("removes the relayer", async function () {
       await bridge.removeRelayer(relayer4.address);
-
       expect(await bridge.isRelayer(relayer4.address)).to.be.false;
     });
-
     it("emits an event", async function () {
       expect(await bridge.isRelayer(relayer4.address)).to.be.true;
       await expect(bridge.removeRelayer(relayer4.address))
         .to.emit(bridge, "RelayerRemoved")
         .withArgs(relayer4.address, adminWallet.address);
     });
-
     it("reverts when not called by admin", async function () {
       nonAdminBridge = bridge.connect(otherWallet);
       await expect(nonAdminBridge.removeRelayer(relayer4.address)).to.be.revertedWith(
         "Access Control: sender is not Admin",
       );
     });
-
     it("reverts if address is not already a relayer", async function () {
       await expect(bridge.removeRelayer(otherWallet.address)).to.be.revertedWith(
         "RelayerRole: address is not a relayer",
       );
     });
   });
-
   describe("setQuorum", async function () {
     const newQuorum = 8;
-
     it("sets the quorum with the new value", async function () {
       await bridge.setQuorum(newQuorum);
-
       expect(await bridge.quorum()).to.equal(newQuorum);
     });
-
     it("emits event", async function () {
       await expect(bridge.setQuorum(newQuorum)).to.emit(bridge, "QuorumChanged").withArgs(newQuorum);
     });
-
     it("reverts when not called by admin", async function () {
       nonAdminBridge = bridge.connect(otherWallet);
       await expect(nonAdminBridge.setQuorum(newQuorum)).to.be.revertedWith("Access Control: sender is not Admin");
     });
-
     describe("when quorum is lower than the minimum", async function () {
       it("reverts", async function () {
         await expect(bridge.setQuorum(2)).to.be.revertedWith("Quorum is too low.");
       });
     });
   });
-
   describe("executeTransfer", async function () {
     let amount, batchNonce, signatures;
+    let mvxTxn;
     let dataToSign,
       signature1,
       signature2,
@@ -170,71 +156,53 @@ describe("Bridge", async function () {
         Buffer.from("c0f0058cea88a2bc1240b60361efb965957038d05f916c42b3f23a2c38ced81e", "hex"),
       );
       batchNonce = 42;
-      signatures = await getSignaturesForExecuteTransfer(
-        [genericErc20.address],
-        [otherWallet.address],
-        [amount],
-        [1],
-        batchNonce,
-        [adminWallet, relayer1, relayer2, relayer3, relayer5, relayer6, relayer7, relayer8],
-      );
+      mvxTxn = {
+        token: genericErc20.address,
+        sender: ethers.utils.formatBytes32String("senderAddress"),
+        recipient: otherWallet.address,
+        amount: amount,
+        depositNonce: 1,
+        callData: "0x",
+        isScRecipient: false,
+      };
+      signatures = await getSignaturesForExecuteTransfer([mvxTxn], batchNonce, [
+        adminWallet,
+        relayer1,
+        relayer2,
+        relayer3,
+        relayer5,
+        relayer6,
+        relayer7,
+        relayer8,
+      ]);
     });
-
     describe("when quorum achieved", async function () {
       it("transfers tokens", async function () {
-        await expect(() =>
-          bridge.executeTransfer([genericErc20.address], [otherWallet.address], [amount], [1], batchNonce, signatures),
-        ).to.changeTokenBalance(genericErc20, otherWallet, amount);
-      });
-
-      it("sets the wasBatchExecuted to true", async function () {
-        await bridge.executeTransfer(
-          [genericErc20.address],
-          [otherWallet.address],
-          [amount],
-          [1],
-          batchNonce,
-          signatures,
+        await expect(() => bridge.executeTransfer([mvxTxn], batchNonce, signatures)).to.changeTokenBalance(
+          genericErc20,
+          otherWallet,
+          amount,
         );
+      });
+      it("sets the wasBatchExecuted to true", async function () {
+        await bridge.executeTransfer([mvxTxn], batchNonce, signatures);
         expect(await bridge.wasBatchExecuted(batchNonce)).to.be.true;
       });
-
       describe("but all signatures are from the same relayer", async function () {
         beforeEach(async function () {
-          dataToSign = await getExecuteTransferData(
-            [genericErc20.address],
-            [otherWallet.address],
-            [amount],
-            [1],
-            batchNonce,
-          );
+          dataToSign = await getExecuteTransferData([mvxTxn], batchNonce);
           signature1 = await adminWallet.signMessage(dataToSign);
           signatures = [signature1, signature1, signature1, signature1, signature1, signature1, signature1];
         });
-
         it("reverts", async function () {
-          await expect(
-            bridge.executeTransfer(
-              [genericErc20.address],
-              [otherWallet.address],
-              [amount],
-              [1],
-              batchNonce,
-              signatures,
-            ),
-          ).to.be.revertedWith("Quorum was not met");
+          await expect(bridge.executeTransfer([mvxTxn], batchNonce, signatures)).to.be.revertedWith(
+            "Quorum was not met",
+          );
         });
       });
-
       describe("but some signatures are from the same relayer", async function () {
         beforeEach(async function () {
-          dataToSign = await getExecuteTransferData(
-            [genericErc20.address],
-            [otherWallet.address],
-            [amount],
-            [1],
-            batchNonce,
-          );
+          dataToSign = await getExecuteTransferData([mvxTxn], batchNonce);
           signature1 = await adminWallet.signMessage(dataToSign);
           signature2 = await relayer1.signMessage(dataToSign);
           signature3 = await relayer2.signMessage(dataToSign);
@@ -246,64 +214,33 @@ describe("Bridge", async function () {
           signaturesInvalid2 = [signature1, signature1, signature2, signature3, signature4, signature5, signature6];
           signaturesValid = [signature1, signature2, signature3, signature4, signature5, signature6, signature7];
         });
-
         it("reverts", async function () {
-          await expect(
-            bridge.executeTransfer(
-              [genericErc20.address],
-              [otherWallet.address],
-              [amount],
-              [1],
-              batchNonce,
-              signaturesInvalid,
-            ),
-          ).to.be.revertedWith("Quorum was not met");
-          await expect(
-            bridge.executeTransfer(
-              [genericErc20.address],
-              [otherWallet.address],
-              [amount],
-              [1],
-              batchNonce,
-              signaturesInvalid2,
-            ),
-          ).to.be.revertedWith("Quorum was not met");
+          await expect(bridge.executeTransfer([mvxTxn], batchNonce, signaturesInvalid)).to.be.revertedWith(
+            "Quorum was not met",
+          );
+          await expect(bridge.executeTransfer([mvxTxn], batchNonce, signaturesInvalid2)).to.be.revertedWith(
+            "Quorum was not met",
+          );
         });
-
         it("does not revert", async function () {
-          await expect(() =>
-            bridge.executeTransfer(
-              [genericErc20.address],
-              [otherWallet.address],
-              [amount],
-              [1],
-              batchNonce,
-              signaturesValid,
-            ),
-          ).to.changeTokenBalance(genericErc20, otherWallet, amount);
+          await expect(() => bridge.executeTransfer([mvxTxn], batchNonce, signaturesValid)).to.changeTokenBalance(
+            genericErc20,
+            otherWallet,
+            amount,
+          );
         });
       });
     });
-
     describe("not enough signatures for quorum", async function () {
       it("reverts", async function () {
-        await expect(
-          bridge.executeTransfer(
-            [genericErc20.address],
-            [otherWallet.address],
-            [amount],
-            [1],
-            batchNonce,
-            signatures.slice(0, -2),
-          ),
-        ).to.be.revertedWith("Not enough signatures to achieve quorum");
+        await expect(bridge.executeTransfer([mvxTxn], batchNonce, signatures.slice(0, -2))).to.be.revertedWith(
+          "Not enough signatures to achieve quorum",
+        );
       });
-
       it("does not set wasBatchExecuted", async function () {
         expect(await bridge.wasBatchExecuted(batchNonce)).to.be.false;
       });
     });
-
     describe("trying to replay the batch", async function () {
       beforeEach(async function () {
         // add more funds in order to not fail because of insufficient balance
@@ -312,21 +249,12 @@ describe("Bridge", async function () {
           amount,
           Buffer.from("c0f0058cea88a2bc1240b60361efb965957038d05f916c42b3f23a2c38ced81e", "hex"),
         );
-
-        await bridge.executeTransfer(
-          [genericErc20.address],
-          [otherWallet.address],
-          [amount],
-          [1],
-          batchNonce,
-          signatures,
-        );
+        await bridge.executeTransfer([mvxTxn], batchNonce, signatures);
       });
-
       it("reverts", async function () {
-        await expect(
-          bridge.executeTransfer([genericErc20.address], [otherWallet.address], [amount], [1], batchNonce, signatures),
-        ).to.be.revertedWith("Batch already executed");
+        await expect(bridge.executeTransfer([mvxTxn], batchNonce, signatures)).to.be.revertedWith(
+          "Batch already executed",
+        );
       });
     });
 
@@ -338,89 +266,51 @@ describe("Bridge", async function () {
         await bridge.unpause();
       });
       it("fails", async function () {
-        await expect(
-          bridge.executeTransfer(
-            [genericErc20.address],
-            [otherWallet.address],
-            [amount],
-            [1],
-            batchNonce,
-            signatures.slice(0, -2),
-          ),
-        ).to.be.revertedWith("Pausable: paused");
+        await expect(bridge.executeTransfer([mvxTxn], batchNonce, signatures.slice(0, -2))).to.be.revertedWith(
+          "Pausable: paused",
+        );
       });
-
       it("does not set wasBatchExecuted", async function () {
         expect(await bridge.wasBatchExecuted(batchNonce)).to.be.false;
       });
     });
-
     describe("check execute transfer saves correct statuses", async function () {
       it("returns correct statuses", async function () {
         //TODO: implement this test
-        await bridge.executeTransfer(
-          [genericErc20.address],
-          [otherWallet.address],
-          [amount],
-          [1],
-          batchNonce,
-          signatures,
-        );
+        await bridge.executeTransfer([mvxTxn], batchNonce, signatures);
         const settleBlockCount = await bridge.batchSettleBlockCount();
         for (let i = 0; i < settleBlockCount - 1; i++) {
           await network.provider.send("evm_mine");
         }
-
         const [firstStatuses, firstIsFinal] = await bridge.getStatusesAfterExecution(batchNonce);
         expect(firstStatuses).to.eql([3]);
-        expect(firstIsFinal).to.be.false
-
+        expect(firstIsFinal).to.be.false;
         await network.provider.send("evm_mine");
-
         const [secondStatuses, secondIsFinal] = await bridge.getStatusesAfterExecution(batchNonce);
         expect(secondStatuses).to.eql([3]);
-        expect(secondIsFinal).to.be.true
+        expect(secondIsFinal).to.be.true;
       });
-
       it("saves refund items", async function () {
-        await bridge.executeTransfer(
-          [genericErc20.address],
-          [otherWallet.address],
-          [amount],
-          [1],
-          batchNonce,
-          signatures,
-        );
+        await bridge.executeTransfer([mvxTxn], batchNonce, signatures);
         const settleBlockCount = await bridge.batchSettleBlockCount();
         for (let i = 0; i < settleBlockCount - 1; i++) {
           await network.provider.send("evm_mine");
         }
-
         const [firstStatuses, firstIsFinal] = await bridge.getStatusesAfterExecution(batchNonce);
         expect(firstStatuses).to.eql([3]);
-        expect(firstIsFinal).to.be.false
-
+        expect(firstIsFinal).to.be.false;
         await network.provider.send("evm_mine");
-
         const [secondStatuses, secondIsFinal] = await bridge.getStatusesAfterExecution(batchNonce);
         expect(secondStatuses).to.eql([3]);
-        expect(secondIsFinal).to.be.true
+        expect(secondIsFinal).to.be.true;
       });
     });
-
     describe("called by a non relayer", async function () {
       it("reverts", async function () {
         const nonAdminBridge = bridge.connect(otherWallet);
-        await expect(
-          nonAdminBridge.executeTransfer(
-            [genericErc20.address],
-            [otherWallet.address],
-            [amount],
-            [1],
-            batchNonce,
-            signatures,
-          ),
-        ).to.be.revertedWith("Access Control: sender is not Relayer");
+        await expect(nonAdminBridge.executeTransfer([mvxTxn], batchNonce, signatures)).to.be.revertedWith(
+          "Access Control: sender is not Relayer",
+        );
       });
     });
   });

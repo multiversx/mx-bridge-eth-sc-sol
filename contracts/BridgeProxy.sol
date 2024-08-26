@@ -6,58 +6,56 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./lib/Pausable.sol";
 import "./SharedStructs.sol";
 import "./lib/BoolTokenTransfer.sol";
+import "./access/AdminRole.sol";
+import "./access/BridgeRole.sol";
 
-contract BridgeProxy is Pausable {
+contract BridgeProxy is Pausable, BridgeRole {
     using BoolTokenTransfer for IERC20;
 
     uint256 public constant MIN_GAS_LIMIT_FOR_SC_CALL = 10_000_000;
     uint256 public constant DEFAULT_GAS_LIMIT_FOR_REFUND_CALLBACK = 20_000_000;
 
-    address public bridgeAddress;
     mapping(uint256 => MvxTransaction) private pendingTransactions;
     uint256 private lowestTxId;
     uint256 private currentTxId;
 
-    constructor(address _bridgeAddress) Pausable() {
-        bridgeAddress = _bridgeAddress;
-        lowestTxId = 1;
+    constructor() Pausable() {
+        lowestTxId = 0;
     }
 
-    function deposit(MvxTransaction calldata txn) external payable whenNotPaused {
-        require(msg.sender == bridgeAddress, "BridgeProxy: Only Bridge contract can do deposits");
+    function deposit(MvxTransaction calldata txn) external payable whenNotPaused onlyBridge {
         pendingTransactions[currentTxId] = txn;
         currentTxId++;
     }
 
     function execute(uint256 txId) external whenNotPaused {
-        require(txId >= 0 && txId < currentTxId, "BridgeProxy: Invalid transaction ID");
+        require(txId < currentTxId, "BridgeProxy: Invalid transaction ID");
         MvxTransaction memory txn = pendingTransactions[txId];
 
         require(txn.amount != 0, "BridgeProxy: No amount bridged");
 
         if (txn.callData.length > 0) {
-            (bytes memory endpoint, uint256 gasLimit, bytes memory args) = abi.decode(
+            (bytes memory selector, uint256 gasLimit, bytes memory args) = abi.decode(
                 txn.callData,
                 (bytes, uint256, bytes)
             );
 
-            if (endpoint.length == 0 || gasLimit == 0 || gasLimit < MIN_GAS_LIMIT_FOR_SC_CALL) {
+            if (selector.length == 0 || gasLimit == 0 || gasLimit < MIN_GAS_LIMIT_FOR_SC_CALL) {
                 _finishExecuteGracefully(txId);
                 return;
             }
 
             bytes memory data;
             if (args.length > 0) {
-                data = abi.encodePacked(endpoint, args);
+                data = abi.encodePacked(selector, args);
             } else {
-                data = endpoint;
+                data = selector;
             }
 
             (bool success, ) = txn.recipient.call{ gas: gasLimit }(data);
 
             if (!success) {
                 _finishExecuteGracefully(txId);
-                return;
             }
         } else {
             _finishExecuteGracefully(txId);
@@ -66,10 +64,7 @@ contract BridgeProxy is Pausable {
 
     function _finishExecuteGracefully(uint256 txId) private {
         _refundTransaction(txId);
-
-        if (txId < lowestTxId) {
-            lowestTxId = txId + 1;
-        }
+        _updateLowestTxId();
 
         delete pendingTransactions[txId];
     }
@@ -78,8 +73,18 @@ contract BridgeProxy is Pausable {
         MvxTransaction memory txn = pendingTransactions[txId];
 
         IERC20 erc20 = IERC20(txn.token);
-        bool transferExecuted = erc20.boolTransfer(bridgeAddress, txn.amount);
+        bool transferExecuted = erc20.boolTransfer(this.bridge(), txn.amount);
         require(transferExecuted, "BridgeProxy: Refund failed");
+    }
+
+    function _updateLowestTxId() private {
+        uint256 newLowestTxId = lowestTxId;
+
+        while (newLowestTxId < currentTxId && pendingTransactions[newLowestTxId].amount == 0) {
+            newLowestTxId++;
+        }
+
+        lowestTxId = newLowestTxId;
     }
 
     function getPendingTransactionById(uint256 txId) public view returns (MvxTransaction memory) {
@@ -87,15 +92,8 @@ contract BridgeProxy is Pausable {
     }
 
     function getPendingTransaction() public view returns (MvxTransaction[] memory) {
-        // Calculate the number of valid transactions
-        uint256 validCount = 0;
-        for (uint256 i = lowestTxId; i < currentTxId; i++) {
-            if (pendingTransactions[i].amount != 0) {
-                validCount++;
-            }
-        }
-
-        MvxTransaction[] memory txns = new MvxTransaction[](validCount);
+        uint256 pendingTransactionsCount = currentTxId - lowestTxId;
+        MvxTransaction[] memory txns = new MvxTransaction[](pendingTransactionsCount);
         uint256 index = 0;
 
         for (uint256 i = lowestTxId; i < currentTxId; i++) {
@@ -103,6 +101,11 @@ contract BridgeProxy is Pausable {
                 txns[index] = pendingTransactions[i];
                 index++;
             }
+        }
+
+        // Resize the array to the actual number of pending transactions
+        assembly {
+            mstore(txns, index)
         }
 
         return txns;
