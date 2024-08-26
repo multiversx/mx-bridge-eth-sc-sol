@@ -8,12 +8,18 @@ import "./SharedStructs.sol";
 contract BridgeProxy is Pausable {
     address public multiTransferAddress;
     address public bridgedTokensWrapperAddress;
-    MvxTransaction[] private pendingTransactions;
-    mapping(uint256 => TokenPayment) private payments;
+    mapping(uint256 => MvxTransaction) public pendingTransactions;
     uint256 private lowestTxId;
+    uint256 private currentTxId;
 
     constructor(address _multiTransferAddress) Pausable() {
         multiTransferAddress = _multiTransferAddress;
         lowestTxId = 1;
+    }
+
+    function deposit(MvxTransaction calldata txn) external payable whenNotPaused {
+        require(msg.sender == multiTransferAddress, "BridgeProxy: Only MultiTransfer can do deposits");
+        pendingTransactions[currentTxId] = txn;
+        currentTxId++;
     }
 }
