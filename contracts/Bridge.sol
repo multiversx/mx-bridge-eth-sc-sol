@@ -101,7 +101,7 @@ contract Bridge is RelayerRole, Pausable {
 
     /**
         @notice Executes a batch of transfers
-        @param mvxTransactions List of transactions ffrom MultiversX side. Each transaction consists of:
+        @param mvxTransactions List of transactions from MultiversX side. Each transaction consists of:
         - token address
         - sender
         - recipient

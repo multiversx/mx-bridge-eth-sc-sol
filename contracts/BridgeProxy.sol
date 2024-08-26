@@ -20,7 +20,7 @@ contract BridgeProxy is Pausable, BridgeRole {
     uint256 private currentTxId;
 
     constructor() Pausable() {
-        lowestTxId = 1;
+        lowestTxId = 0;
     }
 
     function deposit(MvxTransaction calldata txn) external payable whenNotPaused onlyBridge {
@@ -29,7 +29,7 @@ contract BridgeProxy is Pausable, BridgeRole {
     }
 
     function execute(uint256 txId) external whenNotPaused {
-        require(txId >= 0 && txId < currentTxId, "BridgeProxy: Invalid transaction ID");
+        require(txId < currentTxId, "BridgeProxy: Invalid transaction ID");
         MvxTransaction memory txn = pendingTransactions[txId];
 
         require(txn.amount != 0, "BridgeProxy: No amount bridged");
@@ -45,13 +45,22 @@ contract BridgeProxy is Pausable, BridgeRole {
                 return;
             }
 
-            bytes memory data;
-            if (args.length > 0) {
-                data = abi.encodePacked(endpoint, args);
-            } else {
-                data = endpoint;
+            // Convert endpoint from bytes to bytes4 (function selector)
+            bytes4 selector;
+            assembly {
+                selector := mload(add(endpoint, 32))
             }
 
+            bytes memory data;
+            if (args.length > 0) {
+                data = abi.encodePacked(selector, args);
+            } else {
+                // Create a bytes memory array with the length of 4 (for bytes4)
+                data = new bytes(4);
+                assembly {
+                    mstore(add(data, 32), selector) // Store the selector in the bytes array
+                }
+            }
             (bool success, ) = txn.recipient.call{ gas: gasLimit }(data);
 
             if (!success) {
@@ -65,10 +74,7 @@ contract BridgeProxy is Pausable, BridgeRole {
 
     function _finishExecuteGracefully(uint256 txId) private {
         _refundTransaction(txId);
-
-        if (txId < lowestTxId) {
-            lowestTxId = txId + 1;
-        }
+        _updateLowestTxId();
 
         delete pendingTransactions[txId];
     }
@@ -79,6 +85,16 @@ contract BridgeProxy is Pausable, BridgeRole {
         IERC20 erc20 = IERC20(txn.token);
         bool transferExecuted = erc20.boolTransfer(this.bridge(), txn.amount);
         require(transferExecuted, "BridgeProxy: Refund failed");
+    }
+
+    function _updateLowestTxId() private {
+        uint256 newLowestTxId = lowestTxId;
+
+        while (newLowestTxId < currentTxId && pendingTransactions[newLowestTxId].amount == 0) {
+            newLowestTxId++;
+        }
+
+        lowestTxId = newLowestTxId;
     }
 
     function getPendingTransactionById(uint256 txId) public view returns (MvxTransaction memory) {
@@ -97,6 +113,7 @@ contract BridgeProxy is Pausable, BridgeRole {
             }
         }
 
+        // Resize the array to the actual number of pending transactions
         assembly {
             mstore(txns, index)
         }
