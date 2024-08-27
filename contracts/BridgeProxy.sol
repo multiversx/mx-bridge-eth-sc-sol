@@ -41,7 +41,7 @@ contract BridgeProxy is Pausable, BridgeRole {
             );
 
             if (selector.length == 0 || gasLimit == 0 || gasLimit < MIN_GAS_LIMIT_FOR_SC_CALL) {
-                _finishExecuteGracefully(txId);
+                _finishExecuteGracefully(txId, true);
                 return;
             }
 
@@ -54,18 +54,18 @@ contract BridgeProxy is Pausable, BridgeRole {
 
             (bool success, ) = txn.recipient.call{ gas: gasLimit }(data);
 
-            if (!success) {
-                _finishExecuteGracefully(txId);
-            }
+            bool isRefund = !success;
+            _finishExecuteGracefully(txId, isRefund);
         } else {
-            _finishExecuteGracefully(txId);
+            _finishExecuteGracefully(txId, true);
         }
     }
 
-    function _finishExecuteGracefully(uint256 txId) private {
-        _refundTransaction(txId);
+    function _finishExecuteGracefully(uint256 txId, bool isRefund) private {
+        if (isRefund) {
+            _refundTransaction(txId);
+        }
         _updateLowestTxId();
-
         delete pendingTransactions[txId];
     }
 
