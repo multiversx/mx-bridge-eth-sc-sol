@@ -1,8 +1,8 @@
 const { ethers } = require("hardhat");
 const { expect } = require("chai");
 
-const { deployContract, deployUpgradableContract } = require("./utils/deploy.utils");
-const { getSignaturesForExecuteTransfer, getExecuteTransferData } = require("./utils/bridge.utils");
+const { deployContract, deployUpgradableContract, upgradeContract } = require("./utils/deploy.utils");
+const { getSignaturesForExecuteTransfer } = require("./utils/bridge.utils");
 
 describe("BridgeProxy", function () {
   let adminWallet, relayer1, relayer2, relayer3, relayer4, relayer5, relayer6, relayer7, relayer8, otherWallet;
@@ -415,12 +415,59 @@ describe("BridgeProxy", function () {
     });
 
     it("should return all pending transactions", async function () {
-      const pendingTxns = await bridgeProxy.getPendingTransaction();
+      const pendingTxns = await bridgeProxy.getPendingTransactions();
 
       expect(pendingTxns.length).to.equal(3);
       expect(pendingTxns[0][4]).to.equal(mvxTxn1.depositNonce);
       expect(pendingTxns[1][4]).to.equal(mvxTxn2.depositNonce);
       expect(pendingTxns[2][4]).to.equal(mvxTxn3.depositNonce);
+    });
+  });
+
+  describe("Upgrade works as expected", async function () {
+    let amount = 1000;
+    let batchNonce = 42;
+    let mvxTxn;
+
+    beforeEach(async function () {
+      await erc20Safe.deposit(
+        genericErc20.address,
+        amount,
+        Buffer.from("c0f0058cea88a2bc1240b60361efb965957038d05f916c42b3f23a2c38ced81e", "hex"),
+      );
+      mvxTxn = {
+        token: genericErc20.address,
+        sender: ethers.encodeBytes32String("senderAddress"),
+        recipient: otherWallet.address,
+        amount: 80n,
+        depositNonce: 1,
+        callData: "0x",
+        isScRecipient: true,
+      };
+
+      signatures = await getSignaturesForExecuteTransfer([mvxTxn], batchNonce, [
+        adminWallet,
+        relayer1,
+        relayer2,
+        relayer3,
+        relayer5,
+        relayer6,
+        relayer7,
+        relayer8,
+      ]);
+    });
+    it("upgrades and has new functions", async function () {
+      let valueToCheckAgainst = 100n;
+
+      // Make a deposit to check state persistence
+      await bridge.executeTransfer([mvxTxn], batchNonce, signatures);
+
+      let newBridgeProxy = await upgradeContract(adminWallet, bridgeProxy.address, "BridgeProxyUpgrade", [
+        valueToCheckAgainst,
+      ]);
+
+      expect(await newBridgeProxy.afterUpgrade()).to.be.eq(valueToCheckAgainst);
+      expect((await newBridgeProxy.getPendingTransactions()).length).to.be.eq(1);
     });
   });
 });

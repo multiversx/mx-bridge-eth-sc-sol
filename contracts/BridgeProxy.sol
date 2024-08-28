@@ -9,7 +9,7 @@ import "./lib/BoolTokenTransfer.sol";
 import "./access/AdminRole.sol";
 import "./access/BridgeRole.sol";
 
-contract BridgeProxy is Pausable, BridgeRole {
+contract BridgeProxy is Initializable, Pausable, BridgeRole {
     using BoolTokenTransfer for IERC20;
 
     uint256 public constant MIN_GAS_LIMIT_FOR_SC_CALL = 10_000_000;
@@ -96,7 +96,7 @@ contract BridgeProxy is Pausable, BridgeRole {
         return pendingTransactions[txId];
     }
 
-    function getPendingTransaction() public view returns (MvxTransaction[] memory) {
+    function getPendingTransactions() public view returns (MvxTransaction[] memory) {
         uint256 pendingTransactionsCount = currentTxId - lowestTxId;
         MvxTransaction[] memory txns = new MvxTransaction[](pendingTransactionsCount);
         uint256 index = 0;
