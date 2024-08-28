@@ -9,6 +9,7 @@ describe("Bridge", async function () {
   let boardMembers;
   const quorum = 7;
   let erc20Safe, bridge, genericErc20, bridgeProxy;
+
   async function setupContracts() {
     erc20Safe = await deployUpgradableContract(adminWallet, "ERC20Safe");
     bridgeProxy = await deployUpgradableContract(adminWallet, "BridgeProxy");
@@ -159,7 +160,7 @@ describe("Bridge", async function () {
       batchNonce = 42;
       mvxTxn = {
         token: genericErc20.address,
-        sender: ethers.utils.formatBytes32String("senderAddress"),
+        sender: Buffer.from("c0f0058cea88a2bc1240b60361efb965957038d05f916c42b3f23a2c38ced81e", "hex"),
         recipient: otherWallet.address,
         amount: amount,
         depositNonce: 1,
@@ -284,12 +285,12 @@ describe("Bridge", async function () {
           await network.provider.send("evm_mine");
         }
         const [firstStatuses, firstIsFinal] = await bridge.getStatusesAfterExecution(batchNonce);
-        expect(firstStatuses).to.eql([3]);
+        expect(firstStatuses).to.eql([3n]);
         expect(firstIsFinal).to.be.false;
 
         await network.provider.send("evm_mine");
         const [secondStatuses, secondIsFinal] = await bridge.getStatusesAfterExecution(batchNonce);
-        expect(secondStatuses).to.eql([3]);
+        expect(secondStatuses).to.eql([3n]);
         expect(secondIsFinal).to.be.true;
       });
       it("saves refund items", async function () {
@@ -299,12 +300,12 @@ describe("Bridge", async function () {
           await network.provider.send("evm_mine");
         }
         const [firstStatuses, firstIsFinal] = await bridge.getStatusesAfterExecution(batchNonce);
-        expect(firstStatuses).to.eql([3]);
+        expect(firstStatuses).to.eql([3n]);
         expect(firstIsFinal).to.be.false;
 
         await network.provider.send("evm_mine");
         const [secondStatuses, secondIsFinal] = await bridge.getStatusesAfterExecution(batchNonce);
-        expect(secondStatuses).to.eql([3]);
+        expect(secondStatuses).to.eql([3n]);
         expect(secondIsFinal).to.be.true;
       });
     });

@@ -50,7 +50,7 @@ describe("ERC20Safe, MintBurnERC20, and Bridge Interaction", function () {
       amount = 80;
       mvxTxn = {
         token: mintBurnErc20.address,
-        sender: ethers.utils.formatBytes32String("senderAddress"),
+        sender: Buffer.from("c0f0058cea88a2bc1240b60361efb965957038d05f916c42b3f23a2c38ced81e", "hex"),
         recipient: otherWallet.address,
         amount: amount,
         depositNonce: 1,

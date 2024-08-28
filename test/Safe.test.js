@@ -18,10 +18,10 @@ describe("ERC20Safe", function () {
 
   let safe, genericERC20, bridge, bridgeProxy;
   beforeEach(async function () {
-    genericERC20 = await deployContract(adminWallet, GenericERC20Artifact, ["TSC", "TSC", 6]);
+    genericERC20 = await deployContract(adminWallet, "GenericERC20", ["TSC", "TSC", 6]);
     safe = await deployUpgradableContract(adminWallet, "ERC20Safe");
     bridgeProxy = await deployUpgradableContract(adminWallet, "BridgeProxy");
-    bridge = await deployUpgradableContract(adminWallet, BridgeArtifact, [
+    bridge = await deployUpgradableContract(adminWallet, "Bridge", [
       boardMembers.map(m => m.address),
       3,
       safe.address,

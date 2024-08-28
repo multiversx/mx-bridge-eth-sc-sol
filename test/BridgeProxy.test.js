@@ -1,35 +1,25 @@
-const { waffle, ethers, network } = require("hardhat");
+const { ethers } = require("hardhat");
 const { expect } = require("chai");
-const { provider, deployContract } = waffle;
 
-const BridgeContract = require("../artifacts/contracts/Bridge.sol/Bridge.json");
-const ERC20SafeContract = require("../artifacts/contracts/ERC20Safe.sol/ERC20Safe.json");
-const GenericERC20 = require("../artifacts/contracts/GenericERC20.sol/GenericERC20.json");
-const BridgeProxy = require("../artifacts/contracts/BridgeProxy.sol/BridgeProxy.json");
-const Counter = require("../artifacts/contracts/test/Counter.sol/Counter.json");
+const { deployContract, deployUpgradableContract } = require("./utils/deploy.utils");
 const { getSignaturesForExecuteTransfer, getExecuteTransferData } = require("./utils/bridge.utils");
-const { BigNumber } = require("ethers");
 
 describe("BridgeProxy", function () {
-  const [adminWallet, relayer1, relayer2, relayer3, relayer4, relayer5, relayer6, relayer7, relayer8, otherWallet] =
-    provider.getWallets();
-  const boardMembers = [adminWallet, relayer1, relayer2, relayer3, relayer5, relayer6, relayer7, relayer8].map(
-    m => m.address,
-  );
+  let adminWallet, relayer1, relayer2, relayer3, relayer4, relayer5, relayer6, relayer7, relayer8, otherWallet;
+  let boardMembers;
   const quorum = 7;
-
   let erc20Safe, bridge, bridgeProxy, genericErc20, counter;
 
   async function setupContracts() {
-    erc20Safe = await deployContract(adminWallet, ERC20SafeContract);
-    bridgeProxy = await deployContract(adminWallet, BridgeProxy);
-    bridge = await deployContract(adminWallet, BridgeContract, [
+    erc20Safe = await deployUpgradableContract(adminWallet, "ERC20Safe");
+    bridgeProxy = await deployUpgradableContract(adminWallet, "BridgeProxy");
+    bridge = await deployUpgradableContract(adminWallet, "Bridge", [
       boardMembers,
       quorum,
       erc20Safe.address,
       bridgeProxy.address,
     ]);
-    counter = await deployContract(adminWallet, Counter);
+    counter = await deployContract(adminWallet, "Counter");
     await erc20Safe.setBridge(bridge.address);
     await bridgeProxy.setBridge(bridge.address);
     await bridge.unpause();
@@ -38,7 +28,7 @@ describe("BridgeProxy", function () {
   }
 
   async function setupErc20Token() {
-    genericErc20 = await deployContract(adminWallet, GenericERC20, ["TSC", "TSC", 6]);
+    genericErc20 = await deployContract(adminWallet, "GenericERC20", ["TSC", "TSC", 6]);
     await genericErc20.mint(adminWallet.address, 1000);
     await genericErc20.approve(erc20Safe.address, 1000);
     await erc20Safe.whitelistToken(genericErc20.address, 0, 1000, false, true);
@@ -67,29 +57,35 @@ describe("BridgeProxy", function () {
 
   function generateCallData(functionSignature, gasLimit, argTypes, argValues) {
     // Compute the function selector
-    const functionSelector = ethers.utils.id(functionSignature).slice(0, 10); // First 4 bytes of the hash
+    const functionSelector = ethers.id(functionSignature).slice(0, 10); // First 4 bytes of the hash
 
     // Encode the function arguments
-    const args = ethers.utils.defaultAbiCoder.encode(argTypes, argValues);
+    const coder = ethers.AbiCoder.defaultAbiCoder();
+    const args = coder.encode(argTypes, argValues);
 
     // Encode the full calldata with function selector, gas limit, and arguments
-    const callDataEncoded = ethers.utils.defaultAbiCoder.encode(
-      ["bytes", "uint256", "bytes"],
-      [functionSelector, gasLimit, args],
-    );
+    const callDataEncoded = coder.encode(["bytes", "uint256", "bytes"], [functionSelector, gasLimit, args]);
 
     return callDataEncoded;
   }
 
   const checkForEmptyTransaction = async pendingTxn => {
-    expect(pendingTxn[0]).to.equal(ethers.constants.AddressZero);
-    expect(pendingTxn[1]).to.equal(ethers.constants.HashZero);
-    expect(pendingTxn[2]).to.equal(ethers.constants.AddressZero);
+    expect(pendingTxn[0]).to.equal(ethers.AddressZero);
+    expect(pendingTxn[1]).to.equal(ethers.HashZero);
+    expect(pendingTxn[2]).to.equal(ethers.AddressZero);
     expect(pendingTxn[3]).to.equal(0);
     expect(pendingTxn[4]).to.equal(0);
     expect(pendingTxn[5]).to.equal("0x");
     expect(pendingTxn[6]).to.equal(false);
   };
+
+  before(async function () {
+    [adminWallet, relayer1, relayer2, relayer3, relayer4, relayer5, relayer6, relayer7, relayer8, otherWallet] =
+      await ethers.getSigners();
+    boardMembers = [adminWallet, relayer1, relayer2, relayer3, relayer5, relayer6, relayer7, relayer8].map(
+      m => m.address,
+    );
+  });
 
   beforeEach(async function () {
     await setupContracts();
@@ -114,9 +110,9 @@ describe("BridgeProxy", function () {
       );
       mvxTxn = {
         token: genericErc20.address,
-        sender: ethers.utils.formatBytes32String("senderAddress"),
+        sender: ethers.encodeBytes32String("senderAddress"),
         recipient: otherWallet.address,
-        amount: 80,
+        amount: 80n,
         depositNonce: 1,
         callData: "0x",
         isScRecipient: true,
@@ -179,7 +175,7 @@ describe("BridgeProxy", function () {
     it("reverts when transaction's amount is 0", async function () {
       mvxTxnNoAmount = {
         token: genericErc20.address,
-        sender: ethers.utils.formatBytes32String("senderAddress"),
+        sender: ethers.encodeBytes32String("senderAddress"),
         recipient: otherWallet.address,
         amount: 0,
         depositNonce: 4,
@@ -195,9 +191,9 @@ describe("BridgeProxy", function () {
     it("should gracefully finish execution and refund if calldata is empty", async function () {
       const mvxTxnWithoutCalldata = {
         token: genericErc20.address,
-        sender: ethers.utils.formatBytes32String("senderAddress"),
+        sender: ethers.encodeBytes32String("senderAddress"),
         recipient: otherWallet.address,
-        amount: 80,
+        amount: 80n,
         depositNonce: 1,
         callData: "0x",
         isScRecipient: true,
@@ -210,7 +206,7 @@ describe("BridgeProxy", function () {
       await bridgeProxy.execute(0);
       const afterBalance = await genericErc20.balanceOf(bridge.address);
 
-      expect(afterBalance).to.equal(beforeBalance + BigNumber.from(mvxTxnWithoutCalldata.amount));
+      expect(afterBalance).to.equal(beforeBalance + mvxTxnWithoutCalldata.amount);
 
       // check for pending transaction to be removed after refund
       const pendingTxn = await bridgeProxy.getPendingTransactionById(0);
@@ -225,9 +221,9 @@ describe("BridgeProxy", function () {
 
       const mvxTxnWithInvalidCalldata = {
         token: genericErc20.address,
-        sender: ethers.utils.formatBytes32String("senderAddress"),
+        sender: ethers.encodeBytes32String("senderAddress"),
         recipient: genericErc20.address,
-        amount: 80,
+        amount: 80n,
         depositNonce: 2,
         callData: generateCallData(badFunctionSignature, gasLimit, argTypes, argValues),
         isScRecipient: true,
@@ -239,7 +235,7 @@ describe("BridgeProxy", function () {
       await bridgeProxy.execute(0);
       const afterBalance = await genericErc20.balanceOf(bridge.address);
 
-      expect(afterBalance).to.equal(beforeBalance + BigNumber.from(mvxTxnWithInvalidCalldata.amount));
+      expect(afterBalance).to.equal(beforeBalance + mvxTxnWithInvalidCalldata.amount);
 
       // check for pending transaction to be removed after refund
       const pendingTxn = await bridgeProxy.getPendingTransactionById(0);
@@ -253,9 +249,9 @@ describe("BridgeProxy", function () {
 
       const mvxTxnWithZeroGas = {
         token: genericErc20.address,
-        sender: ethers.utils.formatBytes32String("senderAddress"),
+        sender: ethers.encodeBytes32String("senderAddress"),
         recipient: genericErc20.address,
-        amount: 80,
+        amount: 80n,
         depositNonce: 2,
         callData: generateCallData(functionSignature, 0, argTypes, argValues),
         isScRecipient: true,
@@ -263,9 +259,9 @@ describe("BridgeProxy", function () {
 
       const mvxTxnWithInsufficientGas = {
         token: genericErc20.address,
-        sender: ethers.utils.formatBytes32String("senderAddress"),
+        sender: ethers.encodeBytes32String("senderAddress"),
         recipient: genericErc20.address,
-        amount: 80,
+        amount: 80n,
         depositNonce: 2,
         callData: generateCallData(functionSignature, 2000000, argTypes, argValues),
         isScRecipient: true,
@@ -273,9 +269,9 @@ describe("BridgeProxy", function () {
 
       const mvxTxnWithEmptyEndpoint = {
         token: genericErc20.address,
-        sender: ethers.utils.formatBytes32String("senderAddress"),
+        sender: ethers.encodeBytes32String("senderAddress"),
         recipient: genericErc20.address,
-        amount: 80,
+        amount: 80n,
         depositNonce: 2,
         callData: generateCallData("", 11000000, argTypes, argValues),
         isScRecipient: true,
@@ -295,16 +291,16 @@ describe("BridgeProxy", function () {
     });
 
     it("should successfully execute transaction with proper encoded calldata (with args)", async function () {
-      const amountToBeMinted = 999;
+      const amountToBeMinted = 999n;
       const functionSignature = "mint(address,uint256)";
       const gasLimit = 11000000;
       const argTypes = ["address", "uint256"];
       const argValues = [otherWallet.address, amountToBeMinted];
       mvxTxnWithCalldata = {
         token: genericErc20.address,
-        sender: ethers.utils.formatBytes32String("senderAddress"),
+        sender: ethers.encodeBytes32String("senderAddress"),
         recipient: genericErc20.address,
-        amount: 80,
+        amount: 80n,
         depositNonce: 1,
         callData: generateCallData(functionSignature, gasLimit, argTypes, argValues),
         isScRecipient: true,
@@ -317,7 +313,7 @@ describe("BridgeProxy", function () {
       await bridgeProxy.execute(0);
       const afterBalance = await genericErc20.balanceOf(otherWallet.address);
 
-      expect(afterBalance).to.equal(beforeBalance + BigNumber.from(amountToBeMinted));
+      expect(afterBalance).to.equal(beforeBalance + amountToBeMinted);
     });
 
     it("should successfully execute transaction with proper encoded calldata (without args)", async function () {
@@ -325,9 +321,9 @@ describe("BridgeProxy", function () {
       const gasLimit = 11000000;
       mvxTxnWithCalldata = {
         token: genericErc20.address,
-        sender: ethers.utils.formatBytes32String("senderAddress"),
+        sender: ethers.encodeBytes32String("senderAddress"),
         recipient: counter.address,
-        amount: 80,
+        amount: 80n,
         depositNonce: 1,
         callData: generateCallData(functionSignature, gasLimit, [], []),
         isScRecipient: true,
@@ -339,7 +335,7 @@ describe("BridgeProxy", function () {
       await bridgeProxy.execute(0);
       const counterAfter = await counter.count();
 
-      expect(counterAfter).to.equal(counterBefore + BigNumber.from(1));
+      expect(counterAfter).to.equal(counterBefore + 1n);
     });
   });
 
@@ -351,9 +347,9 @@ describe("BridgeProxy", function () {
     beforeEach(async function () {
       mvxTxn = {
         token: genericErc20.address,
-        sender: ethers.utils.formatBytes32String("senderAddress"),
+        sender: ethers.encodeBytes32String("senderAddress"),
         recipient: otherWallet.address,
-        amount: 80,
+        amount: 80n,
         depositNonce: 1,
         callData: "0x",
         isScRecipient: true,
@@ -384,9 +380,9 @@ describe("BridgeProxy", function () {
       const gasLimit = 11000000;
       mvxTxn1 = {
         token: genericErc20.address,
-        sender: ethers.utils.formatBytes32String("senderAddress"),
+        sender: ethers.encodeBytes32String("senderAddress"),
         recipient: counter.address,
-        amount: 80,
+        amount: 80n,
         depositNonce: 1,
         callData: generateCallData(functionSignature1, gasLimit, [], []),
         isScRecipient: true,
@@ -394,9 +390,9 @@ describe("BridgeProxy", function () {
 
       mvxTxn2 = {
         token: genericErc20.address,
-        sender: ethers.utils.formatBytes32String("senderAddress"),
+        sender: ethers.encodeBytes32String("senderAddress"),
         recipient: otherWallet.address,
-        amount: 80,
+        amount: 80n,
         depositNonce: 2,
         callData: "0x",
         isScRecipient: true,
@@ -407,9 +403,9 @@ describe("BridgeProxy", function () {
       const argValues = [otherWallet.address, 99];
       mvxTxn3 = {
         token: genericErc20.address,
-        sender: ethers.utils.formatBytes32String("senderAddress"),
+        sender: ethers.encodeBytes32String("senderAddress"),
         recipient: genericErc20.address,
-        amount: 80,
+        amount: 80n,
         depositNonce: 3,
         callData: generateCallData(functionSignature2, gasLimit, argTypes, argValues),
         isScRecipient: true,
