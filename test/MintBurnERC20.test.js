@@ -1,35 +1,20 @@
 const { expect } = require("chai");
-const { waffle, network } = require("hardhat");
-const { provider, deployContract } = waffle;
+const { ethers } = require("hardhat");
 
-const ERC20SafeContract = require("../artifacts/contracts/ERC20Safe.sol/ERC20Safe.json");
-const MintBurnERC20Contract = require("../artifacts/contracts/MintBurnERC20.sol/MintBurnERC20.json");
-const BridgeContract = require("../artifacts/contracts/Bridge.sol/Bridge.json");
-const BridgeProxy = require("../artifacts/contracts/BridgeProxy.sol/BridgeProxy.json");
+const { deployContract, deployUpgradableContract } = require("./utils/deploy.utils");
 const { getSignaturesForExecuteTransfer } = require("./utils/bridge.utils");
 
 describe("ERC20Safe, MintBurnERC20, and Bridge Interaction", function () {
-  const [adminWallet, relayer1, relayer2, relayer3, relayer4, relayer5, relayer6, relayer7, relayer8, otherWallet] =
-    provider.getWallets();
-  const boardMembers = [
-    adminWallet,
-    relayer1,
-    relayer2,
-    relayer3,
-    relayer4,
-    relayer5,
-    relayer6,
-    relayer7,
-    relayer8,
-  ].map(m => m.address);
+  let adminWallet, relayer1, relayer2, relayer3, relayer4, relayer5, relayer6, relayer7, relayer8, otherWallet;
+  let boardMembers;
   const quorum = 7;
 
   let erc20Safe, bridge, mintBurnErc20, bridgeProxy;
 
   async function setupContracts() {
-    erc20Safe = await deployContract(adminWallet, ERC20SafeContract);
-    bridgeProxy = await deployContract(adminWallet, BridgeProxy);
-    bridge = await deployContract(adminWallet, BridgeContract, [
+    erc20Safe = await deployUpgradableContract(adminWallet, "ERC20Safe");
+    bridgeProxy = await deployUpgradableContract(adminWallet, "BridgeProxy");
+    bridge = await deployUpgradableContract(adminWallet, "Bridge", [
       boardMembers,
       quorum,
       erc20Safe.address,
@@ -42,10 +27,18 @@ describe("ERC20Safe, MintBurnERC20, and Bridge Interaction", function () {
   }
 
   async function setupErc20Token() {
-    mintBurnErc20 = await deployContract(adminWallet, MintBurnERC20Contract, ["Test Token", "TST", 6]);
+    mintBurnErc20 = await deployUpgradableContract(adminWallet, "MintBurnERC20", ["Test Token", "TST", 6]);
     await erc20Safe.whitelistToken(mintBurnErc20.address, 0, 100, true, false);
     await erc20Safe.unpause();
   }
+
+  before(async function () {
+    [adminWallet, relayer1, relayer2, relayer3, relayer4, relayer5, relayer6, relayer7, relayer8, otherWallet] =
+      await ethers.getSigners();
+    boardMembers = [adminWallet, relayer1, relayer2, relayer3, relayer4, relayer5, relayer6, relayer7, relayer8].map(
+      m => m.address,
+    );
+  });
 
   beforeEach(async function () {
     await setupContracts();
@@ -117,7 +110,6 @@ describe("ERC20Safe, MintBurnERC20, and Bridge Interaction", function () {
 
       // check that the transfer is set as Executed
       const [transfers, isFinal] = await bridge.getStatusesAfterExecution(batchNonce);
-      console.log(transfers);
       expect(transfers[0]).to.equal(3);
       expect(isFinal).to.be.true;
     });
@@ -138,7 +130,7 @@ describe("ERC20Safe, MintBurnERC20, and Bridge Interaction", function () {
             amount,
             Buffer.from("c0f0058cea88a2bc1240b60361efb965957038d05f916c42b3f23a2c38ced81e", "hex"),
           ),
-      ).to.revertedWith("ERC20InsufficientAllowance");
+      ).to.revertedWithCustomError(mintBurnErc20, "ERC20InsufficientAllowance");
     });
 
     it("deposit should work when ERC20Safe has enough allowance", async function () {

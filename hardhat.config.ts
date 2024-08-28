@@ -1,11 +1,6 @@
-import "@nomiclabs/hardhat-waffle";
-import "@typechain/hardhat";
-import "hardhat-gas-reporter";
-import "hardhat-contract-sizer";
-import "hardhat-log-remover";
-import "hardhat-tracer";
-import "hardhat-abi-exporter";
-import "solidity-coverage";
+import "@nomiclabs/hardhat-ethers";
+import "@nomicfoundation/hardhat-toolbox";
+import "@openzeppelin/hardhat-upgrades";
 
 import "./tasks/accounts";
 import "./tasks/clean";
@@ -187,7 +182,7 @@ const config: HardhatUserConfig = {
   },
   typechain: {
     outDir: "typechain",
-    target: "ethers-v5",
+    target: "ethers-v6",
   },
   abiExporter: {
     path: "./abi",

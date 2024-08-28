@@ -17,9 +17,11 @@ function getExecuteTransferData(mvxTransactions, batchNonce) {
   ]);
   const signMessageData = [mvxTransactionsData, batchNonce, "ExecuteBatchedTransfer"];
 
-  const bytesToSign = ethers.utils.defaultAbiCoder.encode(signMessageDefinition, signMessageData);
-  const signData = ethers.utils.keccak256(bytesToSign);
-  return ethers.utils.arrayify(signData);
+  const abiCoder = new ethers.AbiCoder();
+  const bytesToSign = abiCoder.encode(signMessageDefinition, signMessageData);
+  const signData = ethers.keccak256(bytesToSign);
+
+  return ethers.toBeArray(signData);
 }
 async function getSignaturesForExecuteTransfer(mvxTransactions, batchNonce, wallets) {
   const dataToSign = getExecuteTransferData(mvxTransactions, batchNonce);

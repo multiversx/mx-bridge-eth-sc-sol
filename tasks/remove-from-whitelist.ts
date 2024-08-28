@@ -1,4 +1,4 @@
-import { task } from "hardhat/config";
+import "@nomicfoundation/hardhat-toolbox";
 import { getDeployOptions } from "./args/deployOptions";
 
 task("remove-from-whitelist", "Removed an already whitelisted address in the bridge.")

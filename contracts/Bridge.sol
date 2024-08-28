@@ -2,6 +2,8 @@
 
 pragma solidity ^0.8.20;
 
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+
 import "./SharedStructs.sol";
 import "./ERC20Safe.sol";
 import "./access/RelayerRole.sol";
@@ -23,7 +25,7 @@ In order to use it:
 @dev This contract mimics a multisign contract by sending the signatures from all
 relayers with the execute call, in order to save gas.
  */
-contract Bridge is RelayerRole, Pausable {
+contract Bridge is Initializable, RelayerRole, Pausable {
     /*============================ EVENTS ============================*/
     event QuorumChanged(uint256 quorum);
 
@@ -32,10 +34,10 @@ contract Bridge is RelayerRole, Pausable {
     string private constant executeTransferAction = "ExecuteBatchedTransfer";
     string private constant prefix = "\x19Ethereum Signed Message:\n32";
     uint256 private constant minimumQuorum = 3;
-    uint256 public batchSettleBlockCount = 40;
+    uint256 public batchSettleBlockCount;
 
     uint256 public quorum;
-    ERC20Safe internal immutable safe;
+    ERC20Safe internal safe;
     BridgeProxy internal bridgeProxy;
 
     mapping(uint256 => bool) public executedBatches;
@@ -50,7 +52,22 @@ contract Bridge is RelayerRole, Pausable {
      *   - add/remove relayers
      *   - add/remove tokens that can be bridged
      */
-    constructor(address[] memory board, uint256 initialQuorum, ERC20Safe erc20Safe, BridgeProxy _bridgeProxy) {
+    function initialize(
+        address[] memory board,
+        uint256 initialQuorum,
+        ERC20Safe erc20Safe,
+        BridgeProxy _bridgeProxy
+    ) public virtual initializer {
+        __RelayerRole_init();
+        __Bridge__init_unchained(board, initialQuorum, erc20Safe, _bridgeProxy);
+    }
+
+    function __Bridge__init_unchained(
+        address[] memory board,
+        uint256 initialQuorum,
+        ERC20Safe erc20Safe,
+        BridgeProxy _bridgeProxy
+    ) internal onlyInitializing {
         require(initialQuorum >= minimumQuorum, "Quorum is too low.");
         require(board.length >= initialQuorum, "The board should be at least the quorum size.");
 
@@ -59,6 +76,8 @@ contract Bridge is RelayerRole, Pausable {
         quorum = initialQuorum;
         safe = erc20Safe;
         bridgeProxy = _bridgeProxy;
+
+        batchSettleBlockCount = 40;
     }
 
     /**

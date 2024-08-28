@@ -1,4 +1,4 @@
-import { task } from "hardhat/config";
+import "@nomicfoundation/hardhat-toolbox";
 
 task("deploy-test-tokens", "Deploys ERC20 contracts to use to test the bridge")
   .addParam("name", "Name of the token to deploy")
@@ -21,6 +21,5 @@ task("deploy-test-tokens", "Deploys ERC20 contracts to use to test the bridge")
     const decimals = taskArgs.decimals;
 
     const usdcContract = await genericERC20Factory.deploy(tokenName, tokenSymbol, decimals);
-    await usdcContract.deployed();
-    console.log("Token deployed to:", usdcContract.address);
+    console.log("Token deployed to:", usdcContract.getAddress());
   });
