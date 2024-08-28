@@ -19,7 +19,12 @@ contract BridgeProxy is Pausable, BridgeRole {
     uint256 private lowestTxId;
     uint256 private currentTxId;
 
-    constructor() Pausable() {
+    function initialize() public initializer {
+        __BridgeRole_init();
+        __Pausable_init();
+    }
+
+    function __BridgeProxy__init_unchained() internal onlyInitializing {
         lowestTxId = 0;
     }
 
