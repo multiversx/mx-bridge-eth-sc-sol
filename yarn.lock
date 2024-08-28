@@ -933,10 +933,10 @@
     json-bigint "1.0.0"
     keccak "3.0.2"
 
-"@multiversx/sdk-js-bridge@^0.2.0":
-  version "0.2.0"
-  resolved "https://registry.npmjs.org/@multiversx/sdk-js-bridge/-/sdk-js-bridge-0.2.0.tgz"
-  integrity sha512-RtYHD78ZChWkLGeB3NsvckJrL6kvtwUV5+e1NxGAJZGQsvQ7Dn5xH81TA+mKAuGaRPy+KpHy/hFvE8PYqwGx7w==
+"@multiversx/sdk-js-bridge@^0.2.3":
+  version "0.2.3"
+  resolved "https://registry.npmjs.org/@multiversx/sdk-js-bridge/-/sdk-js-bridge-0.2.3.tgz"
+  integrity sha512-iiJsTPZk97IYawLGvSs6X7ukaawIEhkL4cZHqHUkdNz/ioNlYsbYpsvTmk+khSLM2neN4WgUD8E7TDPPTV0InA==
   dependencies:
     bignumber.js "^9.1.2"
 
