@@ -34,5 +34,3 @@ RUN abigen --abi=artifacts/contracts/Proxy.sol/Proxy.abi.json --pkg=contract --o
 RUN abigen --abi=artifacts/contracts/ERC20Safe.sol/ERC20Safe.abi.json --pkg=contract --out=artifacts/contracts/ERC20Safe.sol/ERC20Safe.go --type=ERC20Safe
 RUN abigen --abi=artifacts/contracts/GenericERC20.sol/GenericERC20.abi.json --pkg=contract --out=artifacts/contracts/GenericERC20.sol/GenericERC20.go --type=GenericERC20
 RUN abigen --abi=artifacts/contracts/MintBurnERC20.sol/MintBurnERC20.abi.json --pkg=contract --out=artifacts/contracts/MintBurnERC20.sol/MintBurnERC20.go --type=MintBurnERC20
-
-RUN sleep infinity
