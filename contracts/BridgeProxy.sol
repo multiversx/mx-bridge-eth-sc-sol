@@ -12,6 +12,7 @@ import "./access/BridgeRole.sol";
 contract BridgeProxy is Initializable, Pausable, BridgeRole {
     using BoolTokenTransfer for IERC20;
 
+    /*========================= CONTRACT STATE =========================*/
     uint256 public constant MIN_GAS_LIMIT_FOR_SC_CALL = 10_000_000;
     uint256 public constant DEFAULT_GAS_LIMIT_FOR_REFUND_CALLBACK = 20_000_000;
 
@@ -19,6 +20,7 @@ contract BridgeProxy is Initializable, Pausable, BridgeRole {
     uint256 private lowestTxId;
     uint256 private currentTxId;
 
+    /*========================= PUBLIC API =========================*/
     function initialize() public initializer {
         __BridgeRole_init();
         __Pausable_init();
@@ -66,6 +68,7 @@ contract BridgeProxy is Initializable, Pausable, BridgeRole {
         }
     }
 
+    /*========================= PRIVATE API =========================*/
     function _finishExecuteGracefully(uint256 txId, bool isRefund) private {
         if (isRefund) {
             _refundTransaction(txId);
@@ -92,6 +95,11 @@ contract BridgeProxy is Initializable, Pausable, BridgeRole {
         lowestTxId = newLowestTxId;
     }
 
+    function _isPendingTransaction(uint256 txId) private view returns (bool) {
+        return pendingTransactions[txId].amount != 0;
+    }
+
+    /*========================= VIEW FUNCTIONS =========================*/
     function getPendingTransactionById(uint256 txId) public view returns (MvxTransaction memory) {
         return pendingTransactions[txId];
     }
@@ -102,7 +110,7 @@ contract BridgeProxy is Initializable, Pausable, BridgeRole {
         uint256 index = 0;
 
         for (uint256 i = lowestTxId; i < currentTxId; i++) {
-            if (pendingTransactions[i].amount != 0) {
+            if (_isPendingTransaction(i)) {
                 txns[index] = pendingTransactions[i];
                 index++;
             }
