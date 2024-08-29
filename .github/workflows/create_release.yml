@@ -2,9 +2,9 @@ name: Create release
 
 on:
   push:
-    branches:
-      - main
-      - * # TODO: replace with rc/*
+#    branches:
+#      - main
+#      - *
   workflow_dispatch:
 
 permissions:
