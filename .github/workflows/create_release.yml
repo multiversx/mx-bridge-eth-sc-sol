@@ -32,6 +32,8 @@ jobs:
           APP_VER_SHORT=$(git describe --tags)
           ARCHIVE="artifacts_""$APP_VER_SHORT"".zip"
 
+          echo "ARCHIVE=${ARCHIVE}" >> $GITHUB_ENV
+
           sudo chown -R $USER: ${BUILD_DIR}
           chmod -R 755 ${BUILD_DIR}
           ls -al ${BUILD_DIR}
