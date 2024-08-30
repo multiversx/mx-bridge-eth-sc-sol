@@ -1,0 +1,6 @@
+services:
+  artifacts-builder:
+    build: .
+    volumes:
+      - ./artifacts:/multiversx/artifacts_volume
+    entrypoint: /bin/sh -c "cp -r /multiversx/artifacts/* /multiversx/artifacts_volume"
