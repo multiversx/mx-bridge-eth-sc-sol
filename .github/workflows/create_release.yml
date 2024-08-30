@@ -28,7 +28,7 @@ jobs:
 
       - name: Package build output
         run: |
-          BUILD_DIR=${GITHUB_WORKSPACE}/artifacts
+          BUILD_DIR=${GITHUB_WORKSPACE}/artifacts/contracts
           APP_VER_SHORT=$(git describe --tags)
           ARCHIVE="artifacts_""$APP_VER_SHORT"".zip"
 
@@ -67,6 +67,6 @@ jobs:
         run: |
           gh release create --draft --notes="Release draft from Github Actions" vNext
           sleep 10
-          for i in $(find ./assets -name '*.zip' -type f); do
+          for i in $(find ${GITHUB_WORKSPACE} -name '*.zip' -type f); do
             gh release upload vNext ${i}
           done
