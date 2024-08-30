@@ -6,6 +6,8 @@ COPY . .
 
 RUN apk update && apk add jq
 
+RUN cp -u .env.example .env
+
 RUN yarn install
 RUN yarn compile
 
