@@ -3,6 +3,7 @@
 pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "./lib/Pausable.sol";
 import "./SharedStructs.sol";
 import "./lib/BoolTokenTransfer.sol";
@@ -13,12 +14,12 @@ contract BridgeProxy is Initializable, Pausable, BridgeRole {
     using BoolTokenTransfer for IERC20;
 
     /*========================= CONTRACT STATE =========================*/
-    uint256 public constant MIN_GAS_LIMIT_FOR_SC_CALL = 10_000_000;
-    uint256 public constant DEFAULT_GAS_LIMIT_FOR_REFUND_CALLBACK = 20_000_000;
-
-    mapping(uint256 => MvxTransaction) private pendingTransactions;
+    uint128 public constant MIN_GAS_LIMIT_FOR_SC_CALL = 10_000_000;
+    uint128 public constant DEFAULT_GAS_LIMIT_FOR_REFUND_CALLBACK = 20_000_000;
     uint256 private lowestTxId;
     uint256 private currentTxId;
+
+    mapping(uint256 => MvxTransaction) private pendingTransactions;
 
     /*========================= PUBLIC API =========================*/
     function initialize() public initializer {
@@ -28,10 +29,17 @@ contract BridgeProxy is Initializable, Pausable, BridgeRole {
 
     function __BridgeProxy__init_unchained() internal onlyInitializing {
         lowestTxId = 0;
+        currentTxId = 0;
     }
 
     function deposit(MvxTransaction calldata txn) external payable whenNotPaused onlyBridge {
         pendingTransactions[currentTxId] = txn;
+
+        // Set allowance for the recipient to move the tokens later
+        IERC20 token = IERC20(txn.token);
+        bool approvalSuccess = token.approve(txn.recipient, txn.amount);
+        require(approvalSuccess, "BridgeProxy: Token approval failed");
+
         currentTxId++;
     }
 
@@ -48,7 +56,7 @@ contract BridgeProxy is Initializable, Pausable, BridgeRole {
             );
 
             if (selector.length == 0 || gasLimit == 0 || gasLimit < MIN_GAS_LIMIT_FOR_SC_CALL) {
-                _finishExecuteGracefully(txId, true);
+                _finishExecuteGracefully(txId);
                 return;
             }
 
@@ -59,20 +67,24 @@ contract BridgeProxy is Initializable, Pausable, BridgeRole {
                 data = selector;
             }
 
+            _updateLowestTxId(); // <---------
+            delete pendingTransactions[txId]; // <---------
+
             (bool success, ) = txn.recipient.call{ gas: gasLimit }(data);
 
-            bool isRefund = !success;
-            _finishExecuteGracefully(txId, isRefund);
+            if (!success) {
+                _refundTransaction(txId);
+                return;
+            }
         } else {
-            _finishExecuteGracefully(txId, true);
+            _finishExecuteGracefully(txId);
+            return;
         }
     }
 
     /*========================= PRIVATE API =========================*/
-    function _finishExecuteGracefully(uint256 txId, bool isRefund) private {
-        if (isRefund) {
-            _refundTransaction(txId);
-        }
+    function _finishExecuteGracefully(uint256 txId) private {
+        _refundTransaction(txId);
         _updateLowestTxId();
         delete pendingTransactions[txId];
     }
