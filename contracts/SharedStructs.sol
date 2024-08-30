@@ -42,5 +42,4 @@ struct MvxTransaction {
     uint256 amount;
     uint256 depositNonce;
     bytes callData;
-    bool isScRecipient;
 }

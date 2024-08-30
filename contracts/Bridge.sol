@@ -127,8 +127,6 @@ contract Bridge is Initializable, RelayerRole, Pausable {
         - amount
         - deposit nonce
         - call data
-        - true, if recipient a smart contract
-          false, otherwise
         @param batchNonceMvx Nonce for the batch
         @param signatures List of signatures from the relayers
     */
@@ -187,22 +185,36 @@ contract Bridge is Initializable, RelayerRole, Pausable {
 
     function _processDeposit(MvxTransaction calldata mvxTransaction) private returns (DepositStatus) {
         address recipient;
-        if (mvxTransaction.isScRecipient) {
+        bool isScCall = _isScCall(mvxTransaction.callData);
+
+        if (isScCall) {
             recipient = address(bridgeProxy);
         } else {
             recipient = mvxTransaction.recipient;
         }
 
-        DepositStatus status = safe.transfer(mvxTransaction.token, mvxTransaction.amount, recipient)
-            ? DepositStatus.Executed
-            : DepositStatus.Rejected;
-
-        // If the recipient is a smart contract, deposit the funds in the bridgeProxy
-        if (mvxTransaction.isScRecipient && status == DepositStatus.Executed) {
-            bridgeProxy.deposit(mvxTransaction);
+        if (mvxTransaction.amount == 0) {
+            return DepositStatus.Rejected;
         }
 
-        return status;
+        bool transferSuccess = safe.transfer(mvxTransaction.token, mvxTransaction.amount, recipient);
+        if (!transferSuccess) {
+            return DepositStatus.Rejected;
+        }
+
+        // If the recipient is a smart contract, attempt to deposit the funds in bridgeProxy
+        if (_isScCall(mvxTransaction.callData)) {
+            bool depositSuccess = bridgeProxy.deposit(mvxTransaction);
+            if (!depositSuccess) {
+                return DepositStatus.Rejected;
+            }
+        }
+
+        return DepositStatus.Executed;
+    }
+
+    function _isScCall(bytes calldata _data) private pure returns (bool) {
+        return _data.length > 0;
     }
 
     function _validateQuorum(bytes[] memory signatures, bytes32 data) private view {

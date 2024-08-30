@@ -32,22 +32,19 @@ contract BridgeProxy is Initializable, Pausable, BridgeRole {
         currentTxId = 0;
     }
 
-    function deposit(MvxTransaction calldata txn) external payable whenNotPaused onlyBridge {
+    function deposit(MvxTransaction calldata txn) external payable whenNotPaused onlyBridge returns (bool) {
         pendingTransactions[currentTxId] = txn;
+        currentTxId++;
 
-        // Set allowance for the recipient to move the tokens later
         IERC20 token = IERC20(txn.token);
         bool approvalSuccess = token.approve(txn.recipient, txn.amount);
-        require(approvalSuccess, "BridgeProxy: Token approval failed");
 
-        currentTxId++;
+        return approvalSuccess;
     }
 
     function execute(uint256 txId) external whenNotPaused {
         require(txId < currentTxId, "BridgeProxy: Invalid transaction ID");
         MvxTransaction memory txn = pendingTransactions[txId];
-
-        require(txn.amount != 0, "BridgeProxy: No amount bridged");
 
         if (txn.callData.length > 0) {
             (bytes memory selector, uint256 gasLimit, bytes memory args) = abi.decode(
@@ -56,7 +53,7 @@ contract BridgeProxy is Initializable, Pausable, BridgeRole {
             );
 
             if (selector.length == 0 || gasLimit == 0 || gasLimit < MIN_GAS_LIMIT_FOR_SC_CALL) {
-                _finishExecuteGracefully(txId);
+                _refundAndDeleteTxn(txId);
                 return;
             }
 
@@ -67,33 +64,37 @@ contract BridgeProxy is Initializable, Pausable, BridgeRole {
                 data = selector;
             }
 
-            _updateLowestTxId(); // <---------
-            delete pendingTransactions[txId]; // <---------
+            _updateLowestTxId();
+
+            address _token = txn.token;
+            uint256 _amount = txn.amount;
+            delete pendingTransactions[txId];
 
             (bool success, ) = txn.recipient.call{ gas: gasLimit }(data);
 
             if (!success) {
-                _refundTransaction(txId);
+                _refundTransaction(_token, _amount);
                 return;
             }
         } else {
-            _finishExecuteGracefully(txId);
+            _refundAndDeleteTxn(txId);
             return;
         }
     }
 
     /*========================= PRIVATE API =========================*/
-    function _finishExecuteGracefully(uint256 txId) private {
-        _refundTransaction(txId);
+    function _refundAndDeleteTxn(uint256 txId) private {
+        MvxTransaction memory txn = pendingTransactions[txId];
+        _refundTransaction(txn.token, txn.amount);
+
         _updateLowestTxId();
+
         delete pendingTransactions[txId];
     }
 
-    function _refundTransaction(uint256 txId) private {
-        MvxTransaction memory txn = pendingTransactions[txId];
-
-        IERC20 erc20 = IERC20(txn.token);
-        bool transferExecuted = erc20.boolTransfer(this.bridge(), txn.amount);
+    function _refundTransaction(address token, uint256 amount) private {
+        IERC20 erc20 = IERC20(token);
+        bool transferExecuted = erc20.boolTransfer(this.bridge(), amount);
         require(transferExecuted, "BridgeProxy: Refund failed");
     }
 

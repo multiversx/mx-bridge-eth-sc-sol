@@ -8,7 +8,7 @@ describe("BridgeProxy", function () {
   let adminWallet, relayer1, relayer2, relayer3, relayer4, relayer5, relayer6, relayer7, relayer8, otherWallet;
   let boardMembers;
   const quorum = 7;
-  let erc20Safe, bridge, bridgeProxy, genericErc20, counter;
+  let erc20Safe, bridge, bridgeProxy, genericErc20, testContract;
 
   async function setupContracts() {
     erc20Safe = await deployUpgradableContract(adminWallet, "ERC20Safe");
@@ -19,7 +19,7 @@ describe("BridgeProxy", function () {
       erc20Safe.address,
       bridgeProxy.address,
     ]);
-    counter = await deployContract(adminWallet, "Counter");
+    testContract = await deployContract(adminWallet, "BridgeProxyTestContract", [bridgeProxy.address]);
     await erc20Safe.setBridge(bridge.address);
     await bridgeProxy.setBridge(bridge.address);
     await bridge.unpause();
@@ -76,7 +76,6 @@ describe("BridgeProxy", function () {
     expect(pendingTxn[3]).to.equal(0);
     expect(pendingTxn[4]).to.equal(0);
     expect(pendingTxn[5]).to.equal("0x");
-    expect(pendingTxn[6]).to.equal(false);
   };
 
   before(async function () {
@@ -114,8 +113,7 @@ describe("BridgeProxy", function () {
         recipient: otherWallet.address,
         amount: 80n,
         depositNonce: 1,
-        callData: "0x",
-        isScRecipient: true,
+        callData: generateCallData("increment()", 11000000, [], []),
       };
 
       signatures = await getSignaturesForExecuteTransfer([mvxTxn], batchNonce, [
@@ -150,7 +148,6 @@ describe("BridgeProxy", function () {
       expect(pendingTxn[3]).to.equal(mvxTxn.amount);
       expect(pendingTxn[4]).to.equal(mvxTxn.depositNonce);
       expect(pendingTxn[5]).to.equal(mvxTxn.callData);
-      expect(pendingTxn[6]).to.equal(mvxTxn.isScRecipient);
     });
   });
 
@@ -172,46 +169,6 @@ describe("BridgeProxy", function () {
         "BridgeProxy: Invalid transaction ID",
       );
     });
-    it("reverts when transaction's amount is 0", async function () {
-      mvxTxnNoAmount = {
-        token: genericErc20.address,
-        sender: ethers.encodeBytes32String("senderAddress"),
-        recipient: otherWallet.address,
-        amount: 0,
-        depositNonce: 4,
-        callData: "0x",
-        isScRecipient: true,
-      };
-      arrayOfTxn.push(mvxTxnNoAmount);
-
-      await prepareAndExecuteTransfer(amount, batchNonce, arrayOfTxn);
-
-      await expect(bridgeProxy.execute(0)).to.be.revertedWith("BridgeProxy: No amount bridged");
-    });
-    it("should gracefully finish execution and refund if calldata is empty", async function () {
-      const mvxTxnWithoutCalldata = {
-        token: genericErc20.address,
-        sender: ethers.encodeBytes32String("senderAddress"),
-        recipient: otherWallet.address,
-        amount: 80n,
-        depositNonce: 1,
-        callData: "0x",
-        isScRecipient: true,
-      };
-      arrayOfTxn.push(mvxTxnWithoutCalldata);
-      await prepareAndExecuteTransfer(amount, batchNonce, arrayOfTxn);
-
-      //check balance before and after execute
-      const beforeBalance = await genericErc20.balanceOf(bridge.address);
-      await bridgeProxy.execute(0);
-      const afterBalance = await genericErc20.balanceOf(bridge.address);
-
-      expect(afterBalance).to.equal(beforeBalance + mvxTxnWithoutCalldata.amount);
-
-      // check for pending transaction to be removed after refund
-      const pendingTxn = await bridgeProxy.getPendingTransactionById(0);
-      checkForEmptyTransaction(pendingTxn);
-    });
 
     it("should gracefully finish execution and refund if calldata is invalid", async function () {
       const badFunctionSignature = "mint(uint256,uint256)";
@@ -226,7 +183,6 @@ describe("BridgeProxy", function () {
         amount: 80n,
         depositNonce: 2,
         callData: generateCallData(badFunctionSignature, gasLimit, argTypes, argValues),
-        isScRecipient: true,
       };
       arrayOfTxn.push(mvxTxnWithInvalidCalldata);
       await prepareAndExecuteTransfer(amount, batchNonce, arrayOfTxn);
@@ -254,7 +210,6 @@ describe("BridgeProxy", function () {
         amount: 80n,
         depositNonce: 2,
         callData: generateCallData(functionSignature, 0, argTypes, argValues),
-        isScRecipient: true,
       };
 
       const mvxTxnWithInsufficientGas = {
@@ -264,7 +219,6 @@ describe("BridgeProxy", function () {
         amount: 80n,
         depositNonce: 2,
         callData: generateCallData(functionSignature, 2000000, argTypes, argValues),
-        isScRecipient: true,
       };
 
       const mvxTxnWithEmptyEndpoint = {
@@ -274,7 +228,6 @@ describe("BridgeProxy", function () {
         amount: 80n,
         depositNonce: 2,
         callData: generateCallData("", 11000000, argTypes, argValues),
-        isScRecipient: true,
       };
 
       arrayOfTxn = [mvxTxnWithEmptyEndpoint, mvxTxnWithZeroGas, mvxTxnWithInsufficientGas];
@@ -303,7 +256,6 @@ describe("BridgeProxy", function () {
         amount: 80n,
         depositNonce: 1,
         callData: generateCallData(functionSignature, gasLimit, argTypes, argValues),
-        isScRecipient: true,
       };
       arrayOfTxn.push(mvxTxnWithCalldata);
       await prepareAndExecuteTransfer(amount, batchNonce, arrayOfTxn);
@@ -322,20 +274,48 @@ describe("BridgeProxy", function () {
       mvxTxnWithCalldata = {
         token: genericErc20.address,
         sender: ethers.encodeBytes32String("senderAddress"),
-        recipient: counter.address,
+        recipient: testContract.address,
         amount: 80n,
         depositNonce: 1,
         callData: generateCallData(functionSignature, gasLimit, [], []),
-        isScRecipient: true,
       };
       arrayOfTxn.push(mvxTxnWithCalldata);
       await prepareAndExecuteTransfer(amount, batchNonce, arrayOfTxn);
 
-      const counterBefore = await counter.count();
+      const counterBefore = await testContract.count();
       await bridgeProxy.execute(0);
-      const counterAfter = await counter.count();
+      const counterAfter = await testContract.count();
 
       expect(counterAfter).to.equal(counterBefore + 1n);
+    });
+
+    it("should transfer funds from bridge proxy contract after executing transaction", async function () {
+      const amount = 80n;
+      const functionSignature = "withdraw(address,uint256)";
+      const gasLimit = 11000000;
+      const argTypes = ["address", "uint256"];
+      const argValues = [genericErc20.address, amount];
+      mvxTxnWithCalldata = {
+        token: genericErc20.address,
+        sender: ethers.encodeBytes32String("senderAddress"),
+        recipient: testContract.address,
+        amount,
+        depositNonce: 1,
+        callData: generateCallData(functionSignature, gasLimit, argTypes, argValues),
+      };
+      arrayOfTxn.push(mvxTxnWithCalldata);
+      await prepareAndExecuteTransfer(amount, batchNonce, arrayOfTxn);
+
+      const beforeBalanceRecipient = await genericErc20.balanceOf(testContract.address);
+      const beforeBalanceBridgeProxy = await genericErc20.balanceOf(bridgeProxy.address);
+
+      await bridgeProxy.execute(0);
+
+      const afterBalanceRecipient = await genericErc20.balanceOf(testContract.address);
+      const afterBalanceBridgeProxy = await genericErc20.balanceOf(bridgeProxy.address);
+
+      expect(afterBalanceRecipient).to.equal(beforeBalanceRecipient + amount);
+      expect(afterBalanceBridgeProxy).to.equal(beforeBalanceBridgeProxy - amount);
     });
   });
 
@@ -351,8 +331,7 @@ describe("BridgeProxy", function () {
         recipient: otherWallet.address,
         amount: 80n,
         depositNonce: 1,
-        callData: "0x",
-        isScRecipient: true,
+        callData: generateCallData("increment()", 11000000, [], []),
       };
       await prepareAndExecuteTransfer(amount, batchNonce, [mvxTxn]);
     });
@@ -366,7 +345,6 @@ describe("BridgeProxy", function () {
       expect(pendingTxn[3]).to.equal(mvxTxn.amount);
       expect(pendingTxn[4]).to.equal(mvxTxn.depositNonce);
       expect(pendingTxn[5]).to.equal(mvxTxn.callData);
-      expect(pendingTxn[6]).to.equal(mvxTxn.isScRecipient);
     });
   });
 
@@ -381,11 +359,10 @@ describe("BridgeProxy", function () {
       mvxTxn1 = {
         token: genericErc20.address,
         sender: ethers.encodeBytes32String("senderAddress"),
-        recipient: counter.address,
+        recipient: testContract.address,
         amount: 80n,
         depositNonce: 1,
         callData: generateCallData(functionSignature1, gasLimit, [], []),
-        isScRecipient: true,
       };
 
       mvxTxn2 = {
@@ -394,8 +371,7 @@ describe("BridgeProxy", function () {
         recipient: otherWallet.address,
         amount: 80n,
         depositNonce: 2,
-        callData: "0x",
-        isScRecipient: true,
+        callData: generateCallData("increment()", 11000000, [], []),
       };
 
       const functionSignature2 = "mint(address,uint256)";
@@ -408,7 +384,6 @@ describe("BridgeProxy", function () {
         amount: 80n,
         depositNonce: 3,
         callData: generateCallData(functionSignature2, gasLimit, argTypes, argValues),
-        isScRecipient: true,
       };
 
       await prepareAndExecuteTransfer(amount, batchNonce, [mvxTxn1, mvxTxn2, mvxTxn3]);
@@ -441,8 +416,7 @@ describe("BridgeProxy", function () {
         recipient: otherWallet.address,
         amount: 80n,
         depositNonce: 1,
-        callData: "0x",
-        isScRecipient: true,
+        callData: generateCallData("increment()", 11000000, [], []),
       };
 
       signatures = await getSignaturesForExecuteTransfer([mvxTxn], batchNonce, [

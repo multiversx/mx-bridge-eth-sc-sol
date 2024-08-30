@@ -1,7 +1,7 @@
 const { ethers } = require("hardhat");
 
 function getExecuteTransferData(mvxTransactions, batchNonce) {
-  const mvxTransactionType = "address,bytes32,address,uint256,uint256,bytes,bool";
+  const mvxTransactionType = "address,bytes32,address,uint256,uint256,bytes";
   const mvxTransactionsType = `(${mvxTransactionType})[]`;
   const signMessageDefinition = [mvxTransactionsType, "uint256", "string"];
 
@@ -13,7 +13,6 @@ function getExecuteTransferData(mvxTransactions, batchNonce) {
     tx.amount,
     tx.depositNonce,
     tx.callData,
-    tx.isScRecipient,
   ]);
   const signMessageData = [mvxTransactionsData, batchNonce, "ExecuteBatchedTransfer"];
 

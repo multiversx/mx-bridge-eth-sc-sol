@@ -165,7 +165,6 @@ describe("Bridge", async function () {
         amount: amount,
         depositNonce: 1,
         callData: "0x",
-        isScRecipient: false,
       };
       signatures = await getSignaturesForExecuteTransfer([mvxTxn], batchNonce, [
         adminWallet,
