@@ -1,0 +1,71 @@
+name: Create release
+
+on:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: "0"
+
+      - name: Create artifacts files
+        run: |
+          docker compose -f docker-compose.yml build
+          docker compose -f docker-compose.yml up
+          docker compose -f docker-compose.yml down -v
+
+      - name: Package build output
+        run: |
+          BUILD_DIR=${GITHUB_WORKSPACE}/artifacts/contracts
+          APP_VER_SHORT=$(git describe --tags)
+          ARCHIVE="artifacts_""$APP_VER_SHORT"".zip"
+
+          echo "ARCHIVE=${ARCHIVE}" >> $GITHUB_ENV
+
+          sudo chown -R $USER: ${BUILD_DIR}
+          chmod -R 755 ${BUILD_DIR}
+          ls -al ${BUILD_DIR}
+          zip -r -j ${ARCHIVE} ${BUILD_DIR}
+
+      - name: Save artifacts
+        uses: actions/upload-artifact@v3
+        with:
+           name: ${{ env.ARCHIVE }}
+           path: ${{ env.ARCHIVE }}
+           if-no-files-found: error
+  release:
+    needs: [build]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v2
+
+      # https://docs.github.com/en/free-pro-team@latest/actions/guides/storing-workflow-data-as-artifacts#downloading-or-deleting-artifacts
+      # A directory for each artifact is created using its name
+      - name: Download all workflow run artifacts
+        uses: actions/download-artifact@v2
+        with:
+          path: ${GITHUB_WORKSPACE}
+
+      - name: Display structure of downloaded files
+        run: ls -R
+        working-directory: ${GITHUB_WORKSPACE}
+
+      - name: Create release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create --draft --notes="Release draft from Github Actions" vNext
+          sleep 10
+          for i in $(find ${GITHUB_WORKSPACE} -name '*.zip' -type f); do
+            gh release upload vNext ${i}
+          done
