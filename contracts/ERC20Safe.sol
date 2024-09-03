@@ -38,6 +38,9 @@ contract ERC20Safe is BridgeRole, Pausable {
     uint8 public batchBlockLimit = 40;
     uint8 public batchSettleLimit = 40;
 
+    // Reserved storage slots for future upgrades
+    uint256[10] private __gap;
+
     mapping(uint256 => Batch) public batches;
     mapping(address => bool) public whitelistedTokens;
     mapping(address => bool) public mintBurnTokens;

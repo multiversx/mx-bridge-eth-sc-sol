@@ -34,6 +34,9 @@ contract Bridge is RelayerRole, Pausable {
     uint256 public batchSettleBlockCount = 40;
 
     uint256 public quorum;
+    // Reserved storage slots for future upgrades
+    uint256[10] private __gap;
+
     ERC20Safe internal immutable safe;
 
     mapping(uint256 => bool) public executedBatches;

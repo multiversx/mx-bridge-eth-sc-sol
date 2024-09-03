@@ -10,6 +10,8 @@ contract MintBurnERC20 is ERC20, AccessControl, ERC20Burnable {
     // Create a new role identifier for the minter role
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
     uint8 private numDecimals;
+    // Reserved storage slots for future upgrades
+    uint256[10] private __gap;
 
     error CallerNotMinter(address caller);
 
