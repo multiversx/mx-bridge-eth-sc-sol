@@ -1,24 +1,26 @@
 const { expect } = require("chai");
-const { waffle, network } = require("hardhat");
-const { provider, deployContract } = waffle;
+const { ethers } = require("hardhat");
+const { encodeCallData } = require("@multiversx/sdk-js-bridge");
 
-const GenericERC20Artifact = require("../artifacts/contracts/GenericERC20.sol/GenericERC20.json");
-const ERC20SafeArtifact = require("../artifacts/contracts/ERC20Safe.sol/ERC20Safe.json");
-const BridgeArtifact = require("../artifacts/contracts/Bridge.sol/Bridge.json");
-const BridgeMockArtifact = require("../artifacts/contracts/test/BridgeMock.sol/BridgeMock.json");
-const {encodeCallData} = require("@multiversx/sdk-js-bridge");
+const { deployContract, deployUpgradableContract, upgradeContract } = require("./utils/deploy.utils");
 
-describe("ERC20Safe", async function () {
+describe("ERC20Safe", function () {
   const defaultMinAmount = 25;
   const defaultMaxAmount = 100;
-  const [adminWallet, otherWallet, simpleBoardMember] = provider.getWallets();
-  const boardMembers = [adminWallet, otherWallet, simpleBoardMember];
+
+  let adminWallet, otherWallet, simpleBoardMember;
+  let boardMembers;
+
+  before(async function() {
+    [adminWallet, otherWallet, simpleBoardMember] = await ethers.getSigners();
+    boardMembers = [adminWallet, otherWallet, simpleBoardMember];
+  });
 
   let safe, genericERC20, bridge;
   beforeEach(async function () {
-    genericERC20 = await deployContract(adminWallet, GenericERC20Artifact, ["TSC", "TSC", 6]);
-    safe = await deployContract(adminWallet, ERC20SafeArtifact);
-    bridge = await deployContract(adminWallet, BridgeArtifact, [boardMembers.map(m => m.address), 3, safe.address]);
+    genericERC20 = await deployContract(adminWallet, "GenericERC20", ["TSC", "TSC", 6]);
+    safe = await deployUpgradableContract(adminWallet, "ERC20Safe");
+    bridge = await deployUpgradableContract(adminWallet, "Bridge", [boardMembers.map(m => m.address), 3, safe.address]);
 
     await genericERC20.approve(safe.address, 1000);
     await safe.setBridge(bridge.address);
@@ -354,7 +356,9 @@ describe("ERC20Safe", async function () {
             Buffer.from("c0f0058cea88a2bc1240b60361efb965957038d05f916c42b3f23a2c38ced81e", "hex"),
           );
 
-          expect(depositResp.gasLimit).to.be.lt(400000);
+          let receipt = await depositResp.wait();
+
+          expect(receipt.gasUsed).to.be.lt(400000);
         }
       });
     });
@@ -409,7 +413,7 @@ describe("ERC20Safe", async function () {
       await safe.whitelistToken(genericERC20.address, defaultMinAmount, defaultMaxAmount, false, true);
       await genericERC20.approve(safe.address, "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
 
-      const mockBridge = await deployContract(adminWallet, BridgeMockArtifact, [
+      const mockBridge = await deployUpgradableContract(adminWallet, "BridgeMock", [
         boardMembers.map(m => m.address),
         3,
         safe.address,
@@ -498,6 +502,23 @@ describe("ERC20Safe", async function () {
       expect(isFinal).to.be.eq(areDepositsFinal);
       expect(batch.depositsCount).to.be.eq(deposits.length);
       expect(batch.depositsCount).to.be.eq(2);
+    });
+  });
+
+  describe("ERC20Safe - upgrade works as expected", async function() {
+    it("upgrades and has new functions", async function () {
+      let valueToCheckAgainst = 100n;
+
+      // First change something in the safe to check state persistence
+      let currentBatchSize = await safe.batchSize();
+      await safe.setBatchSize(currentBatchSize - 1n);
+
+      let newSafe = await upgradeContract(adminWallet, safe.address, "SafeUpgrade", [valueToCheckAgainst]);
+
+      expect(await newSafe.afterUpgrade()).to.be.eq(valueToCheckAgainst);
+      expect(await newSafe.batchSize()).to.be.eq(currentBatchSize - 1n);
+
+      await safe.setBatchSize(currentBatchSize);
     });
   });
 });

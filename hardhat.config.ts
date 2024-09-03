@@ -1,11 +1,6 @@
-import "@nomiclabs/hardhat-waffle";
-import "@typechain/hardhat";
-import "hardhat-gas-reporter";
-import "hardhat-contract-sizer";
-import "hardhat-log-remover";
-import "hardhat-tracer";
-import "hardhat-abi-exporter";
-import "solidity-coverage";
+import "@nomiclabs/hardhat-ethers";
+import "@nomicfoundation/hardhat-toolbox";
+import "@openzeppelin/hardhat-upgrades";
 
 import "./tasks/accounts";
 import "./tasks/clean";
@@ -34,7 +29,7 @@ import "./tasks/deploy/mint-burn-tokens";
 import "./tasks/quorum";
 import "./tasks/get-statuses-after-execution";
 import "./tasks/depositSC";
-
+import "./tasks/set-batch-settle-limit-on-safe"
 import "./tasks/deploy";
 
 import { resolve } from "path";
@@ -187,7 +182,7 @@ const config: HardhatUserConfig = {
   },
   typechain: {
     outDir: "typechain",
-    target: "ethers-v5",
+    target: "ethers-v6",
   },
   abiExporter: {
     path: "./abi",

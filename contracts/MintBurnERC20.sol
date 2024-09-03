@@ -2,11 +2,11 @@
 
 pragma solidity ^0.8.20;
 
-import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
-import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
+import { AccessControlUpgradeable } from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import { ERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20BurnableUpgradeable.sol";
 
-contract MintBurnERC20 is ERC20, AccessControl, ERC20Burnable {
+contract MintBurnERC20 is ERC20Upgradeable, AccessControlUpgradeable, ERC20BurnableUpgradeable {
     // Create a new role identifier for the minter role
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
     uint8 private numDecimals;
@@ -15,7 +15,15 @@ contract MintBurnERC20 is ERC20, AccessControl, ERC20Burnable {
 
     error CallerNotMinter(address caller);
 
-    constructor(string memory name, string memory symbol, uint8 providedNumDecimals) ERC20(name, symbol) {
+    function initialize(string memory name, string memory symbol, uint8 providedNumDecimals) public initializer {
+        __ERC20_init(name, symbol);
+        __AccessControl_init();
+        __ERC20Burnable_init();
+
+        __MintBurnERC20__init_unchained(providedNumDecimals);
+    }
+
+    function __MintBurnERC20__init_unchained(uint8 providedNumDecimals) internal onlyInitializing {
         numDecimals = providedNumDecimals;
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }

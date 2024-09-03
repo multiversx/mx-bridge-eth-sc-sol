@@ -3,12 +3,13 @@
 pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20BurnableUpgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "./SharedStructs.sol";
 import "./access/BridgeRole.sol";
-import "./lib/BoolTokenTransfer.sol";
 import "./lib/Pausable.sol";
+import "./lib/BoolTokenTransfer.sol";
 
 interface IMintableERC20 is IERC20 {
     function mint(address to, uint256 amount) external;
@@ -27,16 +28,16 @@ In order to use it:
 @dev The deposits are requested by the Bridge, and in order to save gas spent by the relayers
 they will be batched either by time (batchTimeLimit) or size (batchSize).
  */
-contract ERC20Safe is BridgeRole, Pausable {
+contract ERC20Safe is Initializable, BridgeRole, Pausable {
     using SafeERC20 for IERC20;
     using BoolTokenTransfer for IERC20;
 
     uint64 public batchesCount;
     uint64 public depositsCount;
-    uint16 public batchSize = 10;
+    uint16 public batchSize;
     uint16 private constant maxBatchSize = 100;
-    uint8 public batchBlockLimit = 40;
-    uint8 public batchSettleLimit = 40;
+    uint8 public batchBlockLimit;
+    uint8 public batchSettleLimit;
 
     // Reserved storage slots for future upgrades
     uint256[10] private __gap;
@@ -52,8 +53,20 @@ contract ERC20Safe is BridgeRole, Pausable {
     mapping(address => uint256) public burnBalances;
     mapping(uint256 => Deposit[]) public batchDeposits;
 
-    event ERC20Deposit(uint112 depositNonce, uint112 batchId);
-    event ERC20SCDeposit(uint112 indexed batchId, uint112 depositNonce, string callData);
+    event ERC20Deposit(uint112 batchId, uint112 depositNonce);
+    event ERC20SCDeposit(uint112 indexed batchId, uint112 depositNonce, bytes callData);
+
+    function initialize() public initializer {
+        __BridgeRole_init();
+        __Pausable_init();
+        __ERC20Safe__init_unchained();
+    }
+
+    function __ERC20Safe__init_unchained() internal onlyInitializing {
+        batchSize = 10;
+        batchBlockLimit = 40;
+        batchSettleLimit = 40;
+    }
 
     /**
       @notice Whitelist a token. Only whitelisted tokens can be bridged.
@@ -174,11 +187,14 @@ contract ERC20Safe is BridgeRole, Pausable {
      * @param amount The amount of tokens to deposit.
      * @param recipientAddress The address on the target chain to receive the tokens.
      * @param callData The encoded data specifying the cross-chain call details. The expected format is:
-     *        0x01 + endpoint_name_length (4 bytes) + endpoint_name + gas_limit (8 bytes) +
-     *        num_arguments_length (4 bytes) + [argument_length (4 bytes) + argument]...
+     *        0x + endpoint_name_length (4 bytes) + endpoint_name + gas_limit (8 bytes) +
+     *        01 (ArgumentsPresentProtocolMarker) + num_arguments_length (4 bytes) + [argument_length (4 bytes) + argument]...
      *        This payload includes the endpoint name, gas limit for the execution, and the arguments for the call.
+     *        In case of no arguments, only the ArgumentsMissingProtocolMarker should be included. The expected format is:
+     *        0x + endpoint_name_length (4 bytes) + endpoint_name + gas_limit (8 bytes) +
+     *        00 (ArgumentsPresentProtocolMarker)
      */
-    function depositWithSCExecution(address tokenAddress, uint256 amount, bytes32 recipientAddress, string calldata callData) public whenNotPaused {
+    function depositWithSCExecution(address tokenAddress, uint256 amount, bytes32 recipientAddress, bytes calldata callData) public whenNotPaused {
         uint112 batchNonce;
         uint112 depositNonce;
         (batchNonce, depositNonce) = _deposit_common(tokenAddress, amount, recipientAddress);

@@ -1,4 +1,4 @@
-import { task } from "hardhat/config";
+import "@nomicfoundation/hardhat-toolbox";
 
 task("get-quorum", "Get batch information").setAction(async (taskArgs, hre) => {
   const [adminWallet] = await hre.ethers.getSigners();
