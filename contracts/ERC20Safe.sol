@@ -244,23 +244,29 @@ contract ERC20Safe is Initializable, BridgeRole, Pausable {
       @notice Deposit initial supply for an ESDT token already deployed on MultiversX
       @param tokenAddress Address of the contract for the ERC20 token that will be deposited
       @param amount number of tokens that need to be deposited
-\   */
+    */
     function initSupply(address tokenAddress, uint256 amount) external onlyAdmin {
         require(whitelistedTokens[tokenAddress], "Unsupported token");
+        require(!_isTokenMintBurn(tokenAddress), "Cannot init for mintable/burnable tokens");
+        require(nativeTokens[tokenAddress], "Only native tokens can be stored!");
 
-        if (!_isTokenMintBurn(tokenAddress)) {
-            totalBalances[tokenAddress] += amount;
-            IERC20 erc20 = IERC20(tokenAddress);
-            erc20.safeTransferFrom(msg.sender, address(this), amount);
-            return;
-        }
+        totalBalances[tokenAddress] += amount;
+        IERC20 erc20 = IERC20(tokenAddress);
+        erc20.safeTransferFrom(msg.sender, address(this), amount);
+    }
 
-        if (!nativeTokens[tokenAddress]) {
-            require(mintBalances[tokenAddress] >= burnBalances[tokenAddress] + amount, "Not enough minted tokens");
-        }
-        burnBalances[tokenAddress] += amount;
-        IBurnableERC20 burnableErc20 = IBurnableERC20(tokenAddress);
-        burnableErc20.burnFrom(msg.sender, amount);
+    /**
+      @notice Set burn and mint balances for a mintable/burnable token
+      @param tokenAddress Address of the contract for the ERC20 token that will be deposited
+      @param burnAmount number of tokens that are already burned
+      @param mintAmount number of tokens that are already minted
+    */
+    function initSupplyMintBurn(address tokenAddress, uint256 burnAmount, uint256 mintAmount) external onlyAdmin {
+        require(whitelistedTokens[tokenAddress], "Unsupported token");
+        require(_isTokenMintBurn(tokenAddress), "Cannot init for non mintable/burnable tokens");
+
+        burnBalances[tokenAddress] = burnAmount;
+        mintBalances[tokenAddress] = mintAmount;
     }
 
     /**
@@ -290,6 +296,20 @@ contract ERC20Safe is Initializable, BridgeRole, Pausable {
         mintBalances[tokenAddress] += amount;
 
         return true;
+    }
+
+    /**
+     @notice Endpoint used by the admin to reset the token balance to the current balance
+     @notice This endpoint is used only for migration from v2 to v3 and will be removed in the next version
+     @param tokenAddress Address of the ERC20 contract
+    */
+    function resetTotalBalance(address tokenAddress) external onlyAdmin {
+        require(whitelistedTokens[tokenAddress], "Unsupported token");
+        require(!_isTokenMintBurn(tokenAddress), "Token is mintable/burnable");
+
+        IERC20 erc20 = IERC20(tokenAddress);
+        uint256 mainBalance = erc20.balanceOf(address(this));
+        totalBalances[tokenAddress] = mainBalance;
     }
 
     /**
