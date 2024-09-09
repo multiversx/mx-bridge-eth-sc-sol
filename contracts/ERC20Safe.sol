@@ -39,6 +39,9 @@ contract ERC20Safe is Initializable, BridgeRole, Pausable {
     uint8 public batchBlockLimit;
     uint8 public batchSettleLimit;
 
+    // Reserved storage slots for future upgrades
+    uint256[10] private __gap;
+
     mapping(uint256 => Batch) public batches;
     mapping(address => bool) public whitelistedTokens;
     mapping(address => bool) public mintBurnTokens;
