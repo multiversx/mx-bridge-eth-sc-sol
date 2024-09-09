@@ -77,7 +77,10 @@ contract ERC20Safe is Initializable, BridgeRole, Pausable {
         uint256 minimumAmount,
         uint256 maximumAmount,
         bool mintBurn,
-        bool native
+        bool native,
+        uint256 totalBalance,
+        uint256 mintBalance,
+        uint256 burnBalance
     ) external onlyAdmin {
         if (!mintBurn) {
             require(native, "Only native tokens can be stored!");
@@ -87,6 +90,14 @@ contract ERC20Safe is Initializable, BridgeRole, Pausable {
         nativeTokens[token] = native;
         tokenMinLimits[token] = minimumAmount;
         tokenMaxLimits[token] = maximumAmount;
+        if (mintBurn) {
+            require(totalBalance == 0, "Mint-burn tokens must have 0 total balance!");
+            this.initSupplyMintBurn(token, mintBalance, burnBalance);
+        } else {
+            require(mintBalance == 0, "Stored tokens must have 0 mint balance!");
+            require(burnBalance == 0, "Stored tokens must have 0 burn balance!");
+            this.initSupply(token, totalBalance);
+        }
     }
 
     /**
@@ -245,7 +256,7 @@ contract ERC20Safe is Initializable, BridgeRole, Pausable {
       @param tokenAddress Address of the contract for the ERC20 token that will be deposited
       @param amount number of tokens that need to be deposited
     */
-    function initSupply(address tokenAddress, uint256 amount) external onlyAdmin {
+    function initSupply(address tokenAddress, uint256 amount) public onlyAdmin {
         require(whitelistedTokens[tokenAddress], "Unsupported token");
         require(!_isTokenMintBurn(tokenAddress), "Cannot init for mintable/burnable tokens");
         require(nativeTokens[tokenAddress], "Only native tokens can be stored!");
@@ -261,7 +272,7 @@ contract ERC20Safe is Initializable, BridgeRole, Pausable {
       @param burnAmount number of tokens that are already burned
       @param mintAmount number of tokens that are already minted
     */
-    function initSupplyMintBurn(address tokenAddress, uint256 burnAmount, uint256 mintAmount) external onlyAdmin {
+    function initSupplyMintBurn(address tokenAddress, uint256 burnAmount, uint256 mintAmount) public onlyAdmin {
         require(whitelistedTokens[tokenAddress], "Unsupported token");
         require(_isTokenMintBurn(tokenAddress), "Cannot init for non mintable/burnable tokens");
 
