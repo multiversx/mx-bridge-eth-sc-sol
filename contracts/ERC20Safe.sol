@@ -92,11 +92,11 @@ contract ERC20Safe is Initializable, BridgeRole, Pausable {
         tokenMaxLimits[token] = maximumAmount;
         if (mintBurn) {
             require(totalBalance == 0, "Mint-burn tokens must have 0 total balance!");
-            this.initSupplyMintBurn(token, mintBalance, burnBalance);
+            initSupplyMintBurn(token, mintBalance, burnBalance);
         } else {
             require(mintBalance == 0, "Stored tokens must have 0 mint balance!");
             require(burnBalance == 0, "Stored tokens must have 0 burn balance!");
-            this.initSupply(token, totalBalance);
+            initSupply(token, totalBalance);
         }
     }
 
@@ -272,7 +272,7 @@ contract ERC20Safe is Initializable, BridgeRole, Pausable {
       @param burnAmount number of tokens that are already burned
       @param mintAmount number of tokens that are already minted
     */
-    function initSupplyMintBurn(address tokenAddress, uint256 burnAmount, uint256 mintAmount) public onlyAdmin {
+    function initSupplyMintBurn(address tokenAddress, uint256 mintAmount, uint256 burnAmount) public onlyAdmin {
         require(whitelistedTokens[tokenAddress], "Unsupported token");
         require(_isTokenMintBurn(tokenAddress), "Cannot init for non mintable/burnable tokens");
 
