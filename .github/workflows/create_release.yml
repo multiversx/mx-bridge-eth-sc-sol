@@ -32,8 +32,11 @@ jobs:
           echo "ARCHIVE=${ARCHIVE}" >> $GITHUB_ENV
 
           sudo chown -R $USER: ${BUILD_DIR}
+          ls -al ${BUILD_DIR}
           sudo chattr -i -R ${BUILD_DIR} # remove the synchronized attribute
+          ls -al ${BUILD_DIR}
           chmod -R 664 ${BUILD_DIR}
+          ls -al ${BUILD_DIR}
           zip -r -j ${ARCHIVE} ${BUILD_DIR}
 
       - name: Save artifacts
