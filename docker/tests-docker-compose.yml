@@ -1,0 +1,6 @@
+services:
+  run-tests:
+    build:
+      context: ..
+      dockerfile: ./docker/tests.Dockerfile
+    entrypoint: /bin/sh -c "sleep 1"
