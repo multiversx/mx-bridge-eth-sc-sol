@@ -32,7 +32,7 @@ jobs:
           echo "ARCHIVE=${ARCHIVE}" >> $GITHUB_ENV
 
           sudo chown -R $USER: ${BUILD_DIR}
-          chmod -R 664 ${BUILD_DIR}
+          sudo chmod -R 664 ${BUILD_DIR}
           ls -al ${BUILD_DIR}
           zip -r -j ${ARCHIVE} ${BUILD_DIR}
 
