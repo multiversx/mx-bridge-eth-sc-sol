@@ -213,7 +213,7 @@ contract ERC20Safe is Initializable, BridgeRole, Pausable {
     }
 
 
-    function _deposit_common(address tokenAddress, uint256 amount, bytes32 recipientAddress) internal returns (uint112 batchNonce, uint112) {
+    function _deposit_common(address tokenAddress, uint256 amount, bytes32 recipientAddress) internal returns (uint112 batchNonce, uint112 depositNonce) {
         require(whitelistedTokens[tokenAddress], "Unsupported token");
         require(amount >= tokenMinLimits[tokenAddress], "Tried to deposit an amount below the minimum specified limit");
         require(amount <= tokenMaxLimits[tokenAddress], "Tried to deposit an amount above the maximum specified limit");
@@ -239,17 +239,19 @@ contract ERC20Safe is Initializable, BridgeRole, Pausable {
         batch.depositsCount++;
         depositsCount++;
 
-        if (!_isTokenMintBurn(tokenAddress)) {
-            totalBalances[tokenAddress] += amount;
-            IERC20 erc20 = IERC20(tokenAddress);
-            erc20.safeTransferFrom(msg.sender, address(this), amount);
-        } else {
+        IERC20 erc20 = IERC20(tokenAddress);
+        IBurnableERC20 burnableErc20 = IBurnableERC20(tokenAddress);
+
+        if (_isTokenMintBurn(tokenAddress)) {
             if (!nativeTokens[tokenAddress]) {
-                require(mintBalances[tokenAddress] >= burnBalances[tokenAddress] + amount, "Not enough minted tokens");
+                uint256 availableTokens = mintBalances[tokenAddress] - burnBalances[tokenAddress];
+                require(availableTokens >= amount, "Not enough minted tokens");
             }
             burnBalances[tokenAddress] += amount;
-            IBurnableERC20 erc20 = IBurnableERC20(tokenAddress);
-            erc20.burnFrom(msg.sender, amount);
+            burnableErc20.burnFrom(msg.sender, amount);
+        } else {
+            totalBalances[tokenAddress] += amount;
+            erc20.safeTransferFrom(msg.sender, address(this), amount);
         }
         return (batch.nonce, depositNonce);
     }
