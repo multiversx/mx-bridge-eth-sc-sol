@@ -47,7 +47,7 @@ contract Bridge is Initializable, RelayerRole, Pausable {
     /*========================= PUBLIC API =========================*/
 
     /**
-     * @dev whoever deploys the contract is the admin
+     * @dev whoever initializes the contract is the admin
      * Admin Role means that it can:
      *   - adjust access control
      *   - add/remove relayers
@@ -95,7 +95,7 @@ contract Bridge is Initializable, RelayerRole, Pausable {
         - batch nonce
         - blockNumber
         - depositsCount
-        @dev Even if there are deposits in the Safe, the current batch might still return the count as 0. This is because it might not be final (not full, and not enough blocks elapsed)
+        and a boolean that indicates if the batch is final (not full, and not enough blocks elapsed)
     */
     function getBatch(uint256 batchNonce) external view returns (Batch memory, bool isBatchFinal) {
         return safe.getBatch(batchNonce);
@@ -150,9 +150,9 @@ contract Bridge is Initializable, RelayerRole, Pausable {
     }
 
     /**
-        @notice Only returns values if the cross transfers were executed some predefined time ago to ensure finality
+        @notice Gets information about the status of the transfers in a batch after it was executed
         @param batchNonceMvx Nonce for the batch
-        @return a list of statuses for each transfer in the batch provided
+        @return a list of statuses for each transfer in the batch provided and a boolean that indicates if the information is final
      */
     function getStatusesAfterExecution(uint256 batchNonceMvx) external view returns (DepositStatus[] memory, bool isFinal) {
         CrossTransferStatus memory crossStatus = crossTransferStatuses[batchNonceMvx];
