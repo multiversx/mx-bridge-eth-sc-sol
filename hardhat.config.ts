@@ -32,6 +32,7 @@ import "./tasks/depositSC";
 import "./tasks/set-batch-settle-limit-on-safe"
 import "./tasks/deploy";
 import "./tasks/token-balance-query"
+import "./tasks/get-relayers"
 
 import { resolve } from "path";
 
