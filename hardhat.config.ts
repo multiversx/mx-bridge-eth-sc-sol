@@ -31,6 +31,7 @@ import "./tasks/get-statuses-after-execution";
 import "./tasks/depositSC";
 import "./tasks/set-batch-settle-limit-on-safe"
 import "./tasks/deploy";
+import "./tasks/token-balance-query"
 
 import { resolve } from "path";
 
