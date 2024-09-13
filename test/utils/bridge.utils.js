@@ -1,15 +1,20 @@
 const { ethers } = require("hardhat");
 
-function getExecuteTransferData(tokenAddresses, recipientAddresses, amounts, depositNonces, batchNonce) {
-  const signMessageDefinition = ["address[]", "address[]", "uint256[]", "uint256[]", "uint256", "string"];
-  const signMessageData = [
-    recipientAddresses,
-    tokenAddresses,
-    amounts,
-    depositNonces,
-    batchNonce,
-    "ExecuteBatchedTransfer",
-  ];
+function getExecuteTransferData(mvxTransactions, batchNonce) {
+  const mvxTransactionType = "address,bytes32,address,uint256,uint256,bytes";
+  const mvxTransactionsType = `(${mvxTransactionType})[]`;
+  const signMessageDefinition = [mvxTransactionsType, "uint256", "string"];
+
+  // Prepare the data for encoding
+  const mvxTransactionsData = mvxTransactions.map(tx => [
+    tx.token,
+    tx.sender,
+    tx.recipient,
+    tx.amount,
+    tx.depositNonce,
+    tx.callData,
+  ]);
+  const signMessageData = [mvxTransactionsData, batchNonce, "ExecuteBatchedTransfer"];
 
   const abiCoder = new ethers.AbiCoder();
   const bytesToSign = abiCoder.encode(signMessageDefinition, signMessageData);
@@ -17,16 +22,8 @@ function getExecuteTransferData(tokenAddresses, recipientAddresses, amounts, dep
 
   return ethers.toBeArray(signData);
 }
-
-async function getSignaturesForExecuteTransfer(
-  tokenAddresses,
-  recipientAddresses,
-  amounts,
-  depositNonces,
-  batchNonce,
-  wallets,
-) {
-  const dataToSign = getExecuteTransferData(tokenAddresses, recipientAddresses, amounts, depositNonces, batchNonce);
+async function getSignaturesForExecuteTransfer(mvxTransactions, batchNonce, wallets) {
+  const dataToSign = getExecuteTransferData(mvxTransactions, batchNonce);
   let signatures = [];
   for (const wallet of wallets) {
     const signature = await wallet.signMessage(dataToSign);

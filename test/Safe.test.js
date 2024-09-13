@@ -11,16 +11,22 @@ describe("ERC20Safe", function () {
   let adminWallet, otherWallet, simpleBoardMember;
   let boardMembers;
 
-  before(async function() {
+  before(async function () {
     [adminWallet, otherWallet, simpleBoardMember] = await ethers.getSigners();
     boardMembers = [adminWallet, otherWallet, simpleBoardMember];
   });
 
-  let safe, genericERC20, bridge;
+  let safe, genericERC20, bridge, bridgeProxy;
   beforeEach(async function () {
     genericERC20 = await deployContract(adminWallet, "GenericERC20", ["TSC", "TSC", 6]);
     safe = await deployUpgradableContract(adminWallet, "ERC20Safe");
-    bridge = await deployUpgradableContract(adminWallet, "Bridge", [boardMembers.map(m => m.address), 3, safe.address]);
+    bridgeProxy = await deployUpgradableContract(adminWallet, "BridgeProxy");
+    bridge = await deployUpgradableContract(adminWallet, "Bridge", [
+      boardMembers.map(m => m.address),
+      3,
+      safe.address,
+      bridgeProxy.address,
+    ]);
 
     await genericERC20.approve(safe.address, 1000);
     await safe.setBridge(bridge.address);
@@ -417,6 +423,7 @@ describe("ERC20Safe", function () {
         boardMembers.map(m => m.address),
         3,
         safe.address,
+        bridgeProxy.address,
       ]);
       await safe.setBridge(mockBridge.address);
 
@@ -505,7 +512,7 @@ describe("ERC20Safe", function () {
     });
   });
 
-  describe("ERC20Safe - upgrade works as expected", async function() {
+  describe("ERC20Safe - upgrade works as expected", async function () {
     it("upgrades and has new functions", async function () {
       let valueToCheckAgainst = 100n;
 
