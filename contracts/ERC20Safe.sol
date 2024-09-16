@@ -443,13 +443,21 @@ contract ERC20Safe is Initializable, BridgeRole, Pausable {
         }
     }
 
-    // function getThreshold(address tokenAddress) public view returns (uint256) {
-    //     return threshold[tokenAddress];
-    // }
+    function getThreshold(address tokenAddress) public view returns (uint256) {
+        return aggregateValueThreshold[tokenAddress];
+    }
 
-    // function setThreshold(address token, uint256 amount) external onlyAdmin {
-    //     threshold[token] = amount;
-    // }
+    function setThreshold(address token, uint256 amount) external onlyAdmin {
+        aggregateValueThreshold[token] = amount;
+    }
+
+    function getSingleTxThreshold(address tokenAddress) public view returns (uint256) {
+        return singleTransactionThreshold[tokenAddress];
+    }
+
+    function setSingleTxThreshold(address token, uint256 amount) external onlyAdmin {
+        singleTransactionThreshold[token] = amount;
+    }
 
     function processDelayedTransactionImmediately(uint256 index) external onlyAdmin {
         require(index < delayedTransactions.length, "Invalid index");
