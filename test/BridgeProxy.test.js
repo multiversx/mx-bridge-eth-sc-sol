@@ -4,26 +4,26 @@ const { expect } = require("chai");
 const { deployContract, deployUpgradableContract, upgradeContract } = require("./utils/deploy.utils");
 const { getSignaturesForExecuteTransfer } = require("./utils/bridge.utils");
 
-describe("BridgeProxy", function () {
+describe("BridgeExecutor", function () {
   let adminWallet, relayer1, relayer2, relayer3, relayer4, relayer5, relayer6, relayer7, relayer8, otherWallet;
   let boardMembers;
   const quorum = 7;
-  let erc20Safe, bridge, bridgeProxy, genericErc20, testContract;
+  let erc20Safe, bridge, bridgeExecutor, genericErc20, testContract;
 
   async function setupContracts() {
     erc20Safe = await deployUpgradableContract(adminWallet, "ERC20Safe");
-    bridgeProxy = await deployUpgradableContract(adminWallet, "BridgeProxy");
+    bridgeExecutor = await deployUpgradableContract(adminWallet, "BridgeExecutor");
     bridge = await deployUpgradableContract(adminWallet, "Bridge", [
       boardMembers,
       quorum,
       erc20Safe.address,
-      bridgeProxy.address,
+      bridgeExecutor.address,
     ]);
-    testContract = await deployContract(adminWallet, "BridgeProxyTestContract", [bridgeProxy.address]);
+    testContract = await deployContract(adminWallet, "BridgeProxyTestContract", [bridgeExecutor.address]);
     await erc20Safe.setBridge(bridge.address);
-    await bridgeProxy.setBridge(bridge.address);
+    await bridgeExecutor.setBridge(bridge.address);
     await bridge.unpause();
-    await bridgeProxy.unpause();
+    await bridgeExecutor.unpause();
     await setupErc20Token();
   }
 
@@ -90,10 +90,10 @@ describe("BridgeProxy", function () {
     await setupContracts();
   });
   it("sets creator as admin", async function () {
-    expect(await bridgeProxy.admin()).to.equal(adminWallet.address);
+    expect(await bridgeExecutor.admin()).to.equal(adminWallet.address);
   });
   it("sets bridge address", async function () {
-    expect(await bridgeProxy.bridge()).to.equal(bridge.address);
+    expect(await bridgeExecutor.bridge()).to.equal(bridge.address);
   });
 
   describe("deposit", function () {
@@ -129,18 +129,18 @@ describe("BridgeProxy", function () {
     });
 
     it("reverts when called with an address different than the bridge", async function () {
-      await expect(bridgeProxy.connect(otherWallet).deposit(mvxTxn)).to.be.revertedWith(
+      await expect(bridgeExecutor.connect(otherWallet).deposit(mvxTxn)).to.be.revertedWith(
         "Access Control: sender is not Bridge",
       );
     });
     it("reverts when contract is paused", async function () {
-      await bridgeProxy.pause();
+      await bridgeExecutor.pause();
       await expect(bridge.executeTransfer([mvxTxn], batchNonce, signatures)).to.be.revertedWith("Pausable: paused");
     });
     it("should successfully deposit a pending transactions", async function () {
       await bridge.executeTransfer([mvxTxn], batchNonce, signatures);
 
-      const pendingTxn = await bridgeProxy.getPendingTransactionById(0);
+      const pendingTxn = await bridgeExecutor.getPendingTransactionById(0);
 
       expect(pendingTxn[0]).to.equal(mvxTxn.token);
       expect(pendingTxn[1]).to.equal(mvxTxn.sender);
@@ -161,12 +161,12 @@ describe("BridgeProxy", function () {
     });
 
     it("reverts when contract is paused", async function () {
-      await bridgeProxy.pause();
-      await expect(bridgeProxy.execute(0)).to.be.revertedWith("Pausable: paused");
+      await bridgeExecutor.pause();
+      await expect(bridgeExecutor.execute(0)).to.be.revertedWith("Pausable: paused");
     });
     it("reverts when called with bad transaction id", async function () {
-      await expect(bridgeProxy.execute(arrayOfTxn.length + 1)).to.be.revertedWith(
-        "BridgeProxy: Invalid transaction ID",
+      await expect(bridgeExecutor.execute(arrayOfTxn.length + 1)).to.be.revertedWith(
+        "BridgeExecutor: Invalid transaction ID",
       );
     });
 
@@ -188,13 +188,13 @@ describe("BridgeProxy", function () {
       await prepareAndExecuteTransfer(amount, batchNonce, arrayOfTxn);
 
       const beforeBalance = await genericErc20.balanceOf(bridge.address);
-      await bridgeProxy.execute(0);
+      await bridgeExecutor.execute(0);
       const afterBalance = await genericErc20.balanceOf(bridge.address);
 
       expect(afterBalance).to.equal(beforeBalance + mvxTxnWithInvalidCalldata.amount);
 
       // check for pending transaction to be removed after refund
-      const pendingTxn = await bridgeProxy.getPendingTransactionById(0);
+      const pendingTxn = await bridgeExecutor.getPendingTransactionById(0);
       checkForEmptyTransaction(pendingTxn);
     });
 
@@ -233,14 +233,14 @@ describe("BridgeProxy", function () {
       arrayOfTxn = [mvxTxnWithEmptyEndpoint, mvxTxnWithZeroGas, mvxTxnWithInsufficientGas];
       await prepareAndExecuteTransfer(240, batchNonce, arrayOfTxn);
 
-      await bridgeProxy.execute(0);
-      await bridgeProxy.execute(1);
-      await bridgeProxy.execute(2);
+      await bridgeExecutor.execute(0);
+      await bridgeExecutor.execute(1);
+      await bridgeExecutor.execute(2);
 
       // check for pending transaction to be removed after refund
-      checkForEmptyTransaction(bridgeProxy.getPendingTransactionById(0));
-      checkForEmptyTransaction(bridgeProxy.getPendingTransactionById(1));
-      checkForEmptyTransaction(bridgeProxy.getPendingTransactionById(2));
+      checkForEmptyTransaction(bridgeExecutor.getPendingTransactionById(0));
+      checkForEmptyTransaction(bridgeExecutor.getPendingTransactionById(1));
+      checkForEmptyTransaction(bridgeExecutor.getPendingTransactionById(2));
     });
 
     it("should successfully execute transaction with proper encoded calldata (with args)", async function () {
@@ -262,7 +262,7 @@ describe("BridgeProxy", function () {
 
       // check the otherWallet' balance of the token that have been intended to be minted
       const beforeBalance = await genericErc20.balanceOf(otherWallet.address);
-      await bridgeProxy.execute(0);
+      await bridgeExecutor.execute(0);
       const afterBalance = await genericErc20.balanceOf(otherWallet.address);
 
       expect(afterBalance).to.equal(beforeBalance + amountToBeMinted);
@@ -283,7 +283,7 @@ describe("BridgeProxy", function () {
       await prepareAndExecuteTransfer(amount, batchNonce, arrayOfTxn);
 
       const counterBefore = await testContract.count();
-      await bridgeProxy.execute(0);
+      await bridgeExecutor.execute(0);
       const counterAfter = await testContract.count();
 
       expect(counterAfter).to.equal(counterBefore + 1n);
@@ -307,12 +307,12 @@ describe("BridgeProxy", function () {
       await prepareAndExecuteTransfer(amount, batchNonce, arrayOfTxn);
 
       const beforeBalanceRecipient = await genericErc20.balanceOf(testContract.address);
-      const beforeBalanceBridgeProxy = await genericErc20.balanceOf(bridgeProxy.address);
+      const beforeBalanceBridgeProxy = await genericErc20.balanceOf(bridgeExecutor.address);
 
-      await bridgeProxy.execute(0);
+      await bridgeExecutor.execute(0);
 
       const afterBalanceRecipient = await genericErc20.balanceOf(testContract.address);
-      const afterBalanceBridgeProxy = await genericErc20.balanceOf(bridgeProxy.address);
+      const afterBalanceBridgeProxy = await genericErc20.balanceOf(bridgeExecutor.address);
 
       expect(afterBalanceRecipient).to.equal(beforeBalanceRecipient + amount);
       expect(afterBalanceBridgeProxy).to.equal(beforeBalanceBridgeProxy - amount);
@@ -337,7 +337,7 @@ describe("BridgeProxy", function () {
     });
 
     it("should return the transaction with the given id", async function () {
-      const pendingTxn = await bridgeProxy.getPendingTransactionById(0);
+      const pendingTxn = await bridgeExecutor.getPendingTransactionById(0);
 
       expect(pendingTxn[0]).to.equal(mvxTxn.token);
       expect(pendingTxn[1]).to.equal(mvxTxn.sender);
@@ -390,7 +390,7 @@ describe("BridgeProxy", function () {
     });
 
     it("should return all pending transactions", async function () {
-      const pendingTxns = await bridgeProxy.getPendingTransactions();
+      const pendingTxns = await bridgeExecutor.getPendingTransactions();
 
       expect(pendingTxns.length).to.equal(3);
       expect(pendingTxns[0][4]).to.equal(mvxTxn1.depositNonce);
@@ -436,7 +436,7 @@ describe("BridgeProxy", function () {
       // Make a deposit to check state persistence
       await bridge.executeTransfer([mvxTxn], batchNonce, signatures);
 
-      let newBridgeProxy = await upgradeContract(adminWallet, bridgeProxy.address, "BridgeProxyUpgrade", [
+      let newBridgeProxy = await upgradeContract(adminWallet, bridgeExecutor.address, "BridgeProxyUpgrade", [
         valueToCheckAgainst,
       ]);
 

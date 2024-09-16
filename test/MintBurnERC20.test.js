@@ -9,19 +9,19 @@ describe("ERC20Safe, MintBurnERC20, and Bridge Interaction", function () {
   let boardMembers;
   const quorum = 7;
 
-  let erc20Safe, bridge, mintBurnErc20, bridgeProxy;
+  let erc20Safe, bridge, mintBurnErc20, bridgeExecutor;
 
   async function setupContracts() {
     erc20Safe = await deployUpgradableContract(adminWallet, "ERC20Safe");
-    bridgeProxy = await deployUpgradableContract(adminWallet, "BridgeProxy");
+    bridgeExecutor = await deployUpgradableContract(adminWallet, "BridgeExecutor");
     bridge = await deployUpgradableContract(adminWallet, "Bridge", [
       boardMembers,
       quorum,
       erc20Safe.address,
-      bridgeProxy.address,
+      bridgeExecutor.address,
     ]);
     await erc20Safe.setBridge(bridge.address);
-    await bridgeProxy.setBridge(bridge.address);
+    await bridgeExecutor.setBridge(bridge.address);
     await bridge.unpause();
     await setupErc20Token();
   }

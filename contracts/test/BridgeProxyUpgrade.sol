@@ -4,9 +4,9 @@ pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
-import "../BridgeProxy.sol";
+import "../BridgeExecutor.sol";
 
-contract BridgeProxyUpgrade is Initializable, BridgeProxy {
+contract BridgeProxyUpgrade is Initializable, BridgeExecutor {
     uint256 public someValue;
     // New initialization function for the upgrade
     function initializeV2(uint256 val) public reinitializer(2) {

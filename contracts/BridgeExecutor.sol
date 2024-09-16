@@ -10,7 +10,7 @@ import "./lib/BoolTokenTransfer.sol";
 import "./access/AdminRole.sol";
 import "./access/BridgeRole.sol";
 
-contract BridgeProxy is Initializable, Pausable, BridgeRole {
+contract BridgeExecutor is Initializable, Pausable, BridgeRole {
     using BoolTokenTransfer for IERC20;
 
     /*========================= CONTRACT STATE =========================*/
@@ -43,7 +43,7 @@ contract BridgeProxy is Initializable, Pausable, BridgeRole {
     }
 
     function execute(uint256 txId) external whenNotPaused {
-        require(txId < currentTxId, "BridgeProxy: Invalid transaction ID");
+        require(txId < currentTxId, "BridgeExecutor: Invalid transaction ID");
         MvxTransaction memory txn = pendingTransactions[txId];
 
         if (txn.callData.length > 0) {
@@ -95,7 +95,7 @@ contract BridgeProxy is Initializable, Pausable, BridgeRole {
     function _refundTransaction(address token, uint256 amount) private {
         IERC20 erc20 = IERC20(token);
         bool transferExecuted = erc20.boolTransfer(this.bridge(), amount);
-        require(transferExecuted, "BridgeProxy: Refund failed");
+        require(transferExecuted, "BridgeExecutor: Refund failed");
     }
 
     function _updateLowestTxId() private {

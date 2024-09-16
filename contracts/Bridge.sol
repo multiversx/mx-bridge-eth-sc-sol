@@ -8,7 +8,7 @@ import "./SharedStructs.sol";
 import "./ERC20Safe.sol";
 import "./access/RelayerRole.sol";
 import "./lib/Pausable.sol";
-import "./BridgeProxy.sol";
+import "./BridgeExecutor.sol";
 
 /**
 @title Bridge
@@ -38,7 +38,7 @@ contract Bridge is Initializable, RelayerRole, Pausable {
 
     uint256 public quorum;
     ERC20Safe internal safe;
-    BridgeProxy internal bridgeProxy;
+    BridgeExecutor internal bridgeExecutor;
 
     mapping(uint256 => bool) public executedBatches;
     mapping(uint256 => CrossTransferStatus) public crossTransferStatuses;
@@ -56,7 +56,7 @@ contract Bridge is Initializable, RelayerRole, Pausable {
         address[] memory board,
         uint256 initialQuorum,
         ERC20Safe erc20Safe,
-        BridgeProxy _bridgeProxy
+        BridgeExecutor _bridgeProxy
     ) public virtual initializer {
         __RelayerRole_init();
         __Bridge__init_unchained(board, initialQuorum, erc20Safe, _bridgeProxy);
@@ -66,7 +66,7 @@ contract Bridge is Initializable, RelayerRole, Pausable {
         address[] memory board,
         uint256 initialQuorum,
         ERC20Safe erc20Safe,
-        BridgeProxy _bridgeProxy
+        BridgeExecutor _bridgeProxy
     ) internal onlyInitializing {
         require(initialQuorum >= minimumQuorum, "Quorum is too low.");
         require(board.length >= initialQuorum, "The board should be at least the quorum size.");
@@ -75,7 +75,7 @@ contract Bridge is Initializable, RelayerRole, Pausable {
 
         quorum = initialQuorum;
         safe = erc20Safe;
-        bridgeProxy = _bridgeProxy;
+        bridgeExecutor = _bridgeProxy;
 
         batchSettleBlockCount = 40;
     }
@@ -188,7 +188,7 @@ contract Bridge is Initializable, RelayerRole, Pausable {
         bool isScCall = _isScCall(mvxTransaction.callData);
 
         if (isScCall) {
-            recipient = address(bridgeProxy);
+            recipient = address(bridgeExecutor);
         } else {
             recipient = mvxTransaction.recipient;
         }
@@ -202,9 +202,9 @@ contract Bridge is Initializable, RelayerRole, Pausable {
             return DepositStatus.Rejected;
         }
 
-        // If the recipient is a smart contract, attempt to deposit the funds in bridgeProxy
+        // If the recipient is a smart contract, attempt to deposit the funds in bridgeExecutor
         if (_isScCall(mvxTransaction.callData)) {
-            bool depositSuccess = bridgeProxy.deposit(mvxTransaction);
+            bool depositSuccess = bridgeExecutor.deposit(mvxTransaction);
             if (!depositSuccess) {
                 return DepositStatus.Rejected;
             }

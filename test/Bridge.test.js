@@ -8,19 +8,19 @@ describe("Bridge", async function () {
   let adminWallet, relayer1, relayer2, relayer3, relayer4, relayer5, relayer6, relayer7, relayer8, otherWallet;
   let boardMembers;
   const quorum = 7;
-  let erc20Safe, bridge, genericErc20, bridgeProxy;
+  let erc20Safe, bridge, genericErc20, bridgeExecutor;
 
   async function setupContracts() {
     erc20Safe = await deployUpgradableContract(adminWallet, "ERC20Safe");
-    bridgeProxy = await deployUpgradableContract(adminWallet, "BridgeProxy");
+    bridgeExecutor = await deployUpgradableContract(adminWallet, "BridgeExecutor");
     bridge = await deployUpgradableContract(adminWallet, "Bridge", [
       boardMembers,
       quorum,
       erc20Safe.address,
-      bridgeProxy.address,
+      bridgeExecutor.address,
     ]);
     await erc20Safe.setBridge(bridge.address);
-    await bridgeProxy.setBridge(bridge.address);
+    await bridgeExecutor.setBridge(bridge.address);
     await bridge.unpause();
     await setupErc20Token();
   }
@@ -60,7 +60,7 @@ describe("Bridge", async function () {
           boardMembers,
           invalidQuorumValue,
           erc20Safe.address,
-          bridgeProxy.address,
+          bridgeExecutor.address,
         ]),
       ).to.be.revertedWith("Quorum is too low.");
     });
