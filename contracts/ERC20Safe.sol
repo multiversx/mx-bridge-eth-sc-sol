@@ -81,7 +81,7 @@ contract ERC20Safe is Initializable, BridgeRole, Pausable {
     );
 
     //optional
-    event TransactionProcessed(
+    event DelayedTransactionProcessed(
         address indexed sender,
         address indexed tokenAddress,
         uint256 amount,
@@ -356,7 +356,13 @@ contract ERC20Safe is Initializable, BridgeRole, Pausable {
                 delayedTransactions[i] = delayedTransactions[delayedTransactions.length - 1];
                 delayedTransactions.pop();
 
-                emit TransactionProcessed(dt.sender, dt.tokenAddress, dt.amount, dt.recipientAddress, dt.isLarge);
+                emit DelayedTransactionProcessed(
+                    dt.sender,
+                    dt.tokenAddress,
+                    dt.amount,
+                    dt.recipientAddress,
+                    dt.isLarge
+                );
             } else {
                 i++;
             }
@@ -475,7 +481,7 @@ contract ERC20Safe is Initializable, BridgeRole, Pausable {
         delayedTransactions[index] = delayedTransactions[delayedTransactions.length - 1];
         delayedTransactions.pop();
 
-        emit TransactionProcessed(dt.sender, dt.tokenAddress, dt.amount, dt.recipientAddress, dt.isLarge);
+        emit DelayedTransactionProcessed(dt.sender, dt.tokenAddress, dt.amount, dt.recipientAddress, dt.isLarge);
     }
 
     /**

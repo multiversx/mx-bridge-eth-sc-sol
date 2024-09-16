@@ -491,7 +491,10 @@ describe("ERC20Safe", function () {
       }
 
       // Trigger processing of delayed transactions
-      await expect(safe.deposit(genericERC20.address, 50, recipientAddress)).to.emit(safe, "TransactionProcessed");
+      await expect(safe.deposit(genericERC20.address, 50, recipientAddress)).to.emit(
+        safe,
+        "DelayedTransactionProcessed",
+      );
     });
 
     it("processes delayed large transactions after 24 hours", async function () {
@@ -504,7 +507,10 @@ describe("ERC20Safe", function () {
       }
 
       // Trigger processing of delayed transactions
-      await expect(safe.deposit(genericERC20.address, 500, recipientAddress)).to.emit(safe, "TransactionProcessed");
+      await expect(safe.deposit(genericERC20.address, 500, recipientAddress)).to.emit(
+        safe,
+        "DelayedTransactionProcessed",
+      );
     });
 
     it("admin can process delayed transactions immediately", async function () {
@@ -512,7 +518,7 @@ describe("ERC20Safe", function () {
       await safe.deposit(genericERC20.address, 700, recipientAddress); // Delayed
 
       // Admin processes delayed transaction
-      await expect(safe.processDelayedTransactionImmediately(0)).to.emit(safe, "TransactionProcessed");
+      await expect(safe.processDelayedTransactionImmediately(0)).to.emit(safe, "DelayedTransactionProcessed");
     });
 
     it("does not process delayed transactions before 24 hours", async function () {
@@ -525,7 +531,10 @@ describe("ERC20Safe", function () {
       }
 
       // Attempt to trigger processing
-      await expect(safe.deposit(genericERC20.address, 400, recipientAddress)).to.not.emit(safe, "TransactionProcessed");
+      await expect(safe.deposit(genericERC20.address, 400, recipientAddress)).to.not.emit(
+        safe,
+        "DelayedTransactionProcessed",
+      );
     });
   });
 });
