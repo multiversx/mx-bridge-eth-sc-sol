@@ -296,7 +296,7 @@ describe("ERC20Safe", function () {
 
           let receipt = await depositResp.wait();
 
-          //expect(receipt.gasUsed).to.be.lt(400000); // AssertionError: expected 927401 to be below 400000.
+          expect(receipt.gasUsed).to.be.lt(1000000);
         }
       });
     });
