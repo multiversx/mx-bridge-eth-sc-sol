@@ -203,7 +203,7 @@ contract Bridge is Initializable, RelayerRole, Pausable {
         }
 
         // If the recipient is a smart contract, attempt to deposit the funds in bridgeExecutor
-        if (_isScCall(mvxTransaction.callData)) {
+        if (isScCall) {
             bool depositSuccess = bridgeExecutor.deposit(mvxTransaction);
             if (!depositSuccess) {
                 return DepositStatus.Rejected;

@@ -46,6 +46,8 @@ contract BridgeExecutor is Initializable, Pausable, BridgeRole {
         require(txId < currentTxId, "BridgeExecutor: Invalid transaction ID");
         MvxTransaction memory txn = pendingTransactions[txId];
 
+        require(txn.recipient != address(0), "BridgeExecutor: Transaction does not exist");
+
         if (txn.callData.length > 0) {
             (bytes memory selector, uint256 gasLimit, bytes memory args) = abi.decode(
                 txn.callData,
@@ -66,14 +68,12 @@ contract BridgeExecutor is Initializable, Pausable, BridgeRole {
 
             _updateLowestTxId();
 
-            address _token = txn.token;
-            uint256 _amount = txn.amount;
             delete pendingTransactions[txId];
 
             (bool success, ) = txn.recipient.call{ gas: gasLimit }(data);
 
             if (!success) {
-                _refundTransaction(_token, _amount);
+                _refundTransaction(txn.token, txn.amount);
                 return;
             }
         } else {
