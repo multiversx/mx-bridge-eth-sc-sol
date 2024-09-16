@@ -279,45 +279,39 @@ contract ERC20Safe is Initializable, BridgeRole, Pausable {
         require(amount >= tokenMinLimits[tokenAddress], "Tried to deposit an amount below the minimum specified limit");
         require(amount <= tokenMaxLimits[tokenAddress], "Tried to deposit an amount above the maximum specified limit");
 
-        // Check if any delayed transactions can be added to the current batch
         _processDelayedTransactions(tokenAddress);
 
-        // Determine if the transaction is small or large
         bool isLargeTransaction = amount >= singleTransactionThreshold[tokenAddress];
-
-        // Calculate the current bucket_id
         uint256 currentBlock = block.number;
         uint256 bucketId = (currentBlock / blocksInBucket) % numBuckets;
 
-        // Reset bucket if necessary
-        if (currentBlock - bucketLastUpdatedNonce[bucketId] > blocksInBucket) {
-            aggregatedValue[bucketId][tokenAddress] = 0;
-            bucketLastUpdatedNonce[bucketId] = currentBlock;
-        }
+        _resetBucketIfNeeded(bucketId, tokenAddress, currentBlock);
 
         if (isLargeTransaction) {
-            // Add large transaction to delayed transactions with a 24-hour delay
             _addDelayedTransaction(tokenAddress, amount, recipientAddress, true);
             emit TransactionDelayed(msg.sender, tokenAddress, amount, recipientAddress, true);
-            return (0, 0); // Indicate that the transaction is delayed
+            return (0, 0);
         } else {
-            // For small otalransactions, check if it fits within the aggregate value threshold
             uint256 totalAggregatedValue = _getTotalAggregatedValue(tokenAddress, currentBlock);
             if (totalAggregatedValue + amount <= aggregateValueThreshold[tokenAddress]) {
-                // Proceed with the deposit
                 aggregatedValue[bucketId][tokenAddress] += amount;
                 (batchNonce, depositNonce) = _processDeposit(tokenAddress, amount, recipientAddress);
                 return (batchNonce, depositNonce);
             } else {
-                // Add to delayed transactions
                 _addDelayedTransaction(tokenAddress, amount, recipientAddress, false);
                 emit TransactionDelayed(msg.sender, tokenAddress, amount, recipientAddress, false);
-                return (0, 0); // Indicate that the transaction is delayed
+                return (0, 0);
             }
         }
     }
 
-    // Function to add delayed transactions
+    function _resetBucketIfNeeded(uint256 bucketId, address tokenAddress, uint256 currentBlock) internal {
+        if (currentBlock - bucketLastUpdatedNonce[bucketId] > blocksInBucket) {
+            aggregatedValue[bucketId][tokenAddress] = 0;
+            bucketLastUpdatedNonce[bucketId] = currentBlock;
+        }
+    }
+
     function _addDelayedTransaction(
         address tokenAddress,
         uint256 amount,
@@ -335,24 +329,19 @@ contract ERC20Safe is Initializable, BridgeRole, Pausable {
         delayedTransactions.push(dt);
     }
 
-    // Function to process delayed transactions
     function _processDelayedTransactions(address tokenAddress) internal {
         uint256 i = 0;
         while (i < delayedTransactions.length) {
             DelayedTransaction storage dt = delayedTransactions[i];
 
-            // Skip if the transaction is for a different token
             if (dt.tokenAddress != tokenAddress) {
                 i++;
                 continue;
             }
 
-            // Check if the transaction can be processed
             if (_canProcessDelayedTransaction(dt)) {
-                // Process the transaction
                 _processDeposit(dt.tokenAddress, dt.amount, dt.recipientAddress);
 
-                // Remove the transaction from the array
                 delayedTransactions[i] = delayedTransactions[delayedTransactions.length - 1];
                 delayedTransactions.pop();
 
@@ -371,21 +360,15 @@ contract ERC20Safe is Initializable, BridgeRole, Pausable {
 
     function _canProcessDelayedTransaction(DelayedTransaction storage dt) internal returns (bool) {
         uint256 currentBlock = block.number;
-        uint256 averageBlockTime = 15; // Replace with actual average block time in seconds
+        uint256 averageBlockTime = 6;
 
         if (dt.isLarge) {
-            // For large transactions, check if 24 hours have passed
             uint256 blocksIn24Hours = (24 * 60 * 60) / averageBlockTime;
             return currentBlock >= dt.blockAdded + blocksIn24Hours;
         } else {
-            // For small transactions
             uint256 bucketId = (currentBlock / blocksInBucket) % numBuckets;
 
-            // Reset bucket if necessary
-            if (currentBlock - bucketLastUpdatedNonce[bucketId] > blocksInBucket) {
-                aggregatedValue[bucketId][dt.tokenAddress] = 0;
-                bucketLastUpdatedNonce[bucketId] = currentBlock;
-            }
+            _resetBucketIfNeeded(bucketId, dt.tokenAddress, currentBlock);
 
             uint256 totalAggregatedValue = _getTotalAggregatedValue(dt.tokenAddress, currentBlock);
             uint256 threshold = aggregateValueThreshold[dt.tokenAddress];
@@ -394,7 +377,6 @@ contract ERC20Safe is Initializable, BridgeRole, Pausable {
                 aggregatedValue[bucketId][dt.tokenAddress] += dt.amount;
                 return true;
             } else if (currentBlock >= dt.blockAdded + ((24 * 60 * 60) / averageBlockTime)) {
-                // If delayed for more than 24 hours, process immediately
                 return true;
             } else {
                 return false;
@@ -453,7 +435,6 @@ contract ERC20Safe is Initializable, BridgeRole, Pausable {
         totalAggregatedValue = 0;
 
         for (uint256 i = 0; i < numBuckets; i++) {
-            // Reset bucket if necessary
             if (currentBlock - bucketLastUpdatedNonce[i] >= blocksInBucket) {
                 aggregatedValue[i][tokenAddress] = 0;
                 bucketLastUpdatedNonce[i] = currentBlock;
@@ -474,10 +455,8 @@ contract ERC20Safe is Initializable, BridgeRole, Pausable {
         require(index < delayedTransactions.length, "Invalid index");
         DelayedTransaction storage dt = delayedTransactions[index];
 
-        // Process the delayed transaction
         _processDeposit(dt.tokenAddress, dt.amount, dt.recipientAddress);
 
-        // Remove from delayedTransactions
         delayedTransactions[index] = delayedTransactions[delayedTransactions.length - 1];
         delayedTransactions.pop();
 
