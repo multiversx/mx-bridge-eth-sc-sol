@@ -102,7 +102,7 @@ contract ERC20Safe is Initializable, BridgeRole, Pausable {
         batchBlockLimit = 40;
         batchSettleLimit = 40;
         numBuckets = 24;
-        blocksInBucket = 600; // 600 blocks = 3600 seconds/6 seconds per block
+        blocksInBucket = 240; // 240 blocks = 3600 seconds/15 seconds per block
         defaultSingleTransactionThreshold = 1000; //to be set correctly
         defaultAggregateValueThreshold = 10000; //to be set correctly
     }
@@ -360,7 +360,7 @@ contract ERC20Safe is Initializable, BridgeRole, Pausable {
 
     function _canProcessDelayedTransaction(DelayedTransaction storage dt) internal returns (bool) {
         uint256 currentBlock = block.number;
-        uint256 averageBlockTime = 6;
+        uint256 averageBlockTime = 15;
 
         if (dt.isLarge) {
             uint256 blocksIn24Hours = (24 * 60 * 60) / averageBlockTime;
