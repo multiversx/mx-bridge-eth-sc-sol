@@ -28,7 +28,7 @@ describe("ERC20Safe, MintBurnERC20, and Bridge Interaction", function () {
 
   async function setupErc20Token() {
     mintBurnErc20 = await deployUpgradableContract(adminWallet, "MintBurnERC20", ["Test Token", "TST", 6]);
-    await erc20Safe.whitelistToken(mintBurnErc20.address, 0, 100, true, false);
+    await erc20Safe.whitelistToken(mintBurnErc20.address, 0, 100, true, false, 0, 0, 0);
     await erc20Safe.unpause();
   }
 

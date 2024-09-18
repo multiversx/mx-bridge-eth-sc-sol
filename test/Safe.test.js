@@ -40,7 +40,7 @@ describe("ERC20Safe", function () {
 
   describe("ERC20Safe - setting whitelisted tokens works as expected", async function () {
     it("correctly whitelists token and updates limits", async function () {
-      await safe.whitelistToken(genericERC20.address, "25", "100", false, true);
+      await safe.whitelistToken(genericERC20.address, "25", "100", false, true, 0, 0, 0);
       expect(await safe.isTokenWhitelisted(genericERC20.address)).to.be.true;
       expect(await safe.getTokenMinLimit(genericERC20.address)).to.eq("25");
       expect(await safe.getTokenMaxLimit(genericERC20.address)).to.eq("100");
@@ -56,7 +56,7 @@ describe("ERC20Safe", function () {
     });
     it("reverts", async function () {
       await expect(
-        safe.connect(otherWallet).whitelistToken(genericERC20.address, "0", "100", false, true),
+        safe.connect(otherWallet).whitelistToken(genericERC20.address, "0", "100", false, true, 0, 0, 0),
       ).to.be.revertedWith("Access Control: sender is not Admin");
       await expect(safe.connect(otherWallet).removeTokenFromWhitelist(genericERC20.address)).to.be.revertedWith(
         "Access Control: sender is not Admin",
@@ -104,7 +104,7 @@ describe("ERC20Safe", function () {
       );
 
       // Creating a batch
-      await safe.whitelistToken(genericERC20.address, defaultMinAmount, defaultMaxAmount, false, true);
+      await safe.whitelistToken(genericERC20.address, defaultMinAmount, defaultMaxAmount, false, true, 0, 0, 0);
       await genericERC20.approve(safe.address, "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
       await genericERC20.mint(adminWallet.address, "1000000");
       await safe.unpause();
@@ -208,7 +208,7 @@ describe("ERC20Safe", function () {
 
     describe("when token is whitelisted", async function () {
       beforeEach(async function () {
-        await safe.whitelistToken(genericERC20.address, defaultMinAmount, defaultMaxAmount, false, true);
+        await safe.whitelistToken(genericERC20.address, defaultMinAmount, defaultMaxAmount, false, true, 0, 0, 0);
         await genericERC20.approve(safe.address, "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         await genericERC20.mint(adminWallet.address, "1000000");
       });
@@ -392,7 +392,7 @@ describe("ERC20Safe", function () {
     });
 
     it("sends just the balance above what is actually deposited for whitelited tokens", async function () {
-      await safe.whitelistToken(genericERC20.address, defaultMinAmount, defaultMaxAmount, false, true);
+      await safe.whitelistToken(genericERC20.address, defaultMinAmount, defaultMaxAmount, false, true, 0, 0, 0);
       await genericERC20.approve(safe.address, "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
 
       await safe.deposit(
@@ -416,7 +416,7 @@ describe("ERC20Safe", function () {
     });
 
     it("sends just the balance above what is actually deposited for whitelited tokens - considers bridge transfers", async function () {
-      await safe.whitelistToken(genericERC20.address, defaultMinAmount, defaultMaxAmount, false, true);
+      await safe.whitelistToken(genericERC20.address, defaultMinAmount, defaultMaxAmount, false, true, 0, 0, 0);
       await genericERC20.approve(safe.address, "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
 
       const mockBridge = await deployUpgradableContract(adminWallet, "BridgeMock", [
@@ -452,7 +452,7 @@ describe("ERC20Safe", function () {
 
   describe("ERC20Safe - getBatch and getDeposits work as expected", async function () {
     beforeEach(async function () {
-      await safe.whitelistToken(genericERC20.address, defaultMinAmount, defaultMaxAmount, false, true);
+      await safe.whitelistToken(genericERC20.address, defaultMinAmount, defaultMaxAmount, false, true, 0, 0, 0);
       await genericERC20.approve(safe.address, "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
       await genericERC20.mint(adminWallet.address, "1000000");
     });
