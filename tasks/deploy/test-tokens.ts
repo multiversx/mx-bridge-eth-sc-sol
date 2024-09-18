@@ -12,7 +12,7 @@ task("deploy-test-tokens", "Deploys ERC20 contracts to use to test the bridge")
     const safeAddress = config["erc20Safe"];
     const safeContractFactory = await hre.ethers.getContractFactory("ERC20Safe");
     const safe = safeContractFactory.attach(safeAddress);
-    console.log("Safe at: ", safe.address);
+    console.log("Safe at: ", safe.target);
     //deploy contracts
     const genericERC20Factory = await hre.ethers.getContractFactory("GenericERC20");
 
@@ -21,5 +21,5 @@ task("deploy-test-tokens", "Deploys ERC20 contracts to use to test the bridge")
     const decimals = taskArgs.decimals;
 
     const usdcContract = await genericERC20Factory.deploy(tokenName, tokenSymbol, decimals);
-    console.log("Token deployed to:", usdcContract.getAddress());
+    console.log("Token deployed to:", usdcContract.target);
   });
