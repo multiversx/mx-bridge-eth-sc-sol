@@ -19,15 +19,6 @@ interface IBurnableERC20 is IERC20 {
     function burnFrom(address account, uint256 amount) external;
 }
 
-struct DelayedTransaction {
-    uint256 amount;
-    address tokenAddress;
-    address sender;
-    bytes32 recipientAddress;
-    uint256 blockAdded;
-    bool isLarge;
-}
-
 /**
 @title ERC20 Safe for bridging tokens
 @author MultiversX
