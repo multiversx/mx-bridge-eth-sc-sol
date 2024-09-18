@@ -56,17 +56,17 @@ contract Bridge is Initializable, RelayerRole, Pausable {
         address[] memory board,
         uint256 initialQuorum,
         ERC20Safe erc20Safe,
-        BridgeExecutor _bridgeProxy
+        BridgeExecutor _bridgeExecutor
     ) public virtual initializer {
         __RelayerRole_init();
-        __Bridge__init_unchained(board, initialQuorum, erc20Safe, _bridgeProxy);
+        __Bridge__init_unchained(board, initialQuorum, erc20Safe, _bridgeExecutor);
     }
 
     function __Bridge__init_unchained(
         address[] memory board,
         uint256 initialQuorum,
         ERC20Safe erc20Safe,
-        BridgeExecutor _bridgeProxy
+        BridgeExecutor _bridgeExecutor
     ) internal onlyInitializing {
         require(initialQuorum >= minimumQuorum, "Quorum is too low.");
         require(board.length >= initialQuorum, "The board should be at least the quorum size.");
@@ -75,7 +75,7 @@ contract Bridge is Initializable, RelayerRole, Pausable {
 
         quorum = initialQuorum;
         safe = erc20Safe;
-        bridgeExecutor = _bridgeProxy;
+        bridgeExecutor = _bridgeExecutor;
 
         batchSettleBlockCount = 40;
     }

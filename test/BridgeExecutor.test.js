@@ -19,7 +19,7 @@ describe("BridgeExecutor", function () {
       erc20Safe.address,
       bridgeExecutor.address,
     ]);
-    testContract = await deployContract(adminWallet, "BridgeProxyTestContract", [bridgeExecutor.address]);
+    testContract = await deployContract(adminWallet, "BridgeExecutorTestContract", [bridgeExecutor.address]);
     await erc20Safe.setBridge(bridge.address);
     await bridgeExecutor.setBridge(bridge.address);
     await bridge.unpause();
@@ -307,15 +307,15 @@ describe("BridgeExecutor", function () {
       await prepareAndExecuteTransfer(amount, batchNonce, arrayOfTxn);
 
       const beforeBalanceRecipient = await genericErc20.balanceOf(testContract.address);
-      const beforeBalanceBridgeProxy = await genericErc20.balanceOf(bridgeExecutor.address);
+      const beforeBalanceBridgeExecutor = await genericErc20.balanceOf(bridgeExecutor.address);
 
       await bridgeExecutor.execute(0);
 
       const afterBalanceRecipient = await genericErc20.balanceOf(testContract.address);
-      const afterBalanceBridgeProxy = await genericErc20.balanceOf(bridgeExecutor.address);
+      const afterBalanceBridgeExecutor = await genericErc20.balanceOf(bridgeExecutor.address);
 
       expect(afterBalanceRecipient).to.equal(beforeBalanceRecipient + amount);
-      expect(afterBalanceBridgeProxy).to.equal(beforeBalanceBridgeProxy - amount);
+      expect(afterBalanceBridgeExecutor).to.equal(beforeBalanceBridgeExecutor - amount);
     });
   });
 
@@ -436,12 +436,12 @@ describe("BridgeExecutor", function () {
       // Make a deposit to check state persistence
       await bridge.executeTransfer([mvxTxn], batchNonce, signatures);
 
-      let newBridgeProxy = await upgradeContract(adminWallet, bridgeExecutor.address, "BridgeProxyUpgrade", [
+      let newBridgeExecutor = await upgradeContract(adminWallet, bridgeExecutor.address, "BridgeExecutorUpgrade", [
         valueToCheckAgainst,
       ]);
 
-      expect(await newBridgeProxy.afterUpgrade()).to.be.eq(valueToCheckAgainst);
-      expect((await newBridgeProxy.getPendingTransactions()).length).to.be.eq(1);
+      expect(await newBridgeExecutor.afterUpgrade()).to.be.eq(valueToCheckAgainst);
+      expect((await newBridgeExecutor.getPendingTransactions()).length).to.be.eq(1);
     });
   });
 });

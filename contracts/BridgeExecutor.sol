@@ -27,7 +27,7 @@ contract BridgeExecutor is Initializable, Pausable, BridgeRole {
         __Pausable_init();
     }
 
-    function __BridgeProxy__init_unchained() internal onlyInitializing {
+    function __BridgeExecutor__init_unchained() internal onlyInitializing {
         lowestTxId = 0;
         currentTxId = 0;
     }

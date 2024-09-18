@@ -6,13 +6,13 @@ interface IERC20 {
     function transferFrom(address sender, address recipient, uint256 amount) external returns (bool);
 }
 
-contract BridgeProxyTestContract {
+contract BridgeExecutorTestContract {
     uint256 public count;
     address public bridgeExecutor;
 
-    constructor(address _bridgeProxy) {
+    constructor(address _bridgeExecutor) {
         count = 0;
-        bridgeExecutor = _bridgeProxy;
+        bridgeExecutor = _bridgeExecutor;
     }
 
     function increment() public {
