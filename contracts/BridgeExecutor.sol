@@ -48,36 +48,36 @@ contract BridgeExecutor is Initializable, Pausable, BridgeRole {
 
         require(txn.recipient != address(0), "BridgeExecutor: Transaction does not exist");
 
-        if (txn.callData.length > 0) {
-            (bytes memory selector, uint256 gasLimit, bytes memory args) = abi.decode(
-                txn.callData,
-                (bytes, uint256, bytes)
-            );
-
-            if (selector.length == 0 || gasLimit == 0 || gasLimit < MIN_GAS_LIMIT_FOR_SC_CALL) {
-                _refundAndDeleteTxn(txId);
-                return;
-            }
-
-            bytes memory data;
-            if (args.length > 0) {
-                data = abi.encodePacked(selector, args);
-            } else {
-                data = selector;
-            }
-
-            _updateLowestTxId();
-
-            delete pendingTransactions[txId];
-
-            (bool success, ) = txn.recipient.call{ gas: gasLimit }(data);
-
-            if (!success) {
-                _refundTransaction(txn.token, txn.amount);
-                return;
-            }
-        } else {
+        if (txn.callData.length == 0) {
             _refundAndDeleteTxn(txId);
+            return;
+        }
+
+        (bytes memory selector, uint256 gasLimit, bytes memory args) = abi.decode(
+            txn.callData,
+            (bytes, uint256, bytes)
+        );
+
+        if (selector.length == 0 || gasLimit == 0 || gasLimit < MIN_GAS_LIMIT_FOR_SC_CALL) {
+            _refundAndDeleteTxn(txId);
+            return;
+        }
+
+        bytes memory data;
+        if (args.length > 0) {
+            data = abi.encodePacked(selector, args);
+        } else {
+            data = selector;
+        }
+
+        _updateLowestTxId();
+
+        delete pendingTransactions[txId];
+
+        (bool success, ) = txn.recipient.call{ gas: gasLimit }(data);
+
+        if (!success) {
+            _refundTransaction(txn.token, txn.amount);
             return;
         }
     }
