@@ -80,7 +80,7 @@ contract ERC20Safe is Initializable, BridgeRole, Pausable {
         bool isLarge
     );
 
-    DelayedTransaction[] public delayedTransactions;
+    DelayedTransaction[] public delayedTransactions; //TODO: find another way to store this data
 
     function initialize() public initializer {
         __BridgeRole_init();
@@ -94,8 +94,8 @@ contract ERC20Safe is Initializable, BridgeRole, Pausable {
         batchSettleLimit = 40;
         numBuckets = 24;
         blocksInBucket = 300; // 300 blocks = 3600 seconds/12 seconds per block
-        defaultSingleTransactionThreshold = 1000; //to be set correctly
-        defaultAggregateValueThreshold = 10000; //to be set correctly
+        defaultSingleTransactionThreshold = 1000; //TODO: to be set correctly
+        defaultAggregateValueThreshold = 10000; //TODO: to be set correctly
     }
 
     /**
@@ -231,7 +231,7 @@ contract ERC20Safe is Initializable, BridgeRole, Pausable {
         uint112 batchNonce;
         uint112 depositNonce;
         (batchNonce, depositNonce) = _deposit_common(tokenAddress, amount, recipientAddress);
-        // emit ERC20Deposit(depositNonce, batchNonce); //i would remove it
+        emit ERC20Deposit(batchNonce, depositNonce); //TODO: check when and where this event should be emitted
     }
 
     /*
@@ -258,7 +258,7 @@ contract ERC20Safe is Initializable, BridgeRole, Pausable {
         uint112 batchNonce;
         uint112 depositNonce;
         (batchNonce, depositNonce) = _deposit_common(tokenAddress, amount, recipientAddress);
-        emit ERC20SCDeposit(batchNonce, depositNonce, callData);
+        emit ERC20SCDeposit(batchNonce, depositNonce, callData); //TODO: check when and where this event should be emitted
     }
 
     function _deposit_common(
@@ -272,16 +272,15 @@ contract ERC20Safe is Initializable, BridgeRole, Pausable {
 
         _processDelayedTransactions(tokenAddress);
 
-        bool isLargeTransaction = amount >= singleTransactionThreshold[tokenAddress];
         uint256 currentBlock = block.number;
         uint256 bucketId = (currentBlock / blocksInBucket) % numBuckets;
 
         _resetBucketIfNeeded(bucketId, tokenAddress, currentBlock);
 
-        if (isLargeTransaction) {
+        if (amount >= singleTransactionThreshold[tokenAddress]) {
             _addDelayedTransaction(tokenAddress, amount, recipientAddress, true);
-            emit TransactionDelayed(msg.sender, tokenAddress, amount, recipientAddress, true);
-            return (0, 0);
+            emit TransactionDelayed(msg.sender, tokenAddress, amount, recipientAddress, true); 
+            return (0, 0); 
         } else {
             uint256 totalAggregatedValue = _getTotalAggregatedValue(tokenAddress, currentBlock);
             if (totalAggregatedValue + amount <= aggregateValueThreshold[tokenAddress]) {
@@ -290,7 +289,7 @@ contract ERC20Safe is Initializable, BridgeRole, Pausable {
                 return (batchNonce, depositNonce);
             } else {
                 _addDelayedTransaction(tokenAddress, amount, recipientAddress, false);
-                emit TransactionDelayed(msg.sender, tokenAddress, amount, recipientAddress, false);
+                emit TransactionDelayed(msg.sender, tokenAddress, amount, recipientAddress, false); 
                 return (0, 0);
             }
         }
@@ -415,7 +414,7 @@ contract ERC20Safe is Initializable, BridgeRole, Pausable {
         }
 
         batchNonce = batch.nonce;
-        emit ERC20Deposit(batchNonce, depositNonce);
+        // emit ERC20Deposit(batchNonce, depositNonce); //TODO: check other todos to see which event and where fits best
         return (batchNonce, depositNonce);
     }
 
@@ -426,10 +425,7 @@ contract ERC20Safe is Initializable, BridgeRole, Pausable {
         totalAggregatedValue = 0;
 
         for (uint256 i = 0; i < numBuckets; i++) {
-            if (currentBlock - bucketLastUpdatedNonce[i] >= blocksInBucket) {
-                aggregatedValue[i][tokenAddress] = 0;
-                bucketLastUpdatedNonce[i] = currentBlock;
-            }
+            _resetBucketIfNeeded(i, tokenAddress, currentBlock);
             totalAggregatedValue += aggregatedValue[i][tokenAddress];
         }
     }
