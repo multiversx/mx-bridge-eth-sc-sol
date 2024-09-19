@@ -9,9 +9,9 @@ contract BridgeMock is Bridge {
         address[] memory board,
         uint256 initialQuorum,
         ERC20Safe erc20Safe,
-        BridgeProxy bridgeProxy
+        BridgeExecutor bridgeExecutor
     ) public override initializer {
-        Bridge.initialize(board, initialQuorum, erc20Safe, bridgeProxy);
+        Bridge.initialize(board, initialQuorum, erc20Safe, bridgeExecutor);
     }
 
     function proxyTransfer(address tokenAddress, uint256 amount, address recipientAddress) external returns (bool) {

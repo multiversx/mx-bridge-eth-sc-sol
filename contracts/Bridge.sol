@@ -8,7 +8,7 @@ import "./SharedStructs.sol";
 import "./ERC20Safe.sol";
 import "./access/RelayerRole.sol";
 import "./lib/Pausable.sol";
-import "./BridgeProxy.sol";
+import "./BridgeExecutor.sol";
 
 /**
 @title Bridge
@@ -41,7 +41,7 @@ contract Bridge is Initializable, RelayerRole, Pausable {
     uint256[10] private __gap;
 
     ERC20Safe internal safe;
-    BridgeProxy internal bridgeProxy;
+    BridgeExecutor internal bridgeExecutor;
 
     mapping(uint256 => bool) public executedBatches;
     mapping(uint256 => CrossTransferStatus) public crossTransferStatuses;
@@ -49,7 +49,7 @@ contract Bridge is Initializable, RelayerRole, Pausable {
     /*========================= PUBLIC API =========================*/
 
     /**
-     * @dev whoever deploys the contract is the admin
+     * @dev whoever initializes the contract is the admin
      * Admin Role means that it can:
      *   - adjust access control
      *   - add/remove relayers
@@ -59,17 +59,17 @@ contract Bridge is Initializable, RelayerRole, Pausable {
         address[] memory board,
         uint256 initialQuorum,
         ERC20Safe erc20Safe,
-        BridgeProxy _bridgeProxy
+        BridgeExecutor _bridgeExecutor
     ) public virtual initializer {
         __RelayerRole_init();
-        __Bridge__init_unchained(board, initialQuorum, erc20Safe, _bridgeProxy);
+        __Bridge__init_unchained(board, initialQuorum, erc20Safe, _bridgeExecutor);
     }
 
     function __Bridge__init_unchained(
         address[] memory board,
         uint256 initialQuorum,
         ERC20Safe erc20Safe,
-        BridgeProxy _bridgeProxy
+        BridgeExecutor _bridgeExecutor
     ) internal onlyInitializing {
         require(initialQuorum >= minimumQuorum, "Quorum is too low.");
         require(board.length >= initialQuorum, "The board should be at least the quorum size.");
@@ -78,7 +78,7 @@ contract Bridge is Initializable, RelayerRole, Pausable {
 
         quorum = initialQuorum;
         safe = erc20Safe;
-        bridgeProxy = _bridgeProxy;
+        bridgeExecutor = _bridgeExecutor;
 
         batchSettleBlockCount = 40;
     }
@@ -108,7 +108,7 @@ contract Bridge is Initializable, RelayerRole, Pausable {
         - batch nonce
         - blockNumber
         - depositsCount
-        @dev Even if there are deposits in the Safe, the current batch might still return the count as 0. This is because it might not be final (not full, and not enough blocks elapsed)
+        and a boolean that indicates if the batch is final (not full, and not enough blocks elapsed)
     */
     function getBatch(uint256 batchNonce) external view returns (Batch memory, bool isBatchFinal) {
         return safe.getBatch(batchNonce);
@@ -158,9 +158,9 @@ contract Bridge is Initializable, RelayerRole, Pausable {
     }
 
     /**
-        @notice Only returns values if the cross transfers were executed some predefined time ago to ensure finality
+        @notice Gets information about the status of the transfers in a batch after it was executed
         @param batchNonceMvx Nonce for the batch
-        @return a list of statuses for each transfer in the batch provided
+        @return a list of statuses for each transfer in the batch provided and a boolean that indicates if the information is final
      */
     function getStatusesAfterExecution(
         uint256 batchNonceMvx
@@ -191,7 +191,7 @@ contract Bridge is Initializable, RelayerRole, Pausable {
         bool isScCall = _isScCall(mvxTransaction.callData);
 
         if (isScCall) {
-            recipient = address(bridgeProxy);
+            recipient = address(bridgeExecutor);
         } else {
             recipient = mvxTransaction.recipient;
         }
@@ -205,9 +205,9 @@ contract Bridge is Initializable, RelayerRole, Pausable {
             return DepositStatus.Rejected;
         }
 
-        // If the recipient is a smart contract, attempt to deposit the funds in bridgeProxy
-        if (_isScCall(mvxTransaction.callData)) {
-            bool depositSuccess = bridgeProxy.deposit(mvxTransaction);
+        // If the recipient is a smart contract, attempt to deposit the funds in bridgeExecutor
+        if (isScCall) {
+            bool depositSuccess = bridgeExecutor.deposit(mvxTransaction);
             if (!depositSuccess) {
                 return DepositStatus.Rejected;
             }

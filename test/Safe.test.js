@@ -17,16 +17,16 @@ describe("ERC20Safe", function () {
     boardMembers = [adminWallet, otherWallet, simpleBoardMember];
   });
 
-  let safe, genericERC20, bridge, bridgeProxy;
+  let safe, genericERC20, bridge, bridgeExecutor;
   beforeEach(async function () {
     genericERC20 = await deployContract(adminWallet, "GenericERC20", ["TSC", "TSC", 6]);
     safe = await deployUpgradableContract(adminWallet, "ERC20Safe");
-    bridgeProxy = await deployUpgradableContract(adminWallet, "BridgeProxy");
+    bridgeExecutor = await deployUpgradableContract(adminWallet, "BridgeExecutor");
     bridge = await deployUpgradableContract(adminWallet, "Bridge", [
       boardMembers.map(m => m.address),
       3,
       safe.address,
-      bridgeProxy.address,
+      bridgeExecutor.address,
     ]);
 
     await genericERC20.approve(safe.address, 1000);
@@ -347,7 +347,7 @@ describe("ERC20Safe", function () {
         boardMembers.map(m => m.address),
         3,
         safe.address,
-        bridgeProxy.address,
+        bridgeExecutor.address,
       ]);
       await safe.setBridge(mockBridge.address);
 
