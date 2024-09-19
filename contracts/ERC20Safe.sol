@@ -231,7 +231,6 @@ contract ERC20Safe is Initializable, BridgeRole, Pausable {
         uint112 batchNonce;
         uint112 depositNonce;
         (batchNonce, depositNonce) = _deposit_common(tokenAddress, amount, recipientAddress);
-        emit ERC20Deposit(batchNonce, depositNonce); //TODO: check when and where this event should be emitted
     }
 
     /*
@@ -261,7 +260,11 @@ contract ERC20Safe is Initializable, BridgeRole, Pausable {
         emit ERC20SCDeposit(batchNonce, depositNonce, callData); //TODO: check when and where this event should be emitted
     }
 
-    function _deposit_common(address tokenAddress, uint256 amount, bytes32 recipientAddress) internal returns (uint112 batchNonce, uint112 depositNonce) {
+    function _deposit_common(
+        address tokenAddress,
+        uint256 amount,
+        bytes32 recipientAddress
+    ) internal returns (uint112 batchNonce, uint112 depositNonce) {
         require(whitelistedTokens[tokenAddress], "Unsupported token");
         require(amount >= tokenMinLimits[tokenAddress], "Tried to deposit an amount below the minimum specified limit");
         require(amount <= tokenMaxLimits[tokenAddress], "Tried to deposit an amount above the maximum specified limit");
@@ -275,8 +278,8 @@ contract ERC20Safe is Initializable, BridgeRole, Pausable {
 
         if (amount >= singleTransactionThreshold[tokenAddress]) {
             _addDelayedTransaction(tokenAddress, amount, recipientAddress, true);
-            emit TransactionDelayed(msg.sender, tokenAddress, amount, recipientAddress, true); 
-            return (0, 0); 
+            emit TransactionDelayed(msg.sender, tokenAddress, amount, recipientAddress, true);
+            return (0, 0);
         } else {
             uint256 totalAggregatedValue = _getTotalAggregatedValue(tokenAddress, currentBlock);
             if (totalAggregatedValue + amount <= aggregateValueThreshold[tokenAddress]) {
@@ -285,16 +288,9 @@ contract ERC20Safe is Initializable, BridgeRole, Pausable {
                 return (batchNonce, depositNonce);
             } else {
                 _addDelayedTransaction(tokenAddress, amount, recipientAddress, false);
-                emit TransactionDelayed(msg.sender, tokenAddress, amount, recipientAddress, false); 
+                emit TransactionDelayed(msg.sender, tokenAddress, amount, recipientAddress, false);
                 return (0, 0);
             }
-        }
-    }
-
-    function _resetBucketIfNeeded(uint256 bucketId, address tokenAddress, uint256 currentBlock) internal {
-        if (currentBlock - bucketLastUpdatedNonce[bucketId] > blocksInBucket) {
-            aggregatedValue[bucketId][tokenAddress] = 0;
-            bucketLastUpdatedNonce[bucketId] = currentBlock;
         }
     }
 
@@ -412,7 +408,7 @@ contract ERC20Safe is Initializable, BridgeRole, Pausable {
         }
 
         batchNonce = batch.nonce;
-        // emit ERC20Deposit(batchNonce, depositNonce); //TODO: check other todos to see which event and where fits best
+        emit ERC20Deposit(batchNonce, depositNonce); //TODO: check other todos to see which event and where fits best
         return (batchNonce, depositNonce);
     }
 
@@ -428,22 +424,36 @@ contract ERC20Safe is Initializable, BridgeRole, Pausable {
         }
     }
 
+    /**
+     @notice Updates the threshold for a particular token
+     @param token Address of the ERC20 token
+     @param amount New threshold for the aggregated value
+    */
+    function setThreshold(address token, uint256 amount) external onlyAdmin {
+        aggregateValueThreshold[token] = amount;
+    }
+
     function getThreshold(address tokenAddress) public view returns (uint256) {
         return aggregateValueThreshold[tokenAddress];
     }
 
-    function setThreshold(address token, uint256 amount) external onlyAdmin {
-        aggregateValueThreshold[token] = amount;
+    /**
+     @notice Updates the single transaction threshold for a particular token
+     @param token Address of the ERC20 token
+     @param amount New threshold for the aggregated value
+    */
+    function setSingleTxThreshold(address token, uint256 amount) external onlyAdmin {
+        singleTransactionThreshold[token] = amount;
     }
 
     function getSingleTxThreshold(address tokenAddress) public view returns (uint256) {
         return singleTransactionThreshold[tokenAddress];
     }
 
-    function setSingleTxThreshold(address token, uint256 amount) external onlyAdmin {
-        singleTransactionThreshold[token] = amount;
-    }
-
+    /**
+     @notice Process a delayed transaction immediately
+     @param index Index of the delayed transaction
+    */
     function processDelayedTransactionImmediately(uint256 index) external onlyAdmin {
         require(index < delayedTransactions.length, "Invalid index");
         DelayedTransaction storage dt = delayedTransactions[index];
@@ -619,5 +629,12 @@ contract ERC20Safe is Initializable, BridgeRole, Pausable {
 
     function _isTokenMintBurn(address token) internal view returns (bool) {
         return mintBurnTokens[token];
+    }
+
+    function _resetBucketIfNeeded(uint256 bucketId, address tokenAddress, uint256 currentBlock) internal {
+        if (currentBlock - bucketLastUpdatedNonce[bucketId] > blocksInBucket) {
+            aggregatedValue[bucketId][tokenAddress] = 0;
+            bucketLastUpdatedNonce[bucketId] = currentBlock;
+        }
     }
 }
