@@ -51,4 +51,5 @@ struct DelayedTransaction {
     bytes32 recipientAddress;
     uint256 blockAdded;
     bool isLarge;
+    bytes callData;
 }

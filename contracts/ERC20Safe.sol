@@ -80,7 +80,7 @@ contract ERC20Safe is Initializable, BridgeRole, Pausable {
         bool isLarge
     );
 
-    DelayedTransaction[] public delayedTransactions; //TODO: find another way to store this data
+    DelayedTransaction[] public delayedTransactions;
 
     function initialize() public initializer {
         __BridgeRole_init();
@@ -94,8 +94,8 @@ contract ERC20Safe is Initializable, BridgeRole, Pausable {
         batchSettleLimit = 40;
         numBuckets = 24;
         blocksInBucket = 300; // 300 blocks = 3600 seconds/12 seconds per block
-        defaultSingleTransactionThreshold = 1000; //TODO: to be set correctly
-        defaultAggregateValueThreshold = 10000; //TODO: to be set correctly
+        defaultSingleTransactionThreshold = 1000; //to be set correctly
+        defaultAggregateValueThreshold = 10000; //to be set correctly
     }
 
     /**
@@ -230,7 +230,7 @@ contract ERC20Safe is Initializable, BridgeRole, Pausable {
     function deposit(address tokenAddress, uint256 amount, bytes32 recipientAddress) public whenNotPaused {
         uint112 batchNonce;
         uint112 depositNonce;
-        (batchNonce, depositNonce) = _deposit_common(tokenAddress, amount, recipientAddress);
+        (batchNonce, depositNonce) = _deposit_common(tokenAddress, amount, recipientAddress, "");
     }
 
     /*
@@ -252,18 +252,18 @@ contract ERC20Safe is Initializable, BridgeRole, Pausable {
         address tokenAddress,
         uint256 amount,
         bytes32 recipientAddress,
-        bytes calldata callData
+        bytes memory callData
     ) public whenNotPaused {
         uint112 batchNonce;
         uint112 depositNonce;
-        (batchNonce, depositNonce) = _deposit_common(tokenAddress, amount, recipientAddress);
-        emit ERC20SCDeposit(batchNonce, depositNonce, callData); //TODO: check when and where this event should be emitted
+        (batchNonce, depositNonce) = _deposit_common(tokenAddress, amount, recipientAddress, callData);
     }
 
     function _deposit_common(
         address tokenAddress,
         uint256 amount,
-        bytes32 recipientAddress
+        bytes32 recipientAddress,
+        bytes memory callData
     ) internal returns (uint112 batchNonce, uint112 depositNonce) {
         require(whitelistedTokens[tokenAddress], "Unsupported token");
         require(amount >= tokenMinLimits[tokenAddress], "Tried to deposit an amount below the minimum specified limit");
@@ -277,17 +277,17 @@ contract ERC20Safe is Initializable, BridgeRole, Pausable {
         _resetBucketIfNeeded(bucketId, tokenAddress, currentBlock);
 
         if (amount >= singleTransactionThreshold[tokenAddress]) {
-            _addDelayedTransaction(tokenAddress, amount, recipientAddress, true);
+            _addDelayedTransaction(tokenAddress, amount, recipientAddress, true, callData);
             emit TransactionDelayed(msg.sender, tokenAddress, amount, recipientAddress, true);
             return (0, 0);
         } else {
             uint256 totalAggregatedValue = _getTotalAggregatedValue(tokenAddress, currentBlock);
             if (totalAggregatedValue + amount <= aggregateValueThreshold[tokenAddress]) {
                 aggregatedValue[bucketId][tokenAddress] += amount;
-                (batchNonce, depositNonce) = _processDeposit(tokenAddress, amount, recipientAddress);
+                (batchNonce, depositNonce) = _processDeposit(tokenAddress, amount, recipientAddress, callData);
                 return (batchNonce, depositNonce);
             } else {
-                _addDelayedTransaction(tokenAddress, amount, recipientAddress, false);
+                _addDelayedTransaction(tokenAddress, amount, recipientAddress, false, callData);
                 emit TransactionDelayed(msg.sender, tokenAddress, amount, recipientAddress, false);
                 return (0, 0);
             }
@@ -298,7 +298,8 @@ contract ERC20Safe is Initializable, BridgeRole, Pausable {
         address tokenAddress,
         uint256 amount,
         bytes32 recipientAddress,
-        bool isLarge
+        bool isLarge,
+        bytes memory callData
     ) internal {
         DelayedTransaction memory dt = DelayedTransaction({
             amount: amount,
@@ -306,7 +307,8 @@ contract ERC20Safe is Initializable, BridgeRole, Pausable {
             sender: msg.sender,
             recipientAddress: recipientAddress,
             blockAdded: block.number,
-            isLarge: isLarge
+            isLarge: isLarge,
+            callData: callData
         });
         delayedTransactions.push(dt);
     }
@@ -322,7 +324,7 @@ contract ERC20Safe is Initializable, BridgeRole, Pausable {
             }
 
             if (_canProcessDelayedTransaction(dt)) {
-                _processDeposit(dt.tokenAddress, dt.amount, dt.recipientAddress);
+                _processDeposit(dt.tokenAddress, dt.amount, dt.recipientAddress, dt.callData);
 
                 delayedTransactions[i] = delayedTransactions[delayedTransactions.length - 1];
                 delayedTransactions.pop();
@@ -369,7 +371,8 @@ contract ERC20Safe is Initializable, BridgeRole, Pausable {
     function _processDeposit(
         address tokenAddress,
         uint256 amount,
-        bytes32 recipientAddress
+        bytes32 recipientAddress,
+        bytes memory callData
     ) internal returns (uint112 batchNonce, uint112 depositNonce) {
         uint64 currentBlockNumber = uint64(block.number);
 
@@ -408,7 +411,11 @@ contract ERC20Safe is Initializable, BridgeRole, Pausable {
         }
 
         batchNonce = batch.nonce;
-        emit ERC20Deposit(batchNonce, depositNonce); //TODO: check other todos to see which event and where fits best
+        if (callData.length > 0) {
+            emit ERC20SCDeposit(batchNonce, depositNonce, callData);
+        } else {
+            emit ERC20Deposit(batchNonce, depositNonce);
+        }
         return (batchNonce, depositNonce);
     }
 
@@ -458,7 +465,7 @@ contract ERC20Safe is Initializable, BridgeRole, Pausable {
         require(index < delayedTransactions.length, "Invalid index");
         DelayedTransaction storage dt = delayedTransactions[index];
 
-        _processDeposit(dt.tokenAddress, dt.amount, dt.recipientAddress);
+        _processDeposit(dt.tokenAddress, dt.amount, dt.recipientAddress, dt.callData);
 
         delayedTransactions[index] = delayedTransactions[delayedTransactions.length - 1];
         delayedTransactions.pop();
