@@ -43,3 +43,13 @@ struct MvxTransaction {
     uint256 depositNonce;
     bytes callData;
 }
+
+struct DelayedTransaction {
+    uint256 amount;
+    address tokenAddress;
+    address sender;
+    bytes32 recipientAddress;
+    uint256 blockAdded;
+    bool isLarge;
+    bytes callData;
+}
