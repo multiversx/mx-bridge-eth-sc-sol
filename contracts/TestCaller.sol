@@ -14,11 +14,9 @@ contract TestCaller {
 
     function upgrade() public {}
 
-    function callPayable() public payable {}
+    function callPayable() public {}
 
-    function callNonPayable() public {}
-
-    function callPayableWithParams(uint256 size, address addr, address tokenIdentifier) public payable {
+    function callPayableWithParams(uint256 size, address addr, address tokenIdentifier) public {
         CalledData memory data = CalledData({ size: size, addr: addr, tokenIdentifier: tokenIdentifier });
 
         calledDataParams.push(data);
