@@ -31,6 +31,8 @@ import "./tasks/get-statuses-after-execution";
 import "./tasks/depositSC";
 import "./tasks/set-batch-settle-limit-on-safe"
 import "./tasks/deploy";
+import "./tasks/native-tokens"
+import "./tasks/mintburn-tokens"
 
 import { resolve } from "path";
 
