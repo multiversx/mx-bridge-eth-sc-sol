@@ -33,6 +33,8 @@ import "./tasks/set-batch-settle-limit-on-safe"
 import "./tasks/deploy";
 import "./tasks/token-balance-query"
 import "./tasks/get-relayers"
+import "./tasks/native-tokens"
+import "./tasks/mintburn-tokens"
 
 import { resolve } from "path";
 
