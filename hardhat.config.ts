@@ -31,6 +31,11 @@ import "./tasks/get-statuses-after-execution";
 import "./tasks/depositSC";
 import "./tasks/set-batch-settle-limit-on-safe"
 import "./tasks/deploy";
+import "./tasks/token-balance-query"
+import "./tasks/get-relayers"
+import "./tasks/native-tokens"
+import "./tasks/mintburn-tokens"
+import "./tasks/reset-total-balance"
 
 import { resolve } from "path";
 
@@ -49,6 +54,7 @@ const chainIds = {
 
 // Ensure that we have all the environment variables we need.
 const mnemonic: string | undefined = process.env.MNEMONIC;
+const initialindex: string | undefined = process.env.INITIAL_INDEX
 if (!mnemonic) {
   throw new Error("Please set your MNEMONIC in a .env file");
 }
@@ -64,6 +70,7 @@ function getETHConfig(network: string): NetworkUserConfig {
       count: 12,
       mnemonic,
       path: "m/44'/60'/0'/0",
+      initialIndex: Number(initialindex),
     },
     url: "https://" + chainIds.sepolia + ".infura.io/v3/" + infuraApiKey,
   };
@@ -88,6 +95,7 @@ function getBSCConfig(network: string): NetworkUserConfig {
       count: 12,
       mnemonic,
       path: "m/44'/60'/0'/0",
+      initialIndex: Number(initialindex),
     },
     url: `https://data-seed-prebsc-1-s1.binance.org:8545`,
   };
@@ -112,6 +120,7 @@ function getPolygonConfig(network: string): NetworkUserConfig {
       count: 12,
       mnemonic,
       path: "m/44'/60'/0'/0",
+      initialIndex: Number(initialindex),
     },
     url: "https://polygon-mumbai.infura.io/v3/" + infuraApiKey,
   };
