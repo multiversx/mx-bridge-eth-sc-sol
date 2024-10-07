@@ -1,6 +1,6 @@
 import "@nomicfoundation/hardhat-toolbox";
 
-task("get-quorum", "Get batch information").setAction(async (taskArgs, hre) => {
+task("get-quorum", "Get quorum information").setAction(async (taskArgs, hre) => {
   const [adminWallet] = await hre.ethers.getSigners();
   const fs = require("fs");
   const config = JSON.parse(fs.readFileSync("setup.config.json", "utf8"));

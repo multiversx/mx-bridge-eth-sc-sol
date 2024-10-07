@@ -8,18 +8,18 @@ task("add-to-whitelist", "Whitelists a new address in the bridge.")
   .addOptionalParam("price", "Gas price in gwei for this transaction", undefined)
   .addOptionalParam("mintburn", "flag if the token is mintable/burnable", false, types.boolean)
   .addOptionalParam("native", "flag if the token is native", true, types.boolean)
-  .addOptionalParam("totalBalance", "total balance")
-  .addOptionalParam("mintBalance", "minted balance")
-  .addOptionalParam("burnBalance", "burn balance")
+  .addOptionalParam("totalbalance", "total balance")
+  .addOptionalParam("mintbalance", "minted balance")
+  .addOptionalParam("burnbalance", "burn balance")
   .setAction(async (taskArgs, hre) => {
     const minAmount = taskArgs.min ?? 25;
     const maxAmount = taskArgs.max ?? 100;
     const address = taskArgs.address;
     const mintBurn = taskArgs.mintburn ?? false;
     const native = taskArgs.native ?? false;
-    const totalBalance = taskArgs.totalBalance ?? 0
-    const mintBalance = taskArgs.mintBalance ?? 0
-    const burnBalance = taskArgs.burnBalance ?? 0
+    const totalBalance = taskArgs.totalbalance ?? 0
+    const mintBalance = taskArgs.mintbalance ?? 0
+    const burnBalance = taskArgs.burnbalance ?? 0
     const [adminWallet] = await hre.ethers.getSigners();
     const fs = require("fs");
     const filename = "setup.config.json";
