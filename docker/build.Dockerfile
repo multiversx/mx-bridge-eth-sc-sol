@@ -17,6 +17,7 @@ RUN jq -r '.abi' artifacts/contracts/ERC20Safe.sol/ERC20Safe.json > artifacts/co
 RUN jq -r '.abi' artifacts/contracts/GenericERC20.sol/GenericERC20.json > artifacts/contracts/GenericERC20.sol/GenericERC20.abi.json
 RUN jq -r '.abi' artifacts/contracts/MintBurnERC20.sol/MintBurnERC20.json > artifacts/contracts/MintBurnERC20.sol/MintBurnERC20.abi.json
 RUN jq -r '.abi' artifacts/contracts/BridgeExecutor.sol/BridgeExecutor.json > artifacts/contracts/BridgeExecutor.sol/BridgeExecutor.abi.json
+RUN jq -r '.abi' artifacts/contracts/TestCaller.sol/TestCaller.json > artifacts/contracts/TestCaller.sol/TestCaller.abi.json
 
 RUN jq -r '.bytecode' artifacts/contracts/Bridge.sol/Bridge.json > artifacts/contracts/Bridge.sol/Bridge.hex
 RUN jq -r '.bytecode' artifacts/contracts/Proxy.sol/Proxy.json > artifacts/contracts/Proxy.sol/Proxy.hex
@@ -24,6 +25,7 @@ RUN jq -r '.bytecode' artifacts/contracts/ERC20Safe.sol/ERC20Safe.json > artifac
 RUN jq -r '.bytecode' artifacts/contracts/GenericERC20.sol/GenericERC20.json > artifacts/contracts/GenericERC20.sol/GenericERC20.hex
 RUN jq -r '.bytecode' artifacts/contracts/MintBurnERC20.sol/MintBurnERC20.json > artifacts/contracts/MintBurnERC20.sol/MintBurnERC20.hex
 RUN jq -r '.bytecode' artifacts/contracts/BridgeExecutor.sol/BridgeExecutor.json > artifacts/contracts/BridgeExecutor.sol/BridgeExecutor.hex
+RUN jq -r '.bytecode' artifacts/contracts/TestCaller.sol/TestCaller.json > artifacts/contracts/TestCaller.sol/TestCaller.hex
 
 FROM golang:1.20.7-bookworm AS go-builder
 LABEL description="This Docker image creates the go-wrappers for the Solidity contracts"
@@ -40,3 +42,4 @@ RUN abigen --abi=artifacts/contracts/ERC20Safe.sol/ERC20Safe.abi.json --pkg=cont
 RUN abigen --abi=artifacts/contracts/GenericERC20.sol/GenericERC20.abi.json --pkg=contract --out=artifacts/contracts/GenericERC20.sol/GenericERC20.go --type=GenericERC20
 RUN abigen --abi=artifacts/contracts/MintBurnERC20.sol/MintBurnERC20.abi.json --pkg=contract --out=artifacts/contracts/MintBurnERC20.sol/MintBurnERC20.go --type=MintBurnERC20
 RUN abigen --abi=artifacts/contracts/BridgeExecutor.sol/BridgeExecutor.abi.json --pkg=contract --out=artifacts/contracts/BridgeExecutor.sol/BridgeExecutor.go --type=BridgeExecutor
+RUN abigen --abi=artifacts/contracts/TestCaller.sol/TestCaller.abi.json --pkg=contract --out=artifacts/contracts/TestCaller.sol/TestCaller.go --type=TestCaller
