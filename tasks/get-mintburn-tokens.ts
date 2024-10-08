@@ -1,7 +1,7 @@
 import "@nomicfoundation/hardhat-toolbox";
 import fs from "fs";
 
-task("native-tokens", "Returns if the token is native or not")
+task("get-mintburn-tokens", "Returns if the token is mint-burn or not")
   .addParam("address", "Address of the token")
   .setAction(async (taskArgs, hre) => {
     const address = taskArgs.address;
@@ -14,9 +14,9 @@ task("native-tokens", "Returns if the token is native or not")
     const contract = safeContractFactory.attach(safeAddress)
 
     await contract
-      .nativeTokens(address)
-      .then((isNative: any) => {
-        console.log(`Token ${address} is native: ${isNative.toString()}`);
+      .mintBurnTokens(address)
+      .then((isMintBurn: any) => {
+        console.log(`Token ${address} is mint-burn: ${isMintBurn.toString()}`);
       })
       .catch((err: any) => {
         console.log(err);

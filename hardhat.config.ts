@@ -26,16 +26,16 @@ import "./tasks/recover-lost-funds";
 import "./tasks/get-batch";
 import "./tasks/get-batch-deposits";
 import "./tasks/deploy/mint-burn-tokens";
-import "./tasks/quorum";
+import "./tasks/get-quorum";
 import "./tasks/get-statuses-after-execution";
 import "./tasks/depositSC";
 import "./tasks/set-batch-settle-limit-on-safe"
 import "./tasks/deploy";
 import "./tasks/token-balance-query"
 import "./tasks/get-relayers"
-import "./tasks/native-tokens"
-import "./tasks/mintburn-tokens"
+import "./tasks/get-token-properties"
 import "./tasks/reset-total-balance"
+import "./tasks/mintburn-test-tokens"
 
 import { resolve } from "path";
 
