@@ -8,6 +8,7 @@ import "./SharedStructs.sol";
 import "./ERC20Safe.sol";
 import "./access/RelayerRole.sol";
 import "./lib/Pausable.sol";
+import "./BridgeExecutor.sol";
 
 /**
 @title Bridge
@@ -40,6 +41,7 @@ contract Bridge is Initializable, RelayerRole, Pausable {
     uint256[10] private __gap;
 
     ERC20Safe internal safe;
+    BridgeExecutor internal bridgeExecutor;
 
     mapping(uint256 => bool) public executedBatches;
     mapping(uint256 => CrossTransferStatus) public crossTransferStatuses;
@@ -53,12 +55,22 @@ contract Bridge is Initializable, RelayerRole, Pausable {
      *   - add/remove relayers
      *   - add/remove tokens that can be bridged
      */
-    function initialize(address[] memory board, uint256 initialQuorum, ERC20Safe erc20Safe) public virtual initializer {
+    function initialize(
+        address[] memory board,
+        uint256 initialQuorum,
+        ERC20Safe erc20Safe,
+        BridgeExecutor _bridgeExecutor
+    ) public virtual initializer {
         __RelayerRole_init();
-        __Bridge__init_unchained(board, initialQuorum, erc20Safe);
+        __Bridge__init_unchained(board, initialQuorum, erc20Safe, _bridgeExecutor);
     }
 
-    function __Bridge__init_unchained(address[] memory board, uint256 initialQuorum, ERC20Safe erc20Safe) internal onlyInitializing {
+    function __Bridge__init_unchained(
+        address[] memory board,
+        uint256 initialQuorum,
+        ERC20Safe erc20Safe,
+        BridgeExecutor _bridgeExecutor
+    ) internal onlyInitializing {
         require(initialQuorum >= minimumQuorum, "Quorum is too low.");
         require(board.length >= initialQuorum, "The board should be at least the quorum size.");
 
@@ -66,6 +78,7 @@ contract Bridge is Initializable, RelayerRole, Pausable {
 
         quorum = initialQuorum;
         safe = erc20Safe;
+        bridgeExecutor = _bridgeExecutor;
 
         batchSettleBlockCount = 40;
     }
@@ -109,20 +122,19 @@ contract Bridge is Initializable, RelayerRole, Pausable {
     }
 
     /**
-        @notice Executes transfers that were signed by the relayers.
-        @dev This is for the MultiversX to Ethereum flow
-        @dev Arrays here try to mimmick the structure of a batch. A batch represents the values from the same index in all the arrays.
-        @param tokens Array containing all the token addresses that the batch interacts with. Can even contain duplicates.
-        @param recipients Array containing all the destinations from the batch. Can be duplicates.
-        @param amounts Array containing all the amounts that will be transfered.
-        @param batchNonceMvx Nonce for the batch. This identifies a batch created on the MultiversX chain that bridges tokens from MultiversX to Ethereum
-        @param signatures Signatures from all the relayers for the execution. This mimics a delegated multisig contract. For the execution to take place, there must be enough valid signatures to achieve quorum.
+        @notice Executes a batch of transfers
+        @param mvxTransactions List of transactions from MultiversX side. Each transaction consists of:
+        - token address
+        - sender
+        - recipient
+        - amount
+        - deposit nonce
+        - call data
+        @param batchNonceMvx Nonce for the batch
+        @param signatures List of signatures from the relayers
     */
     function executeTransfer(
-        address[] calldata tokens,
-        address[] calldata recipients,
-        uint256[] calldata amounts,
-        uint256[] calldata depositNonces,
+        MvxTransaction[] calldata mvxTransactions,
         uint256 batchNonceMvx,
         bytes[] calldata signatures
     ) public whenNotPaused onlyRelayer {
@@ -132,16 +144,12 @@ contract Bridge is Initializable, RelayerRole, Pausable {
 
         _validateQuorum(
             signatures,
-            _getHashedDepositData(
-                abi.encode(recipients, tokens, amounts, depositNonces, batchNonceMvx, executeTransferAction)
-            )
+            _getHashedDepositData(abi.encode(mvxTransactions, batchNonceMvx, executeTransferAction))
         );
 
-        DepositStatus[] memory statuses = new DepositStatus[](tokens.length);
-        for (uint256 j = 0; j < tokens.length; j++) {
-            statuses[j] = safe.transfer(tokens[j], amounts[j], recipients[j])
-                ? DepositStatus.Executed
-                : DepositStatus.Rejected;
+        DepositStatus[] memory statuses = new DepositStatus[](mvxTransactions.length);
+        for (uint256 j = 0; j < mvxTransactions.length; j++) {
+            statuses[j] = _processDeposit(mvxTransactions[j]);
         }
 
         CrossTransferStatus storage crossStatus = crossTransferStatuses[batchNonceMvx];
@@ -154,7 +162,9 @@ contract Bridge is Initializable, RelayerRole, Pausable {
         @param batchNonceMvx Nonce for the batch
         @return a list of statuses for each transfer in the batch provided and a boolean that indicates if the information is final
      */
-    function getStatusesAfterExecution(uint256 batchNonceMvx) external view returns (DepositStatus[] memory, bool isFinal) {
+    function getStatusesAfterExecution(
+        uint256 batchNonceMvx
+    ) external view returns (DepositStatus[] memory, bool isFinal) {
         CrossTransferStatus memory crossStatus = crossTransferStatuses[batchNonceMvx];
         return (crossStatus.statuses, _isMvxBatchFinal(crossStatus.createdBlockNumber));
     }
@@ -174,6 +184,40 @@ contract Bridge is Initializable, RelayerRole, Pausable {
     /*========================= PRIVATE API =========================*/
     function _getHashedDepositData(bytes memory encodedData) private pure returns (bytes32) {
         return keccak256(abi.encodePacked(prefix, keccak256(encodedData)));
+    }
+
+    function _processDeposit(MvxTransaction calldata mvxTransaction) private returns (DepositStatus) {
+        address recipient;
+        bool isScCall = _isScCall(mvxTransaction.callData);
+
+        if (isScCall) {
+            recipient = address(bridgeExecutor);
+        } else {
+            recipient = mvxTransaction.recipient;
+        }
+
+        if (mvxTransaction.amount == 0) {
+            return DepositStatus.Rejected;
+        }
+
+        bool transferSuccess = safe.transfer(mvxTransaction.token, mvxTransaction.amount, recipient);
+        if (!transferSuccess) {
+            return DepositStatus.Rejected;
+        }
+
+        // If the recipient is a smart contract, attempt to deposit the funds in bridgeExecutor
+        if (isScCall) {
+            bool depositSuccess = bridgeExecutor.deposit(mvxTransaction);
+            if (!depositSuccess) {
+                return DepositStatus.Rejected;
+            }
+        }
+
+        return DepositStatus.Executed;
+    }
+
+    function _isScCall(bytes calldata _data) private pure returns (bool) {
+        return _data.length > 0;
     }
 
     function _validateQuorum(bytes[] memory signatures, bytes32 data) private view {

@@ -9,12 +9,19 @@ describe("ERC20Safe, MintBurnERC20, and Bridge Interaction", function () {
   let boardMembers;
   const quorum = 7;
 
-  let erc20Safe, bridge, mintBurnErc20;
+  let erc20Safe, bridge, mintBurnErc20, bridgeExecutor;
 
   async function setupContracts() {
     erc20Safe = await deployUpgradableContract(adminWallet, "ERC20Safe");
-    bridge = await deployUpgradableContract(adminWallet, "Bridge", [boardMembers, quorum, erc20Safe.address]);
+    bridgeExecutor = await deployUpgradableContract(adminWallet, "BridgeExecutor");
+    bridge = await deployUpgradableContract(adminWallet, "Bridge", [
+      boardMembers,
+      quorum,
+      erc20Safe.address,
+      bridgeExecutor.address,
+    ]);
     await erc20Safe.setBridge(bridge.address);
+    await bridgeExecutor.setBridge(bridge.address);
     await bridge.unpause();
     await setupErc20Token();
   }
@@ -26,18 +33,11 @@ describe("ERC20Safe, MintBurnERC20, and Bridge Interaction", function () {
   }
 
   before(async function () {
-    [adminWallet, relayer1, relayer2, relayer3, relayer4, relayer5, relayer6, relayer7, relayer8, otherWallet] = await ethers.getSigners();
-    boardMembers = [
-      adminWallet,
-      relayer1,
-      relayer2,
-      relayer3,
-      relayer4,
-      relayer5,
-      relayer6,
-      relayer7,
-      relayer8,
-    ].map(m => m.address);
+    [adminWallet, relayer1, relayer2, relayer3, relayer4, relayer5, relayer6, relayer7, relayer8, otherWallet] =
+      await ethers.getSigners();
+    boardMembers = [adminWallet, relayer1, relayer2, relayer3, relayer4, relayer5, relayer6, relayer7, relayer8].map(
+      m => m.address,
+    );
   });
 
   beforeEach(async function () {
@@ -45,18 +45,29 @@ describe("ERC20Safe, MintBurnERC20, and Bridge Interaction", function () {
   });
 
   describe("should burn tokens on deposit to ERC20Safe", async function () {
-    let amount, batchNonce, signatures;
+    let amount, batchNonce, signatures, mvxTxn;
     beforeEach(async function () {
       amount = 80;
+      mvxTxn = {
+        token: mintBurnErc20.address,
+        sender: Buffer.from("c0f0058cea88a2bc1240b60361efb965957038d05f916c42b3f23a2c38ced81e", "hex"),
+        recipient: otherWallet.address,
+        amount: amount,
+        depositNonce: 1,
+        callData: "0x",
+        isScRecipient: false,
+      };
       batchNonce = 42;
-      signatures = await getSignaturesForExecuteTransfer(
-        [mintBurnErc20.address],
-        [otherWallet.address],
-        [amount],
-        [1],
-        batchNonce,
-        [adminWallet, relayer1, relayer2, relayer3, relayer5, relayer6, relayer7, relayer8],
-      );
+      signatures = await getSignaturesForExecuteTransfer([mvxTxn], batchNonce, [
+        adminWallet,
+        relayer1,
+        relayer2,
+        relayer3,
+        relayer5,
+        relayer6,
+        relayer7,
+        relayer8,
+      ]);
     });
 
     it("transfer is set as REJECTED when ERC20Safe does not have the minter role", async function () {
@@ -65,14 +76,7 @@ describe("ERC20Safe, MintBurnERC20, and Bridge Interaction", function () {
       const initialBalanceOtherWallet = await mintBurnErc20.balanceOf(otherWallet.address);
 
       // Execute the transfer
-      await bridge.executeTransfer(
-        [mintBurnErc20.address],
-        [otherWallet.address],
-        [amount],
-        [1],
-        batchNonce,
-        signatures,
-      );
+      await bridge.executeTransfer([mvxTxn], batchNonce, signatures);
 
       // Get final balance of the otherWallet
       const finalBalanceOtherWallet = await mintBurnErc20.balanceOf(otherWallet.address);
@@ -88,14 +92,16 @@ describe("ERC20Safe, MintBurnERC20, and Bridge Interaction", function () {
       // check that the transfer is set as REJECTED
       const [transfers, isFinal] = await bridge.getStatusesAfterExecution(batchNonce);
       expect(transfers[0]).to.equal(4);
-      expect(isFinal).to.be.true
+      expect(isFinal).to.be.true;
     });
 
     it("transfer is set as Executed when ERC20Safe does have the minter role", async function () {
       await mintBurnErc20.grantRole(await mintBurnErc20.MINTER_ROLE(), erc20Safe.address);
-      await expect(() =>
-        bridge.executeTransfer([mintBurnErc20.address], [otherWallet.address], [amount], [1], batchNonce, signatures),
-      ).to.changeTokenBalance(mintBurnErc20, otherWallet, amount);
+      await expect(() => bridge.executeTransfer([mvxTxn], batchNonce, signatures)).to.changeTokenBalance(
+        mintBurnErc20,
+        otherWallet,
+        amount,
+      );
 
       const settleBlockCount = await bridge.batchSettleBlockCount();
       for (let i = 0; i < settleBlockCount; i++) {
@@ -105,14 +111,16 @@ describe("ERC20Safe, MintBurnERC20, and Bridge Interaction", function () {
       // check that the transfer is set as Executed
       const [transfers, isFinal] = await bridge.getStatusesAfterExecution(batchNonce);
       expect(transfers[0]).to.equal(3);
-      expect(isFinal).to.be.true
+      expect(isFinal).to.be.true;
     });
 
     it("deposit not should work when ERC20Safe does not have enough allowance", async function () {
       await mintBurnErc20.grantRole(await mintBurnErc20.MINTER_ROLE(), erc20Safe.address);
-      await expect(() =>
-        bridge.executeTransfer([mintBurnErc20.address], [otherWallet.address], [amount], [1], batchNonce, signatures),
-      ).to.changeTokenBalance(mintBurnErc20, otherWallet, amount);
+      await expect(() => bridge.executeTransfer([mvxTxn], batchNonce, signatures)).to.changeTokenBalance(
+        mintBurnErc20,
+        otherWallet,
+        amount,
+      );
 
       await expect(
         erc20Safe
@@ -127,9 +135,11 @@ describe("ERC20Safe, MintBurnERC20, and Bridge Interaction", function () {
 
     it("deposit should work when ERC20Safe has enough allowance", async function () {
       await mintBurnErc20.grantRole(await mintBurnErc20.MINTER_ROLE(), erc20Safe.address);
-      await expect(() =>
-        bridge.executeTransfer([mintBurnErc20.address], [otherWallet.address], [amount], [1], batchNonce, signatures),
-      ).to.changeTokenBalance(mintBurnErc20, otherWallet, amount);
+      await expect(() => bridge.executeTransfer([mvxTxn], batchNonce, signatures)).to.changeTokenBalance(
+        mintBurnErc20,
+        otherWallet,
+        amount,
+      );
 
       await mintBurnErc20.connect(otherWallet).approve(erc20Safe.address, amount);
       await expect(
