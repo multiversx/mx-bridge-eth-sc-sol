@@ -1,5 +1,5 @@
 import { getDeployOptions } from "./args/deployOptions";
-import { encodeCallData } from "@multiversx/sdk-js-bridge";
+
 task("deposit-sc", "Deposits token and sends to safe")
   .addParam("address", "Address of the token to be sent")
   .addParam("amount", "Amount we want to deposit (full value, with decimals)")
