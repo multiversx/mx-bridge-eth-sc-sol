@@ -187,7 +187,7 @@ contract ERC20Safe is Initializable, BridgeRole, Pausable {
         uint112 batchNonce;
         uint112 depositNonce;
         (batchNonce, depositNonce) = _deposit_common(tokenAddress, amount, recipientAddress);
-        emit ERC20Deposit(depositNonce, batchNonce);
+        emit ERC20Deposit(batchNonce, depositNonce);
     }
 
     /*
