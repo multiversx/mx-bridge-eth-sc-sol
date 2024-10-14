@@ -36,6 +36,7 @@ import "./tasks/get-relayers"
 import "./tasks/get-token-properties"
 import "./tasks/reset-total-balance"
 import "./tasks/mintburn-test-tokens"
+import "./tasks/deploy/upgrade-safe"
 
 import { resolve } from "path";
 
