@@ -21,19 +21,13 @@ contract ApproveNonZeroERC20 is ERC20 {
         return numDecimals;
     }
 
-    function _approve(address owner, address spender, uint256 value, bool emitEvent) internal virtual {
-        if (owner == address(0)) {
-            revert ERC20InvalidApprover(address(0));
+    function approve(address spender, uint256 value) public override returns (bool) {
+        address owner = _msgSender();
+        uint256 allowance = allowance(owner, spender);
+        if (allowance != 0 && value != 0) {
+            revert ERC20ApproveNonZero(spender, owner, allowance);
         }
-        if (spender == address(0)) {
-            revert ERC20InvalidSpender(address(0));
-        }
-        if (_allowances[owner][spender] != 0) {
-            revert ERC20ApproveNonZero(owner, spender, _allowances[owner][spender]);
-        }
-        _allowances[owner][spender] = value;
-        if (emitEvent) {
-            emit Approval(owner, spender, value);
-        }
+        _approve(owner, spender, value);
+        return true;
     }
 }

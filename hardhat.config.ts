@@ -25,7 +25,6 @@ import "./tasks/remove-from-whitelist";
 import "./tasks/recover-lost-funds";
 import "./tasks/get-batch";
 import "./tasks/get-batch-deposits";
-import "./tasks/deploy/mint-burn-tokens";
 import "./tasks/get-quorum";
 import "./tasks/get-statuses-after-execution";
 import "./tasks/depositSC";
@@ -36,7 +35,7 @@ import "./tasks/get-relayers"
 import "./tasks/get-token-properties"
 import "./tasks/reset-total-balance"
 import "./tasks/mintburn-test-tokens"
-import "./tasks/deploy/upgrade-safe"
+
 
 import { resolve } from "path";
 
