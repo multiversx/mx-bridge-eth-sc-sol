@@ -6,7 +6,7 @@ export type DeployOptions = {
   gasPrice?: number;
 };
 
-export function getDeployOptions(taskArgs): DeployOptions {
+export function getDeployOptions(taskArgs: any): DeployOptions {
   let deployOptions: DeployOptions = {};
   if (taskArgs.price) {
     deployOptions.gasPrice = taskArgs.price * 1000000000;

@@ -1,4 +1,4 @@
-import { task } from "hardhat/config";
+import "@nomicfoundation/hardhat-toolbox";
 import { getDeployOptions } from "./args/deployOptions";
 
 task("unpause-safe", "Unpause the safe SC")

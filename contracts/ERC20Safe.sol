@@ -1,42 +1,72 @@
 //SPDX-License-Identifier: UNLICENSED
 
-pragma solidity ^0.8.4;
+pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20BurnableUpgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "./SharedStructs.sol";
 import "./access/BridgeRole.sol";
-import "./lib/BoolTokenTransfer.sol";
 import "./lib/Pausable.sol";
+import "./lib/BoolTokenTransfer.sol";
+
+interface IMintableERC20 is IERC20 {
+    function mint(address to, uint256 amount) external;
+}
+
+interface IBurnableERC20 is IERC20 {
+    function burnFrom(address account, uint256 amount) external;
+}
 
 /**
 @title ERC20 Safe for bridging tokens
-@author Elrond
+@author MultiversX
 @notice Contract to be used by the users to make deposits that will be bridged
 In order to use it:
 - The Bridge.sol must be deployed and must be whitelisted for the Safe contract.
 @dev The deposits are requested by the Bridge, and in order to save gas spent by the relayers
 they will be batched either by time (batchTimeLimit) or size (batchSize).
  */
-contract ERC20Safe is BridgeRole, Pausable {
+contract ERC20Safe is Initializable, BridgeRole, Pausable {
     using SafeERC20 for IERC20;
     using BoolTokenTransfer for IERC20;
 
     uint64 public batchesCount;
     uint64 public depositsCount;
-    uint16 public batchSize = 10;
+    uint16 public batchSize;
     uint16 private constant maxBatchSize = 100;
-    uint8 public batchBlockLimit = 40;
-    uint8 public batchSettleLimit = 40;
+    uint8 public batchBlockLimit;
+    uint8 public batchSettleLimit;
+
+    // Reserved storage slots for future upgrades
+    uint256[10] private __gap;
 
     mapping(uint256 => Batch) public batches;
     mapping(address => bool) public whitelistedTokens;
+    mapping(address => bool) public mintBurnTokens;
+    mapping(address => bool) public nativeTokens;
     mapping(address => uint256) public tokenMinLimits;
     mapping(address => uint256) public tokenMaxLimits;
-    mapping(address => uint256) public tokenBalances;
+    mapping(address => uint256) public totalBalances;
+    mapping(address => uint256) public mintBalances;
+    mapping(address => uint256) public burnBalances;
     mapping(uint256 => Deposit[]) public batchDeposits;
 
-    event ERC20Deposit(uint112 depositNonce, uint112 batchId);
+    event ERC20Deposit(uint112 batchId, uint112 depositNonce);
+    event ERC20SCDeposit(uint112 indexed batchId, uint112 depositNonce, bytes callData);
+
+    function initialize() public initializer {
+        __BridgeRole_init();
+        __Pausable_init();
+        __ERC20Safe__init_unchained();
+    }
+
+    function __ERC20Safe__init_unchained() internal onlyInitializing {
+        batchSize = 10;
+        batchBlockLimit = 40;
+        batchSettleLimit = 40;
+    }
 
     /**
       @notice Whitelist a token. Only whitelisted tokens can be bridged.
@@ -48,11 +78,29 @@ contract ERC20Safe is BridgeRole, Pausable {
     function whitelistToken(
         address token,
         uint256 minimumAmount,
-        uint256 maximumAmount
+        uint256 maximumAmount,
+        bool mintBurn,
+        bool native,
+        uint256 totalBalance,
+        uint256 mintBalance,
+        uint256 burnBalance
     ) external onlyAdmin {
+        if (!mintBurn) {
+            require(native, "Only native tokens can be stored!");
+        }
         whitelistedTokens[token] = true;
+        mintBurnTokens[token] = mintBurn;
+        nativeTokens[token] = native;
         tokenMinLimits[token] = minimumAmount;
         tokenMaxLimits[token] = maximumAmount;
+        if (mintBurn) {
+            require(totalBalance == 0, "Mint-burn tokens must have 0 total balance!");
+            initSupplyMintBurn(token, mintBalance, burnBalance);
+        } else {
+            require(mintBalance == 0, "Stored tokens must have 0 mint balance!");
+            require(burnBalance == 0, "Stored tokens must have 0 burn balance!");
+            initSupply(token, totalBalance);
+        }
     }
 
     /**
@@ -132,14 +180,40 @@ contract ERC20Safe is BridgeRole, Pausable {
       @notice Entrypoint for the user in the bridge. Will create a new deposit
       @param tokenAddress Address of the contract for the ERC20 token that will be deposited
       @param amount number of tokens that need to be deposited
-      @param recipientAddress address of the receiver of tokens on Elrond Network
+      @param recipientAddress address of the receiver of tokens on MultiversX Network
       @notice emits {ERC20Deposited} event
 \   */
-    function deposit(
-        address tokenAddress,
-        uint256 amount,
-        bytes32 recipientAddress
-    ) public whenNotPaused {
+    function deposit(address tokenAddress, uint256 amount, bytes32 recipientAddress) public whenNotPaused {
+        uint112 batchNonce;
+        uint112 depositNonce;
+        (batchNonce, depositNonce) = _deposit_common(tokenAddress, amount, recipientAddress);
+        emit ERC20Deposit(batchNonce, depositNonce);
+    }
+
+    /*
+     * @notice Entrypoint for the user in the bridge. Will create a new deposit
+     * @dev The `callData` parameter is structured to include the endpoint name, gas limit, and arguments for the cross-chain call.
+     *
+     * @param tokenAddress The address of the ERC20 token to deposit.
+     * @param amount The amount of tokens to deposit.
+     * @param recipientAddress The address on the target chain to receive the tokens.
+     * @param callData The encoded data specifying the cross-chain call details. The expected format is:
+     *        0x + endpoint_name_length (4 bytes) + endpoint_name + gas_limit (8 bytes) +
+     *        01 (ArgumentsPresentProtocolMarker) + num_arguments_length (4 bytes) + [argument_length (4 bytes) + argument]...
+     *        This payload includes the endpoint name, gas limit for the execution, and the arguments for the call.
+     *        In case of no arguments, only the ArgumentsMissingProtocolMarker should be included. The expected format is:
+     *        0x + endpoint_name_length (4 bytes) + endpoint_name + gas_limit (8 bytes) +
+     *        00 (ArgumentsPresentProtocolMarker)
+     */
+    function depositWithSCExecution(address tokenAddress, uint256 amount, bytes32 recipientAddress, bytes calldata callData) public whenNotPaused {
+        uint112 batchNonce;
+        uint112 depositNonce;
+        (batchNonce, depositNonce) = _deposit_common(tokenAddress, amount, recipientAddress);
+        emit ERC20SCDeposit(batchNonce, depositNonce, callData);
+    }
+
+
+    function _deposit_common(address tokenAddress, uint256 amount, bytes32 recipientAddress) internal returns (uint112 batchNonce, uint112 depositNonce) {
         require(whitelistedTokens[tokenAddress], "Unsupported token");
         require(amount >= tokenMinLimits[tokenAddress], "Tried to deposit an amount below the minimum specified limit");
         require(amount <= tokenMaxLimits[tokenAddress], "Tried to deposit an amount above the maximum specified limit");
@@ -165,26 +239,50 @@ contract ERC20Safe is BridgeRole, Pausable {
         batch.depositsCount++;
         depositsCount++;
 
-        tokenBalances[tokenAddress] += amount;
-
         IERC20 erc20 = IERC20(tokenAddress);
-        erc20.safeTransferFrom(msg.sender, address(this), amount);
+        IBurnableERC20 burnableErc20 = IBurnableERC20(tokenAddress);
 
-        emit ERC20Deposit(depositNonce, batch.nonce);
+        if (_isTokenMintBurn(tokenAddress)) {
+            if (!nativeTokens[tokenAddress]) {
+                uint256 availableTokens = mintBalances[tokenAddress] - burnBalances[tokenAddress];
+                require(availableTokens >= amount, "Not enough minted tokens");
+            }
+            burnBalances[tokenAddress] += amount;
+            burnableErc20.burnFrom(msg.sender, amount);
+        } else {
+            totalBalances[tokenAddress] += amount;
+            erc20.safeTransferFrom(msg.sender, address(this), amount);
+        }
+        return (batch.nonce, depositNonce);
     }
 
     /**
-      @notice Deposit initial supply for an ESDT token already deployed on Elrond
+      @notice Deposit initial supply for an ESDT token already deployed on MultiversX
       @param tokenAddress Address of the contract for the ERC20 token that will be deposited
       @param amount number of tokens that need to be deposited
-\   */
-    function initSupply(address tokenAddress, uint256 amount) external onlyAdmin {
+    */
+    function initSupply(address tokenAddress, uint256 amount) public onlyAdmin {
         require(whitelistedTokens[tokenAddress], "Unsupported token");
+        require(!_isTokenMintBurn(tokenAddress), "Cannot init for mintable/burnable tokens");
+        require(nativeTokens[tokenAddress], "Only native tokens can be stored!");
 
-        tokenBalances[tokenAddress] += amount;
-
+        totalBalances[tokenAddress] += amount;
         IERC20 erc20 = IERC20(tokenAddress);
         erc20.safeTransferFrom(msg.sender, address(this), amount);
+    }
+
+    /**
+      @notice Set burn and mint balances for a mintable/burnable token
+      @param tokenAddress Address of the contract for the ERC20 token that will be deposited
+      @param burnAmount number of tokens that are already burned
+      @param mintAmount number of tokens that are already minted
+    */
+    function initSupplyMintBurn(address tokenAddress, uint256 mintAmount, uint256 burnAmount) public onlyAdmin {
+        require(whitelistedTokens[tokenAddress], "Unsupported token");
+        require(_isTokenMintBurn(tokenAddress), "Cannot init for non mintable/burnable tokens");
+
+        burnBalances[tokenAddress] = burnAmount;
+        mintBalances[tokenAddress] = mintAmount;
     }
 
     /**
@@ -195,13 +293,39 @@ contract ERC20Safe is BridgeRole, Pausable {
         uint256 amount,
         address recipientAddress
     ) external onlyBridge returns (bool) {
-        IERC20 erc20 = IERC20(tokenAddress);
-        bool transferExecuted = erc20.boolTransfer(recipientAddress, amount);
-        if (transferExecuted) {
-            tokenBalances[tokenAddress] -= amount;
+        if (!_isTokenMintBurn(tokenAddress)) {
+            IERC20 erc20 = IERC20(tokenAddress);
+            bool transferExecuted = erc20.boolTransfer(recipientAddress, amount);
+            if (!transferExecuted) {
+                return false;
+            }
+            totalBalances[tokenAddress] -= amount;
+            return true;
         }
+        if (nativeTokens[tokenAddress]) {
+            require(burnBalances[tokenAddress] >= mintBalances[tokenAddress] + amount, "Not enough burned tokens");
+        }
+        bool mintExecuted = _internalMint(tokenAddress, recipientAddress, amount);
+        if (!mintExecuted) {
+            return false;
+        }
+        mintBalances[tokenAddress] += amount;
 
-        return transferExecuted;
+        return true;
+    }
+
+    /**
+     @notice Endpoint used by the admin to reset the token balance to the current balance
+     @notice This endpoint is used only for migration from v2 to v3 and will be removed in the next version
+     @param tokenAddress Address of the ERC20 contract
+    */
+    function resetTotalBalance(address tokenAddress) external onlyAdmin {
+        require(whitelistedTokens[tokenAddress], "Unsupported token");
+        require(!_isTokenMintBurn(tokenAddress), "Token is mintable/burnable");
+
+        IERC20 erc20 = IERC20(tokenAddress);
+        uint256 mainBalance = erc20.balanceOf(address(this));
+        totalBalances[tokenAddress] = mainBalance;
     }
 
     /**
@@ -213,7 +337,7 @@ contract ERC20Safe is BridgeRole, Pausable {
         uint256 mainBalance = erc20.balanceOf(address(this));
         uint256 availableForRecovery;
         if (whitelistedTokens[tokenAddress]) {
-            availableForRecovery = mainBalance - tokenBalances[tokenAddress];
+            availableForRecovery = mainBalance - totalBalances[tokenAddress];
         } else {
             availableForRecovery = mainBalance;
         }
@@ -230,13 +354,9 @@ contract ERC20Safe is BridgeRole, Pausable {
         - lastUpdatedTimestamp
         - depositsCount
     */
-    function getBatch(uint256 batchNonce) public view returns (Batch memory) {
+    function getBatch(uint256 batchNonce) public view returns (Batch memory, bool isBatchFinal) {
         Batch memory batch = batches[batchNonce - 1];
-        if (_isBatchFinal(batch)) {
-            return batch;
-        }
-
-        return Batch(0, 0, 0, 0);
+        return (batch, _isBatchFinal(batch));
     }
 
     /**
@@ -244,13 +364,9 @@ contract ERC20Safe is BridgeRole, Pausable {
      @param batchNonce Identifier for the batchsetBatchSettleLimit
      @return a list of deposits included in this batch
     */
-    function getDeposits(uint256 batchNonce) public view returns (Deposit[] memory) {
+    function getDeposits(uint256 batchNonce) public view returns (Deposit[] memory, bool areDepositsFinal) {
         Batch memory batch = batches[batchNonce - 1];
-        if (_isBatchFinal(batch)) {
-            return batchDeposits[batchNonce - 1];
-        }
-
-        return batchDeposits[type(uint256).max];
+        return (batchDeposits[batchNonce - 1], _isBatchFinal(batch));
     }
 
     /**
@@ -290,5 +406,18 @@ contract ERC20Safe is BridgeRole, Pausable {
 
         Batch memory batch = batches[batchesCount - 1];
         return _isBatchProgessOver(batch.depositsCount, batch.blockNumber) || batch.depositsCount >= batchSize;
+    }
+
+    function _internalMint(address token, address to, uint256 amount) internal returns (bool) {
+        IMintableERC20 mintableToken = IMintableERC20(token);
+        try mintableToken.mint(to, amount) {
+            return true;
+        } catch {
+            return false;
+        }
+    }
+
+    function _isTokenMintBurn(address token) internal view returns (bool) {
+        return mintBurnTokens[token];
     }
 }

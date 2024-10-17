@@ -1,4 +1,4 @@
-import { task } from "hardhat/config";
+import "@nomicfoundation/hardhat-toolbox";
 import { getDeployOptions } from "./args/deployOptions";
 
 task("remove-relayer", "Remove relayer with given address")
