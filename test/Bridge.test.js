@@ -316,5 +316,20 @@ describe("Bridge", async function () {
         );
       });
     });
+    describe("when a signature from a non-relayer is included", async function () {
+      dataToSign = await getExecuteTransferData([mvxTxn], batchNonce);
+      signature1 = await adminWallet.signMessage(dataToSign);
+      signature2 = await relayer1.signMessage(dataToSign);
+      signature3 = await relayer2.signMessage(dataToSign);
+      signature4 = await relayer3.signMessage(dataToSign);
+      signature5 = await relayer5.signMessage(dataToSign);
+      signature6 = await relayer6.signMessage(dataToSign);
+      signature7 = await otherWallet.signMessage(dataToSign);
+      signatures = [signature1, signature2, signature3, signature4, signature5, signature6, signature7];
+
+      it("reverts with 'Quorum was not met'", async function () {
+        await expect(bridge.executeTransfer([mvxTxn], batchNonce, signatures)).to.be.revertedWith("Quorum was not met");
+      });
+    });
   });
 });
