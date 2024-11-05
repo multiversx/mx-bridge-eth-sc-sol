@@ -4,7 +4,7 @@ LABEL description="This Docker image compiles the Solidity contracts and prepare
 WORKDIR /multiversx
 COPY . .
 
-RUN apk update && apk add jq
+RUN apk update && apk add jq && apk add python3
 
 RUN cp -u .env.example .env
 
