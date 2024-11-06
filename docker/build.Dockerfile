@@ -1,10 +1,10 @@
-FROM node:22-alpine AS sol-compiler
+FROM node:22-bookworm AS sol-compiler
 LABEL description="This Docker image compiles the Solidity contracts and prepares the .json and .hex files."
 
 WORKDIR /multiversx
 COPY . .
 
-RUN apk update && apk add jq && apk add python3
+RUN apt update && apt -qy install jq
 
 RUN cp -u .env.example .env
 
