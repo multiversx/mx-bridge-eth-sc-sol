@@ -37,7 +37,7 @@ npx hardhat add-to-whitelist --min 660000000000000000000 --max 40250000000000000
 npx hardhat add-to-whitelist --min 50000000 --max 1000000000000 --address 0xdac17f958d2ee523a2206206994597c13d831ec7 --mintburn false --native true --limit 200000 --network $NETWORK
 
 #BUSD - decimals 18, min 50, max 50000
-npx hardhat add-to-whitelist --min 50000000000000000000 --max 50000000000000000000000 --address 0x4fabb145d64652a948d72533023f6e7a623c7c53 --mintburn false --native true --limit 200000 --network $NETWORK
+#npx hardhat add-to-whitelist --min 50000000000000000000 --max 50000000000000000000000 --address 0x4fabb145d64652a948d72533023f6e7a623c7c53 --mintburn false --native true --limit 200000 --network $NETWORK
 
 #HMT - decimals 18, min 870, max 872750
 npx hardhat add-to-whitelist --min 870000000000000000000 --max 872750000000000000000000 --address 0xd1ba9bac957322d6e8c07a160a3a8da11a0d2867 --mintburn false --native true --limit 200000 --network $NETWORK
