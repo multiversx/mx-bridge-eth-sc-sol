@@ -50,7 +50,7 @@ const chainIds = {
   goerli: 5,
   sepolia: "sepolia",
   hardhat: 31337,
-  mainnet: 1,
+  mainnet: "mainnet",
 };
 
 // Ensure that we have all the environment variables we need.
@@ -127,10 +127,10 @@ function getBSCConfig(network: string, withLedger: boolean): NetworkUserConfig {
 
   switch (network) {
     case "testnet":
-      config.url = "https://data-seed-prebsc-1-s1.binance.org:8545";
+      config.url = "https://bsc-testnet.infura.io/v3/" + infuraApiKey;
       break;
     case "mainnet":
-      config.url = "https://bsc-dataseed.binance.org";
+      config.url = "https://bsc-mainnet.infura.io/v3/" + infuraApiKey;
       break;
     default:
       throw new Error("invalid config option for bsc chain");
