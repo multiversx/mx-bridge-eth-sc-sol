@@ -18,8 +18,9 @@ RELAYER_ADDR_8=0x4e14d424D44B55670e04808B29447b343612336E
 RELAYER_ADDR_9=0x197018843776e2465E2335f796779BE5012B7949
 
 # DEPLOY & SET contracts
+
 npx hardhat deploy-safe --network $NETWORK
-npx npx hardhat deploy-bridge --relayer-addresses '["'${RELAYER_ADDR_0}'", "'${RELAYER_ADDR_1}'", "'${RELAYER_ADDR_2}'", "'${RELAYER_ADDR_3}'", "'${RELAYER_ADDR_4}'", "'${RELAYER_ADDR_5}'", "'${RELAYER_ADDR_6}'", "'${RELAYER_ADDR_7}'", "'${RELAYER_ADDR_8}'", "'${RELAYER_ADDR_9}'"]' --quorum 7 --network $NETWORK
+npx hardhat deploy-bridge --relayer-addresses '["'${RELAYER_ADDR_0}'", "'${RELAYER_ADDR_1}'", "'${RELAYER_ADDR_2}'", "'${RELAYER_ADDR_3}'", "'${RELAYER_ADDR_4}'", "'${RELAYER_ADDR_5}'", "'${RELAYER_ADDR_6}'", "'${RELAYER_ADDR_7}'", "'${RELAYER_ADDR_8}'", "'${RELAYER_ADDR_9}'"]' --quorum 7 --network $NETWORK
 npx hardhat set-bridge-on-safe --network $NETWORK
 npx hardhat unpause-bridge --network $NETWORK
 npx hardhat unpause-safe --network $NETWORK

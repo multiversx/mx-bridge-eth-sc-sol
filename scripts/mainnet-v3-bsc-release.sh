@@ -1,6 +1,6 @@
 #!/bin/bash
 
-NETWORK=testnet_bsc_ledger
+NETWORK=mainnet_bsc_ledger
 
 cd ..
 export NVM_DIR="$HOME/.nvm" && [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
@@ -18,8 +18,23 @@ RELAYER_ADDR_8=0x461eb4808Fd061e0551172f9A34F17cf3aFE02aB
 RELAYER_ADDR_9=0x03030999D1DA9CDFeC6b3Ec9A4AaD4b5724192EA
 
 # DEPLOY & SET contracts
+
 npx hardhat deploy-safe --network $NETWORK
-npx npx hardhat deploy-bridge --relayer-addresses '["'${RELAYER_ADDR_0}'", "'${RELAYER_ADDR_1}'", "'${RELAYER_ADDR_2}'", "'${RELAYER_ADDR_3}'", "'${RELAYER_ADDR_4}'", "'${RELAYER_ADDR_5}'", "'${RELAYER_ADDR_6}'", "'${RELAYER_ADDR_7}'", "'${RELAYER_ADDR_8}'", "'${RELAYER_ADDR_9}'"]' --quorum 7 --network $NETWORK
+npx hardhat deploy-bridge --relayer-addresses '["'${RELAYER_ADDR_0}'", "'${RELAYER_ADDR_1}'", "'${RELAYER_ADDR_2}'", "'${RELAYER_ADDR_3}'", "'${RELAYER_ADDR_4}'", "'${RELAYER_ADDR_5}'", "'${RELAYER_ADDR_6}'", "'${RELAYER_ADDR_7}'", "'${RELAYER_ADDR_8}'", "'${RELAYER_ADDR_9}'"]' --quorum 7 --network $NETWORK
 npx hardhat set-bridge-on-safe --network $NETWORK
 npx hardhat unpause-bridge --network $NETWORK
 npx hardhat unpause-safe --network $NETWORK
+
+# WHITELIST tokens
+
+#USDC - decimals 18, min 10, max 1000000
+npx hardhat add-to-whitelist --min 10000000000000000000 --max 1000000000000000000000000 --address 0x8ac76a51cc950d9822d68b83fe1ad97b32cd580d --mintburn false --native true --limit 200000 --network $NETWORK
+
+#USDT - decimals 18, min 10, max 1000000
+npx hardhat add-to-whitelist --min 10000000000000000000 --max 1000000000000000000000000 --address 0x55d398326f99059ff775485246999027b3197955 --mintburn false --native true --limit 200000 --network $NETWORK
+
+#BUSD - decimals 18, min 10, max 1000000
+npx hardhat add-to-whitelist --min 10000000000000000000 --max 1000000000000000000000000 --address 0xe9e7cea3dedca5984780bafc599bd69add087d56 --mintburn false --native true --limit 200000 --network $NETWORK
+
+#TADA - decimals 18, min 200, max 1000000
+npx hardhat add-to-whitelist --min 200000000000000000000 --max 1000000000000000000000000 --address 0x9b26e318bc6a2c8b45f5daea2cc14697e0e0f8b5 --mintburn false --native true --limit 200000 --network $NETWORK

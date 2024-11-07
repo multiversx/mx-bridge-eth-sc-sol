@@ -131,6 +131,7 @@ function getBSCConfig(network: string, withLedger: boolean): NetworkUserConfig {
       break;
     case "mainnet":
       config.url = "https://bsc-mainnet.infura.io/v3/" + infuraApiKey;
+      config.gasPrice=3500000000;
       break;
     default:
       throw new Error("invalid config option for bsc chain");
@@ -186,7 +187,7 @@ const config: HardhatUserConfig = {
     testnet_bsc: getBSCConfig("testnet", false),
     testnet_bsc_ledger: getBSCConfig("testnet", true),
     mainnet_bsc: getBSCConfig("mainnet",false),
-    mainnet_bsc_ledger: getBSCConfig("mainnet", false),
+    mainnet_bsc_ledger: getBSCConfig("mainnet", true),
     mumbai: getPolygonConfig("testnet"),
     mainnet_polygon: getPolygonConfig("mainnet"),
   },
