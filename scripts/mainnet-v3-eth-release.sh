@@ -27,39 +27,39 @@ npx hardhat unpause-safe --network $NETWORK
 
 # WHITELIST tokens
 
-#USDC - decimals 6, min 50, max 1000000
-npx hardhat add-to-whitelist --min 50000000 --max 1000000000000 --address 0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48 --mintburn false --native true --limit 200000 --network $NETWORK
+#USDC - decimals 6, min 40, max 1000000
+npx hardhat add-to-whitelist --min 40000000 --max 1000000000000 --address 0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48 --mintburn false --native true --limit 200000 --network $NETWORK
 
-#UTK - decimals 18, min 660, max 402500
-npx hardhat add-to-whitelist --min 660000000000000000000 --max 402500000000000000000000 --address 0xdc9ac3c20d1ed0b540df9b1fedc10039df13f99c --mintburn false --native true --limit 200000 --network $NETWORK
+#UTK - decimals 18, min 1320, max 402500
+npx hardhat add-to-whitelist --min 1320000000000000000000 --max 402500000000000000000000 --address 0xdc9ac3c20d1ed0b540df9b1fedc10039df13f99c --mintburn false --native true --limit 200000 --network $NETWORK
 
-#USDT - decimals 6, min 50, max 1000000
-npx hardhat add-to-whitelist --min 50000000 --max 1000000000000 --address 0xdac17f958d2ee523a2206206994597c13d831ec7 --mintburn false --native true --limit 200000 --network $NETWORK
+#USDT - decimals 6, min 40, max 1000000
+npx hardhat add-to-whitelist --min 40000000 --max 1000000000000 --address 0xdac17f958d2ee523a2206206994597c13d831ec7 --mintburn false --native true --limit 200000 --network $NETWORK
 
 #BUSD - decimals 18, min 50, max 50000
 #npx hardhat add-to-whitelist --min 50000000000000000000 --max 50000000000000000000000 --address 0x4fabb145d64652a948d72533023f6e7a623c7c53 --mintburn false --native true --limit 200000 --network $NETWORK
 
-#HMT - decimals 18, min 870, max 872750
-npx hardhat add-to-whitelist --min 870000000000000000000 --max 872750000000000000000000 --address 0xd1ba9bac957322d6e8c07a160a3a8da11a0d2867 --mintburn false --native true --limit 200000 --network $NETWORK
+#HMT - decimals 18, min 1740, max 872750
+npx hardhat add-to-whitelist --min 1740000000000000000000 --max 872750000000000000000000 --address 0xd1ba9bac957322d6e8c07a160a3a8da11a0d2867 --mintburn false --native true --limit 200000 --network $NETWORK
 
-#CGG - decimals 18, min 630, max 635000
-npx hardhat add-to-whitelist --min 630000000000000000000 --max 635000000000000000000000 --address 0x1fe24f25b1cf609b9c4e7e12d802e3640dfa5e43 --mintburn false --native true --limit 200000 --network $NETWORK
+#CGG - decimals 18, min 3706, max 635000
+npx hardhat add-to-whitelist --min 3706000000000000000000 --max 635000000000000000000000 --address 0x1fe24f25b1cf609b9c4e7e12d802e3640dfa5e43 --mintburn false --native true --limit 200000 --network $NETWORK
 
-#INFRA - decimals 18, min 100, max 100000
-npx hardhat add-to-whitelist --min 100000000000000000000 --max 100000000000000000000000 --address 0x013062189dc3dcc99e9cee714c513033b8d99e3c --mintburn false --native true --limit 200000  --network $NETWORK
+#INFRA - decimals 18, min 300, max 100000
+npx hardhat add-to-whitelist --min 300000000000000000000 --max 100000000000000000000000 --address 0x013062189dc3dcc99e9cee714c513033b8d99e3c --mintburn false --native true --limit 200000  --network $NETWORK
 
-#WBTC - decimals 8, min 0.0019234, max 2
-npx hardhat add-to-whitelist --min 192340 --max 200000000 --address 0x2260fac5e5542a773aa44fbcfedf7c193bc2c599 --mintburn false --native true --limit 200000 --network $NETWORK
+#WBTC - decimals 8, min 0.0006411, max 2
+npx hardhat add-to-whitelist --min 64110 --max 200000000 --address 0x2260fac5e5542a773aa44fbcfedf7c193bc2c599 --mintburn false --native true --limit 200000 --network $NETWORK
 
-#WETH - decimals 18, min 0.0284374, max 28.5
-npx hardhat add-to-whitelist --min 28437400000000000 --max 28500000000000000000 --address 0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2 --mintburn false --native true --limit 200000 --network $NETWORK
+#WETH - decimals 18, min 0.01422, max 28.5
+npx hardhat add-to-whitelist --min 14220000000000000 --max 28500000000000000000 --address 0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2 --mintburn false --native true --limit 200000 --network $NETWORK
 
-#WSDAI - decimals 18, min 50, max 50000
-npx hardhat add-to-whitelist --min 50000000000000000000 --max 50000000000000000000000 --address 0x83f20f44975d03b1b09e64809b757c47f942beea --mintburn false --native true --limit 200000 --network $NETWORK
+#WSDAI - decimals 18, min 34, max 50000
+npx hardhat add-to-whitelist --min 34000000000000000000 --max 50000000000000000000000 --address 0x83f20f44975d03b1b09e64809b757c47f942beea --mintburn false --native true --limit 200000 --network $NETWORK
 
-#WDAI - decimals 18, min 50, max 1000000
-npx hardhat add-to-whitelist --min 50000000000000000000 --max 1000000000000000000000000 --address 0x6b175474e89094c44da98b954eedeac495271d0f --mintburn false --native true --limit 200000 --network $NETWORK
+#WDAI - decimals 18, min 40, max 1000000
+npx hardhat add-to-whitelist --min 40000000000000000000 --max 1000000000000000000000000 --address 0x6b175474e89094c44da98b954eedeac495271d0f --mintburn false --native true --limit 200000 --network $NETWORK
 
-#UMB - decimals 18, min 2000, max 1650000
-npx hardhat add-to-whitelist --min 2000000000000000000000 --max 1650000000000000000000000 --address 0x6fc13eace26590b80cccab1ba5d51890577d83b2 --mintburn false --native true --limit 200000 --network $NETWORK
+#UMB - decimals 18, min 5280, max 1650000
+npx hardhat add-to-whitelist --min 5280000000000000000000 --max 1650000000000000000000000 --address 0x6fc13eace26590b80cccab1ba5d51890577d83b2 --mintburn false --native true --limit 200000 --network $NETWORK
 
