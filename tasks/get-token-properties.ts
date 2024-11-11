@@ -13,6 +13,27 @@ task("get-token-properties", "Returns the token's properties")
     const safeContractFactory = await hre.ethers.getContractFactory("ERC20Safe");
     const contract = safeContractFactory.attach(safeAddress)
 
+    const erc20ContractFactory = await hre.ethers.getContractFactory("GenericERC20");
+    const erc20Contract = erc20ContractFactory.attach(address)
+
+    await erc20Contract
+      .name()
+      .then((name: any) => {
+        console.log(`Token ${address} is ${name.toString()}`);
+      })
+      .catch((err: any) => {
+        console.log(err);
+      });
+
+    await erc20Contract
+      .decimals()
+      .then((value: any) => {
+        console.log(`Token ${address} has the decimals set to: ${value.toString()}`);
+      })
+      .catch((err: any) => {
+        console.log(err);
+      });
+
     await contract
       .totalBalances(address)
       .then((balance: any) => {
@@ -58,4 +79,21 @@ task("get-token-properties", "Returns the token's properties")
         console.log(err);
       });
 
+    await contract
+      .tokenMinLimits(address)
+      .then((value: any) => {
+        console.log(`Token ${address} has a minimum limit of: ${value.toString()}`);
+      })
+      .catch((err: any) => {
+        console.log(err);
+      });
+
+    await contract
+      .tokenMaxLimits(address)
+      .then((value: any) => {
+        console.log(`Token ${address} has a maximum limit of: ${value.toString()}`);
+      })
+      .catch((err: any) => {
+        console.log(err);
+      });
   });
