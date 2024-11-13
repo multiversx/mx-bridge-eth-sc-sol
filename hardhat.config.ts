@@ -71,7 +71,7 @@ function getETHConfig(network: string, withLedger: boolean): NetworkUserConfig {
   if (withLedger) {
     config = {
       ledgerAccounts: [
-        "0x60745fCA64C92c0aBAC5b1bed145204FBF1e9d85",
+        "0x4408D9f40b9e45d5bE27256Ad71453DeEF043910",
       ],
       ledgerOptions: {
         derivationFunction: (x: string) => `m/44'/60'/0'/0/${x}`
@@ -108,7 +108,7 @@ function getBSCConfig(network: string, withLedger: boolean): NetworkUserConfig {
   if (withLedger) {
     config = {
       ledgerAccounts: [
-        "0x60745fCA64C92c0aBAC5b1bed145204FBF1e9d85",
+        "0x4408D9f40b9e45d5bE27256Ad71453DeEF043910",
       ],
       ledgerOptions: {
         derivationFunction: (x: string) => `m/44'/60'/0'/0/${x}`
@@ -130,8 +130,7 @@ function getBSCConfig(network: string, withLedger: boolean): NetworkUserConfig {
       config.url = "https://bsc-testnet.infura.io/v3/" + infuraApiKey;
       break;
     case "mainnet":
-      config.url = "https://bsc-mainnet.infura.io/v3/" + infuraApiKey;
-      config.gasPrice=3500000000;
+      config.url = "https://bsc-dataseed.binance.org";
       break;
     default:
       throw new Error("invalid config option for bsc chain");
