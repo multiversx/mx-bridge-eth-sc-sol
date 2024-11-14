@@ -1,6 +1,8 @@
 //SPDX-License-Identifier: UNLICENSED
 
-pragma solidity ^0.8.4;
+pragma solidity ^0.8.20;
+
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 import "./SharedStructs.sol";
 import "./ERC20Safe.sol";
@@ -9,7 +11,7 @@ import "./lib/Pausable.sol";
 
 /**
 @title Bridge
-@author Elrond & AgileFreaks
+@author MultiversX
 @notice Contract to be used by the bridge relayers,
 to get information and execute batches of transactions
 to be bridged.
@@ -22,7 +24,7 @@ In order to use it:
 @dev This contract mimics a multisign contract by sending the signatures from all
 relayers with the execute call, in order to save gas.
  */
-contract Bridge is RelayerRole, Pausable {
+contract Bridge is Initializable, RelayerRole, Pausable {
     /*============================ EVENTS ============================*/
     event QuorumChanged(uint256 quorum);
 
@@ -31,10 +33,13 @@ contract Bridge is RelayerRole, Pausable {
     string private constant executeTransferAction = "ExecuteBatchedTransfer";
     string private constant prefix = "\x19Ethereum Signed Message:\n32";
     uint256 private constant minimumQuorum = 3;
-    uint256 public batchSettleBlockCount = 40;
+    uint256 public batchSettleBlockCount;
 
     uint256 public quorum;
-    ERC20Safe internal immutable safe;
+    // Reserved storage slots for future upgrades
+    uint256[10] private __gap;
+
+    ERC20Safe internal safe;
 
     mapping(uint256 => bool) public executedBatches;
     mapping(uint256 => CrossTransferStatus) public crossTransferStatuses;
@@ -42,17 +47,18 @@ contract Bridge is RelayerRole, Pausable {
     /*========================= PUBLIC API =========================*/
 
     /**
-     * @dev whoever deploys the contract is the admin
+     * @dev whoever initializes the contract is the admin
      * Admin Role means that it can:
      *   - adjust access control
      *   - add/remove relayers
      *   - add/remove tokens that can be bridged
      */
-    constructor(
-        address[] memory board,
-        uint256 initialQuorum,
-        ERC20Safe erc20Safe
-    ) {
+    function initialize(address[] memory board, uint256 initialQuorum, ERC20Safe erc20Safe) public virtual initializer {
+        __RelayerRole_init();
+        __Bridge__init_unchained(board, initialQuorum, erc20Safe);
+    }
+
+    function __Bridge__init_unchained(address[] memory board, uint256 initialQuorum, ERC20Safe erc20Safe) internal onlyInitializing {
         require(initialQuorum >= minimumQuorum, "Quorum is too low.");
         require(board.length >= initialQuorum, "The board should be at least the quorum size.");
 
@@ -60,6 +66,8 @@ contract Bridge is RelayerRole, Pausable {
 
         quorum = initialQuorum;
         safe = erc20Safe;
+
+        batchSettleBlockCount = 40;
     }
 
     /**
@@ -87,27 +95,27 @@ contract Bridge is RelayerRole, Pausable {
         - batch nonce
         - blockNumber
         - depositsCount
-        @dev Even if there are deposits in the Safe, the current batch might still return the count as 0. This is because it might not be final (not full, and not enough blocks elapsed)
+        and a boolean that indicates if the batch is final (not full, and not enough blocks elapsed)
     */
-    function getBatch(uint256 batchNonce) external view returns (Batch memory) {
+    function getBatch(uint256 batchNonce) external view returns (Batch memory, bool isBatchFinal) {
         return safe.getBatch(batchNonce);
     }
 
     /**
         @notice Gets information about the deposits from a batch
     */
-    function getBatchDeposits(uint256 batchNonce) external view returns (Deposit[] memory) {
+    function getBatchDeposits(uint256 batchNonce) external view returns (Deposit[] memory, bool areDepositsFinal) {
         return safe.getDeposits(batchNonce);
     }
 
     /**
         @notice Executes transfers that were signed by the relayers.
-        @dev This is for the Elrond to Ethereum flow
+        @dev This is for the MultiversX to Ethereum flow
         @dev Arrays here try to mimmick the structure of a batch. A batch represents the values from the same index in all the arrays.
         @param tokens Array containing all the token addresses that the batch interacts with. Can even contain duplicates.
         @param recipients Array containing all the destinations from the batch. Can be duplicates.
         @param amounts Array containing all the amounts that will be transfered.
-        @param batchNonceElrondETH Nonce for the batch. This identifies a batch created on the Elrond chain that bridges tokens from Elrond to Ethereum
+        @param batchNonceMvx Nonce for the batch. This identifies a batch created on the MultiversX chain that bridges tokens from MultiversX to Ethereum
         @param signatures Signatures from all the relayers for the execution. This mimics a delegated multisig contract. For the execution to take place, there must be enough valid signatures to achieve quorum.
     */
     function executeTransfer(
@@ -115,17 +123,17 @@ contract Bridge is RelayerRole, Pausable {
         address[] calldata recipients,
         uint256[] calldata amounts,
         uint256[] calldata depositNonces,
-        uint256 batchNonceElrondETH,
+        uint256 batchNonceMvx,
         bytes[] calldata signatures
     ) public whenNotPaused onlyRelayer {
         require(signatures.length >= quorum, "Not enough signatures to achieve quorum");
-        require(executedBatches[batchNonceElrondETH] == false, "Batch already executed");
-        executedBatches[batchNonceElrondETH] = true;
+        require(executedBatches[batchNonceMvx] == false, "Batch already executed");
+        executedBatches[batchNonceMvx] = true;
 
         _validateQuorum(
             signatures,
             _getHashedDepositData(
-                abi.encode(recipients, tokens, amounts, depositNonces, batchNonceElrondETH, executeTransferAction)
+                abi.encode(recipients, tokens, amounts, depositNonces, batchNonceMvx, executeTransferAction)
             )
         );
 
@@ -136,26 +144,31 @@ contract Bridge is RelayerRole, Pausable {
                 : DepositStatus.Rejected;
         }
 
-        CrossTransferStatus storage crossStatus = crossTransferStatuses[batchNonceElrondETH];
+        CrossTransferStatus storage crossStatus = crossTransferStatuses[batchNonceMvx];
         crossStatus.statuses = statuses;
         crossStatus.createdBlockNumber = block.number;
     }
 
     /**
-        @notice Only returns values if the cross transfers were executed some predefined time ago to ensure finality
-        @param batchNonceElrondETH Nonce for the batch
-        @return a list of statuses for each transfer in the batch provided
+        @notice Gets information about the status of the transfers in a batch after it was executed
+        @param batchNonceMvx Nonce for the batch
+        @return a list of statuses for each transfer in the batch provided and a boolean that indicates if the information is final
      */
-    function getStatusesAfterExecution(uint256 batchNonceElrondETH) external view returns (DepositStatus[] memory) {
-        CrossTransferStatus memory crossStatus = crossTransferStatuses[batchNonceElrondETH];
-        require(crossStatus.createdBlockNumber > 0, "Invalid nonce requested");
-        require((crossStatus.createdBlockNumber + batchSettleBlockCount) <= block.number, "Statuses not final yet");
-
-        return crossStatus.statuses;
+    function getStatusesAfterExecution(uint256 batchNonceMvx) external view returns (DepositStatus[] memory, bool isFinal) {
+        CrossTransferStatus memory crossStatus = crossTransferStatuses[batchNonceMvx];
+        return (crossStatus.statuses, _isMvxBatchFinal(crossStatus.createdBlockNumber));
     }
 
-    function wasBatchExecuted(uint256 batchNonceElrondETH) external view returns (bool) {
-        return executedBatches[batchNonceElrondETH];
+    function _isMvxBatchFinal(uint256 createdBlockNumber) private view returns (bool) {
+        if (createdBlockNumber == 0) {
+            return false;
+        }
+
+        return (createdBlockNumber + batchSettleBlockCount) <= block.number;
+    }
+
+    function wasBatchExecuted(uint256 batchNonceMvx) external view returns (bool) {
+        return executedBatches[batchNonceMvx];
     }
 
     /*========================= PRIVATE API =========================*/

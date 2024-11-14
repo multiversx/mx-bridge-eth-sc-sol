@@ -1,4 +1,4 @@
-import { task } from "hardhat/config";
+import "@nomicfoundation/hardhat-toolbox";
 
 task("set-batch-settle-limit-on-bridge", "Sets a new batch block limit")
   .addParam("blocks", "new batch settle limit")

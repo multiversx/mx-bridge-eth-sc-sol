@@ -1,5 +1,4 @@
-import { ethers } from "ethers";
-import { task } from "hardhat/config";
+import "@nomicfoundation/hardhat-toolbox";
 import { getDeployOptions } from "./args/deployOptions";
 
 task("approve", "Approve token")

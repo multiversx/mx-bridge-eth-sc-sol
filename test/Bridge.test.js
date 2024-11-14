@@ -1,37 +1,38 @@
-const { waffle, ethers, network } = require("hardhat");
+const { ethers } = require("hardhat");
 const { expect } = require("chai");
-const { provider, deployContract } = waffle;
-const { smock } = require("@defi-wonderland/smock");
 
-const BridgeContract = require("../artifacts/contracts/Bridge.sol/Bridge.json");
-const ERC20SafeContract = require("../artifacts/contracts/ERC20Safe.sol/ERC20Safe.json");
-const GenericERC20 = require("../artifacts/contracts/GenericERC20.sol/GenericERC20.json");
+const { deployContract, deployUpgradableContract } = require("./utils/deploy.utils");
+const { getSignaturesForExecuteTransfer, getExecuteTransferData } = require("./utils/bridge.utils");
 
 describe("Bridge", async function () {
-  const [adminWallet, relayer1, relayer2, relayer3, relayer4, relayer5, relayer6, relayer7, relayer8, otherWallet] =
-    provider.getWallets();
-  const boardMembers = [adminWallet, relayer1, relayer2, relayer3, relayer5, relayer6, relayer7, relayer8].map(
-    m => m.address,
-  );
+  let adminWallet, relayer1, relayer2, relayer3, relayer4, relayer5, relayer6, relayer7, relayer8, otherWallet;
+  let boardMembers;
   const quorum = 7;
 
   let erc20Safe, bridge, genericErc20;
 
   async function setupContracts() {
-    erc20Safe = await deployContract(adminWallet, ERC20SafeContract);
-    bridge = await deployContract(adminWallet, BridgeContract, [boardMembers, quorum, erc20Safe.address]);
+    erc20Safe = await deployUpgradableContract(adminWallet, "ERC20Safe");
+    bridge = await deployUpgradableContract(adminWallet, "Bridge", [boardMembers, quorum, erc20Safe.address]);
     await erc20Safe.setBridge(bridge.address);
     await bridge.unpause();
     await setupErc20Token();
   }
 
   async function setupErc20Token() {
-    genericErc20 = await deployContract(adminWallet, GenericERC20, ["TSC", "TSC"]);
+    genericErc20 = await deployContract(adminWallet, "GenericERC20", ["TSC", "TSC", 6]);
     await genericErc20.mint(adminWallet.address, 1000);
     await genericErc20.approve(erc20Safe.address, 1000);
-    await erc20Safe.whitelistToken(genericErc20.address, 0, 100);
+    await erc20Safe.whitelistToken(genericErc20.address, 0, 100, false, true, 0, 0, 0);
     await erc20Safe.unpause();
   }
+
+  before(async function() {
+    [adminWallet, relayer1, relayer2, relayer3, relayer4, relayer5, relayer6, relayer7, relayer8, otherWallet] = await ethers.getSigners();
+    boardMembers = [adminWallet, relayer1, relayer2, relayer3, relayer5, relayer6, relayer7, relayer8].map(
+      m => m.address,
+    );
+  });
 
   beforeEach(async function () {
     await setupContracts();
@@ -53,14 +54,14 @@ describe("Bridge", async function () {
     it("reverts", async function () {
       const invalidQuorumValue = 1;
       await expect(
-        deployContract(adminWallet, BridgeContract, [boardMembers, invalidQuorumValue, erc20Safe.address]),
+        deployUpgradableContract(adminWallet, "Bridge", [boardMembers, invalidQuorumValue, erc20Safe.address]),
       ).to.be.revertedWith("Quorum is too low.");
     });
   });
 
   describe("addRelayer", async function () {
     it("reverts when called with an empty address", async function () {
-      await expect(bridge.addRelayer(ethers.constants.AddressZero)).to.be.revertedWith(
+      await expect(bridge.addRelayer(ethers.ZeroAddress)).to.be.revertedWith(
         "RelayerRole: account cannot be the 0 address",
       );
     });
@@ -175,43 +176,9 @@ describe("Bridge", async function () {
         [amount],
         [1],
         batchNonce,
+        [adminWallet, relayer1, relayer2, relayer3, relayer5, relayer6, relayer7, relayer8],
       );
     });
-
-    function getExecuteTransferData(tokenAddresses, recipientAddresses, amounts, depositNonces, batchNonce) {
-      const signMessageDefinition = ["address[]", "address[]", "uint256[]", "uint256[]", "uint256", "string"];
-      const signMessageData = [
-        recipientAddresses,
-        tokenAddresses,
-        amounts,
-        depositNonces,
-        batchNonce,
-        "ExecuteBatchedTransfer",
-      ];
-
-      const bytesToSign = ethers.utils.defaultAbiCoder.encode(signMessageDefinition, signMessageData);
-      const signData = ethers.utils.keccak256(bytesToSign);
-      return ethers.utils.arrayify(signData);
-    }
-
-    async function getSignaturesForExecuteTransfer(
-      tokenAddresses,
-      recipientAddresses,
-      amounts,
-      depositNonces,
-      batchNonce,
-    ) {
-      dataToSign = getExecuteTransferData(tokenAddresses, recipientAddresses, amounts, depositNonces, batchNonce);
-      signature1 = await adminWallet.signMessage(dataToSign);
-      signature2 = await relayer1.signMessage(dataToSign);
-      signature3 = await relayer2.signMessage(dataToSign);
-      signature4 = await relayer3.signMessage(dataToSign);
-      signature5 = await relayer5.signMessage(dataToSign);
-      signature6 = await relayer6.signMessage(dataToSign);
-      signature7 = await relayer7.signMessage(dataToSign);
-
-      return [signature1, signature2, signature3, signature4, signature5, signature6, signature7];
-    }
 
     describe("when quorum achieved", async function () {
       it("transfers tokens", async function () {
@@ -389,16 +356,9 @@ describe("Bridge", async function () {
     });
 
     describe("check execute transfer saves correct statuses", async function () {
-      let mockedSafe = await smock.fake("FakeSafe");
-      const newBridgeFactory = await ethers.getContractFactory("Bridge");
-      const newBridge = await newBridgeFactory.deploy([boardMembers, quorum, mockedSafe.address]);
-      mockedSafe.smocked.transfer.will.return.with(true);
-
-      await newBridge.unpause();
-
       it("returns correct statuses", async function () {
         //TODO: implement this test
-        await newBridge.executeTransfer(
+        await bridge.executeTransfer(
           [genericErc20.address],
           [otherWallet.address],
           [amount],
@@ -406,20 +366,24 @@ describe("Bridge", async function () {
           batchNonce,
           signatures,
         );
-        const settleBlockCount = await newBridge.batchSettleBlockCount();
-        for (let i = 0; i < settleBlockCount - 1; i++) {
+        const settleBlockCount = await bridge.batchSettleBlockCount();
+        for (let i = 0; i < settleBlockCount - 1n; i++) {
           await network.provider.send("evm_mine");
         }
 
-        await expect(newBridge.getStatusesAfterExecution(batchNonce)).to.be.revertedWith("Statuses not final yet");
+        const [firstStatuses, firstIsFinal] = await bridge.getStatusesAfterExecution(batchNonce);
+        expect(firstStatuses).to.eql([3n]);
+        expect(firstIsFinal).to.be.false
 
         await network.provider.send("evm_mine");
 
-        expect(await newBridge.getStatusesAfterExecution(batchNonce)).to.eql([3]);
+        const [secondStatuses, secondIsFinal] = await bridge.getStatusesAfterExecution(batchNonce);
+        expect(secondStatuses).to.eql([3n]);
+        expect(secondIsFinal).to.be.true
       });
 
       it("saves refund items", async function () {
-        await newBridge.executeTransfer(
+        await bridge.executeTransfer(
           [genericErc20.address],
           [otherWallet.address],
           [amount],
@@ -427,16 +391,20 @@ describe("Bridge", async function () {
           batchNonce,
           signatures,
         );
-        const settleBlockCount = await newBridge.batchSettleBlockCount();
-        for (let i = 0; i < settleBlockCount - 1; i++) {
+        const settleBlockCount = await bridge.batchSettleBlockCount();
+        for (let i = 0; i < settleBlockCount - 1n; i++) {
           await network.provider.send("evm_mine");
         }
 
-        await expect(newBridge.getStatusesAfterExecution(batchNonce)).to.be.revertedWith("Statuses not final yet");
+        const [firstStatuses, firstIsFinal] = await bridge.getStatusesAfterExecution(batchNonce);
+        expect(firstStatuses).to.eql([3n]);
+        expect(firstIsFinal).to.be.false
 
         await network.provider.send("evm_mine");
 
-        expect(await newBridge.getStatusesAfterExecution(batchNonce)).to.eql([3]);
+        const [secondStatuses, secondIsFinal] = await bridge.getStatusesAfterExecution(batchNonce);
+        expect(secondStatuses).to.eql([3n]);
+        expect(secondIsFinal).to.be.true
       });
     });
 

@@ -1,4 +1,4 @@
-import { task } from "hardhat/config";
+import "@nomicfoundation/hardhat-toolbox";
 
 task("get-statuses-after-execution", "Get statuses of the swaps after execution from a given batch")
   .addParam("batch", "Id of the batch")

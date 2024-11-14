@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 
-pragma solidity ^0.8.4;
+pragma solidity ^0.8.20;
+
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 /**
  * @dev Contract module which provides a basic access control mechanism, where
@@ -14,7 +16,7 @@ pragma solidity ^0.8.4;
  * `onlyAdmin`, which can be applied to your functions to restrict their use to
  * the admin.
  */
-abstract contract AdminRole {
+abstract contract AdminRole is Initializable {
     address private _admin;
 
     event AdminRoleTransferred(address indexed previousAdmin, address indexed newAdmin);
@@ -22,7 +24,11 @@ abstract contract AdminRole {
     /**
      * @dev Initializes the contract setting the deployer as the initial admin.
      */
-    constructor() {
+    function __AdminRole_init() internal onlyInitializing {
+        __AdminRole_init_unchained();
+    }
+
+    function __AdminRole_init_unchained() internal onlyInitializing {
         address msgSender = msg.sender;
         _admin = msgSender;
         emit AdminRoleTransferred(address(0), msgSender);

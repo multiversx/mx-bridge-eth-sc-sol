@@ -1,0 +1,8 @@
+services:
+  artifacts-builder:
+    build:
+      context: ..
+      dockerfile: ./docker/build.Dockerfile
+    volumes:
+      - ./../artifacts:/multiversx/artifacts_volume
+    entrypoint: /bin/sh -c "cp -r /multiversx/artifacts/* /multiversx/artifacts_volume"

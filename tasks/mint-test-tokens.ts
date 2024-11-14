@@ -1,4 +1,4 @@
-import { task } from "hardhat/config";
+import "@nomicfoundation/hardhat-toolbox";
 
 task("mint-test-tokens", "Mints tests tokens and sends them to the recipientAddress")
   .addParam("address", "Address of wallet to be funded")
@@ -11,7 +11,7 @@ task("mint-test-tokens", "Mints tests tokens and sends them to the recipientAddr
     for (let token of config["tokens"]) {
       console.log("minting tokens for contract: ", token);
       const tokenContract = (await hre.ethers.getContractFactory("GenericERC20")).attach(token);
-      await tokenContract.mint(address, 100000000000000);
+      await tokenContract.mint(address, "1000000000000000000000000000");
       console.log("minted tokens for contract: ", token, address);
     }
   });

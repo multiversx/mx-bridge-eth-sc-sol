@@ -1,10 +1,9 @@
-import { task } from "hardhat/config";
-import { address } from "hardhat/internal/core/config/config-validation";
+import "@nomicfoundation/hardhat-toolbox";
 import { getDeployOptions } from "./args/deployOptions";
 
 task("init-supply", "Deposit the initial supply on a new SC from an old one")
   .addParam("address", "The addres of the token that will be deposited")
-  .addParam("amount", "New amount we want to set (full value, with 18 decimals)")
+  .addParam("amount", "New amount we want to set (full denominated value, with all decimals)")
   .addOptionalParam("price", "Gas price in gwei for this transaction", undefined)
   .setAction(async (taskArgs, hre) => {
     const [adminWallet] = await hre.ethers.getSigners();

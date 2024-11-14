@@ -1,10 +1,10 @@
-import { task } from "hardhat/config";
+import "@nomicfoundation/hardhat-toolbox";
 import { getDeployOptions } from "./args/deployOptions";
 
 task("deposit", "Deposits token and sends to safe")
   .addParam("address", "Address of the token to be sent")
   .addParam("amount", "Amount we want to deposit (full value, with decimals)")
-  .addParam("receiver", "Elrond address hex encoded of the receiver")
+  .addParam("receiver", "MultiversX address hex encoded of the receiver")
   .addOptionalParam("price", "Gas price in gwei for this transaction", undefined)
   .setAction(async (taskArgs, hre) => {
     const fs = require("fs");

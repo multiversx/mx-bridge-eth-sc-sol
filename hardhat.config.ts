@@ -1,11 +1,7 @@
-import "@nomiclabs/hardhat-waffle";
-import "@typechain/hardhat";
-import "hardhat-gas-reporter";
-import "hardhat-contract-sizer";
-import "hardhat-log-remover";
-import "hardhat-tracer";
-import "hardhat-abi-exporter";
-import "solidity-coverage";
+import "@nomiclabs/hardhat-ethers";
+import "@nomicfoundation/hardhat-toolbox";
+import "@openzeppelin/hardhat-upgrades";
+import "@nomicfoundation/hardhat-ledger";
 
 import "./tasks/accounts";
 import "./tasks/clean";
@@ -30,9 +26,17 @@ import "./tasks/remove-from-whitelist";
 import "./tasks/recover-lost-funds";
 import "./tasks/get-batch";
 import "./tasks/get-batch-deposits";
+import "./tasks/get-quorum";
 import "./tasks/get-statuses-after-execution";
-
+import "./tasks/depositSC";
+import "./tasks/set-batch-settle-limit-on-safe"
 import "./tasks/deploy";
+import "./tasks/token-balance-query"
+import "./tasks/get-relayers"
+import "./tasks/get-token-properties"
+import "./tasks/reset-total-balance"
+import "./tasks/mintburn-test-tokens"
+
 
 import { resolve } from "path";
 
@@ -44,12 +48,14 @@ dotenvConfig({ path: resolve(__dirname, "./.env") });
 
 const chainIds = {
   goerli: 5,
+  sepolia: "sepolia",
   hardhat: 31337,
-  mainnet: 1,
+  mainnet: "mainnet",
 };
 
 // Ensure that we have all the environment variables we need.
 const mnemonic: string | undefined = process.env.MNEMONIC;
+const initialindex: string | undefined = process.env.INITIAL_INDEX
 if (!mnemonic) {
   throw new Error("Please set your MNEMONIC in a .env file");
 }
@@ -59,19 +65,32 @@ if (!infuraApiKey) {
   throw new Error("Please set your INFURA_API_KEY in a .env file");
 }
 
-function getETHConfig(network: string): NetworkUserConfig {
-  let config = {
-    accounts: {
-      count: 12,
-      mnemonic,
-      path: "m/44'/60'/0'/0",
-    },
-    url: "https://" + chainIds.goerli + ".infura.io/v3/" + infuraApiKey,
-  };
+function getETHConfig(network: string, withLedger: boolean): NetworkUserConfig {
+  let config: any
+
+  if (withLedger) {
+    config = {
+      ledgerAccounts: [
+        "0x60745fCA64C92c0aBAC5b1bed145204FBF1e9d85",
+      ],
+      ledgerOptions: {
+        derivationFunction: (x: string) => `m/44'/60'/0'/0/${x}`
+      },
+    };
+  } else {
+    config = {
+      accounts: {
+        count: 12,
+        mnemonic,
+        path: "m/44'/60'/0'/0",
+        initialIndex: Number(initialindex),
+      },
+    };
+  }
 
   switch (network) {
     case "testnet":
-      config.url = "https://" + chainIds.goerli + ".infura.io/v3/" + infuraApiKey;
+      config.url = "https://" + chainIds.sepolia + ".infura.io/v3/" + infuraApiKey;
       break;
     case "mainnet":
       config.url = "https://" + chainIds.mainnet + ".infura.io/v3/" + infuraApiKey;
@@ -83,22 +102,36 @@ function getETHConfig(network: string): NetworkUserConfig {
   return config;
 }
 
-function getBSCConfig(network: string): NetworkUserConfig {
-  let config = {
-    accounts: {
-      count: 12,
-      mnemonic,
-      path: "m/44'/60'/0'/0",
-    },
-    url: `https://data-seed-prebsc-1-s1.binance.org:8545`,
-  };
+function getBSCConfig(network: string, withLedger: boolean): NetworkUserConfig {
+  let config: any
+
+  if (withLedger) {
+    config = {
+      ledgerAccounts: [
+        "0x60745fCA64C92c0aBAC5b1bed145204FBF1e9d85",
+      ],
+      ledgerOptions: {
+        derivationFunction: (x: string) => `m/44'/60'/0'/0/${x}`
+      },
+    };
+  } else {
+    config = {
+      accounts: {
+        count: 12,
+        mnemonic,
+        path: "m/44'/60'/0'/0",
+        initialIndex: Number(initialindex),
+      },
+    };
+  }
 
   switch (network) {
     case "testnet":
-      config.url = "https://data-seed-prebsc-1-s1.binance.org:8545";
+      config.url = "https://bsc-testnet.infura.io/v3/" + infuraApiKey;
       break;
     case "mainnet":
-      config.url = "https://bsc-dataseed.binance.org";
+      config.url = "https://bsc-mainnet.infura.io/v3/" + infuraApiKey;
+      config.gasPrice=3500000000;
       break;
     default:
       throw new Error("invalid config option for bsc chain");
@@ -108,11 +141,12 @@ function getBSCConfig(network: string): NetworkUserConfig {
 }
 
 function getPolygonConfig(network: string): NetworkUserConfig {
-  let config = {
+  const config = {
     accounts: {
       count: 12,
       mnemonic,
       path: "m/44'/60'/0'/0",
+      initialIndex: Number(initialindex),
     },
     url: "https://polygon-mumbai.infura.io/v3/" + infuraApiKey,
   };
@@ -135,7 +169,7 @@ const config: HardhatUserConfig = {
   defaultNetwork: "hardhat",
   gasReporter: {
     currency: "USD",
-    enabled: process.env.REPORT_GAS ? true : false,
+    enabled: !!process.env.REPORT_GAS,
     coinmarketcap: process.env.CMC_TOKEN || "26043cba-19e3-4a70-8575-916adb54fa12",
     excludeContracts: [],
     src: "./contracts",
@@ -147,10 +181,13 @@ const config: HardhatUserConfig = {
       },
       chainId: chainIds.hardhat,
     },
-    goerli: getETHConfig("testnet"),
-    mainnet_eth: getETHConfig("mainnet"),
-    testnet_bsc: getBSCConfig("testnet"),
-    mainnet_bsc: getBSCConfig("mainnet"),
+    sepolia: getETHConfig("testnet", false),
+    mainnet_eth: getETHConfig("mainnet", false),
+    mainnet_eth_ledger: getETHConfig("mainnet", true),
+    testnet_bsc: getBSCConfig("testnet", false),
+    testnet_bsc_ledger: getBSCConfig("testnet", true),
+    mainnet_bsc: getBSCConfig("mainnet",false),
+    mainnet_bsc_ledger: getBSCConfig("mainnet", true),
     mumbai: getPolygonConfig("testnet"),
     mainnet_polygon: getPolygonConfig("mainnet"),
   },
@@ -161,7 +198,7 @@ const config: HardhatUserConfig = {
     tests: "./test",
   },
   solidity: {
-    version: "0.8.13",
+    version: "0.8.20",
     settings: {
       metadata: {
         // Not including the metadata hash
@@ -174,17 +211,22 @@ const config: HardhatUserConfig = {
         enabled: true,
         runs: 200,
       },
+      outputSelection: {
+        "*": {
+          "*": ["storageLayout"],
+        },
+      },
     },
   },
   typechain: {
     outDir: "typechain",
-    target: "ethers-v5",
+    target: "ethers-v6",
   },
   abiExporter: {
     path: "./abi",
     clear: true,
     flat: false,
-    only: [":Bridge$", ":ERC20Safe$"],
+    only: [":Bridge$", ":ERC20Safe$", ":SCExecProxy$"],
     pretty: false,
   },
 };
