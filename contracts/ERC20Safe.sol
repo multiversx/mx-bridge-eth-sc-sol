@@ -44,8 +44,7 @@ contract ERC20Safe is Initializable, BridgeRole, Pausable {
 
     // Reserved storage slots for future upgrades
     uint32 private __gap32;
-    uint64 private __gap64;
-    uint128 private __gap128;
+    uint64[3] private __gap64;
     uint256[9] private __gap;
 
     mapping(uint256 => Batch) public batches;
