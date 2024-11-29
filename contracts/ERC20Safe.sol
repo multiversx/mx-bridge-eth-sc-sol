@@ -36,11 +36,17 @@ contract ERC20Safe is Initializable, BridgeRole, Pausable {
     uint64 public depositsCount;
     uint16 public batchSize;
     uint16 private constant maxBatchSize = 100;
-    uint8 public batchBlockLimit;
-    uint8 public batchSettleLimit;
+    uint8 public oldBatchBlockLimit;  // unused
+    uint8 public oldBatchSettleLimit; // unused
+
+    uint16 public batchBlockLimit;
+    uint16 public batchSettleLimit;
 
     // Reserved storage slots for future upgrades
-    uint256[10] private __gap;
+    uint32 private __gap32;
+    uint64 private __gap64;
+    uint128 private __gap128;
+    uint256[9] private __gap;
 
     mapping(uint256 => Batch) public batches;
     mapping(address => bool) public whitelistedTokens;
@@ -123,7 +129,7 @@ contract ERC20Safe is Initializable, BridgeRole, Pausable {
      @notice Updates the block number limit used to check if a batch is finalized for processing
      @param newBatchBlockLimit New block number limit that will be set until a batch is considered final
     */
-    function setBatchBlockLimit(uint8 newBatchBlockLimit) external onlyAdmin {
+    function setBatchBlockLimit(uint16 newBatchBlockLimit) external onlyAdmin {
         require(newBatchBlockLimit <= batchSettleLimit, "Cannot increase batch block limit over settlement limit");
         batchBlockLimit = newBatchBlockLimit;
     }
@@ -132,7 +138,7 @@ contract ERC20Safe is Initializable, BridgeRole, Pausable {
      @notice Updates the settle number limit used to determine if a batch is final
      @param newBatchSettleLimit New block settle limit that will be set until a batch is considered final
     */
-    function setBatchSettleLimit(uint8 newBatchSettleLimit) external onlyAdmin whenPaused {
+    function setBatchSettleLimit(uint16 newBatchSettleLimit) external onlyAdmin whenPaused {
         require(!isAnyBatchInProgress(), "Cannot change batchSettleLimit with pending batches");
         require(
             newBatchSettleLimit >= batchBlockLimit,

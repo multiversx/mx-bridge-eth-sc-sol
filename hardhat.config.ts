@@ -29,13 +29,15 @@ import "./tasks/get-batch-deposits";
 import "./tasks/get-quorum";
 import "./tasks/get-statuses-after-execution";
 import "./tasks/depositSC";
-import "./tasks/set-batch-settle-limit-on-safe"
+import "./tasks/set-batch-settle-limit"
+import "./tasks/set-batch-settle-limit-on-bridge"
 import "./tasks/deploy";
 import "./tasks/token-balance-query"
 import "./tasks/get-relayers"
 import "./tasks/get-token-properties"
 import "./tasks/reset-total-balance"
 import "./tasks/mintburn-test-tokens"
+import "./tasks/get-safe-parameters"
 
 
 import { resolve } from "path";
@@ -94,6 +96,43 @@ function getETHConfig(network: string, withLedger: boolean): NetworkUserConfig {
       break;
     case "mainnet":
       config.url = "https://" + chainIds.mainnet + ".infura.io/v3/" + infuraApiKey;
+      break;
+    default:
+      throw new Error("invalid config option for eth chain");
+  }
+
+  return config;
+}
+
+function getBaseConfig(network: string, withLedger: boolean): NetworkUserConfig {
+  let config: any
+
+  if (withLedger) {
+    config = {
+      ledgerAccounts: [
+        "0x4408D9f40b9e45d5bE27256Ad71453DeEF043910",
+      ],
+      ledgerOptions: {
+        derivationFunction: (x: string) => `m/44'/60'/0'/0/${x}`
+      },
+    };
+  } else {
+    config = {
+      accounts: {
+        count: 12,
+        mnemonic,
+        path: "m/44'/60'/0'/0",
+        initialIndex: Number(initialindex),
+      },
+    };
+  }
+
+  switch (network) {
+    case "testnet":
+      config.url = "https://base-sepolia.infura.io/v3/" + infuraApiKey;
+      break;
+    case "mainnet":
+      config.url = "https://base-mainnet.infura.io/v3/" + infuraApiKey;
       break;
     default:
       throw new Error("invalid config option for eth chain");
@@ -190,6 +229,8 @@ const config: HardhatUserConfig = {
     mainnet_bsc_ledger: getBSCConfig("mainnet", true),
     mumbai: getPolygonConfig("testnet"),
     mainnet_polygon: getPolygonConfig("mainnet"),
+    testnet_base: getBaseConfig("testnet", false),
+    testnet_base_ledger: getBaseConfig("testnet", true),
   },
   paths: {
     artifacts: "./artifacts",
