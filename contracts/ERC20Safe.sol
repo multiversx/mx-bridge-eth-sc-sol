@@ -36,13 +36,11 @@ contract ERC20Safe is Initializable, BridgeRole, Pausable {
     uint64 public depositsCount;
     uint16 public batchSize;
     uint16 private constant maxBatchSize = 100;
-    uint8 public oldBatchBlockLimit;  // unused
-    uint8 public oldBatchSettleLimit; // unused
-
     uint16 public batchBlockLimit;
     uint16 public batchSettleLimit;
 
     // Reserved storage slots for future upgrades
+    uint16 private __gap16;
     uint32 private __gap32;
     uint64[3] private __gap64;
     uint256[9] private __gap;
