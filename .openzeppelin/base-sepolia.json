@@ -1,0 +1,921 @@
+{
+  "manifestVersion": "3.2",
+  "proxies": [
+    {
+      "address": "0xd1B537b9f9c119371976b2CCf37b607098D0f185",
+      "kind": "transparent"
+    },
+    {
+      "address": "0xC10F8792926DC85FEDEd347C245d41BE7818cDf0",
+      "kind": "transparent"
+    }
+  ],
+  "impls": {
+    "46e0313941613e19a78e16195b8a30cca06cc8e9bc7ebf3b5baac4b6a4d3fe58": {
+      "address": "0xB4fbAd36699eAB4c8b919CdC5336975FfFf8BfDa",
+      "layout": {
+        "solcVersion": "0.8.20",
+        "storage": [
+          {
+            "label": "_admin",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_address",
+            "contract": "AdminRole",
+            "src": "contracts/access/AdminRole.sol:20"
+          },
+          {
+            "label": "_bridge",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_address",
+            "contract": "BridgeRole",
+            "src": "contracts/access/BridgeRole.sol:37"
+          },
+          {
+            "label": "_paused",
+            "offset": 20,
+            "slot": "1",
+            "type": "t_bool",
+            "contract": "Pausable",
+            "src": "contracts/lib/Pausable.sol:10"
+          },
+          {
+            "label": "batchesCount",
+            "offset": 21,
+            "slot": "1",
+            "type": "t_uint64",
+            "contract": "ERC20Safe",
+            "src": "contracts/ERC20Safe.sol:35"
+          },
+          {
+            "label": "depositsCount",
+            "offset": 0,
+            "slot": "2",
+            "type": "t_uint64",
+            "contract": "ERC20Safe",
+            "src": "contracts/ERC20Safe.sol:36"
+          },
+          {
+            "label": "batchSize",
+            "offset": 8,
+            "slot": "2",
+            "type": "t_uint16",
+            "contract": "ERC20Safe",
+            "src": "contracts/ERC20Safe.sol:37"
+          },
+          {
+            "label": "batchBlockLimit",
+            "offset": 10,
+            "slot": "2",
+            "type": "t_uint8",
+            "contract": "ERC20Safe",
+            "src": "contracts/ERC20Safe.sol:39"
+          },
+          {
+            "label": "batchSettleLimit",
+            "offset": 11,
+            "slot": "2",
+            "type": "t_uint8",
+            "contract": "ERC20Safe",
+            "src": "contracts/ERC20Safe.sol:40"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "3",
+            "type": "t_array(t_uint256)10_storage",
+            "contract": "ERC20Safe",
+            "src": "contracts/ERC20Safe.sol:43"
+          },
+          {
+            "label": "batches",
+            "offset": 0,
+            "slot": "13",
+            "type": "t_mapping(t_uint256,t_struct(Batch)5764_storage)",
+            "contract": "ERC20Safe",
+            "src": "contracts/ERC20Safe.sol:45"
+          },
+          {
+            "label": "whitelistedTokens",
+            "offset": 0,
+            "slot": "14",
+            "type": "t_mapping(t_address,t_bool)",
+            "contract": "ERC20Safe",
+            "src": "contracts/ERC20Safe.sol:46"
+          },
+          {
+            "label": "mintBurnTokens",
+            "offset": 0,
+            "slot": "15",
+            "type": "t_mapping(t_address,t_bool)",
+            "contract": "ERC20Safe",
+            "src": "contracts/ERC20Safe.sol:47"
+          },
+          {
+            "label": "nativeTokens",
+            "offset": 0,
+            "slot": "16",
+            "type": "t_mapping(t_address,t_bool)",
+            "contract": "ERC20Safe",
+            "src": "contracts/ERC20Safe.sol:48"
+          },
+          {
+            "label": "tokenMinLimits",
+            "offset": 0,
+            "slot": "17",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "ERC20Safe",
+            "src": "contracts/ERC20Safe.sol:49"
+          },
+          {
+            "label": "tokenMaxLimits",
+            "offset": 0,
+            "slot": "18",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "ERC20Safe",
+            "src": "contracts/ERC20Safe.sol:50"
+          },
+          {
+            "label": "totalBalances",
+            "offset": 0,
+            "slot": "19",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "ERC20Safe",
+            "src": "contracts/ERC20Safe.sol:51"
+          },
+          {
+            "label": "mintBalances",
+            "offset": 0,
+            "slot": "20",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "ERC20Safe",
+            "src": "contracts/ERC20Safe.sol:52"
+          },
+          {
+            "label": "burnBalances",
+            "offset": 0,
+            "slot": "21",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "ERC20Safe",
+            "src": "contracts/ERC20Safe.sol:53"
+          },
+          {
+            "label": "batchDeposits",
+            "offset": 0,
+            "slot": "22",
+            "type": "t_mapping(t_uint256,t_array(t_struct(Deposit)5748_storage)dyn_storage)",
+            "contract": "ERC20Safe",
+            "src": "contracts/ERC20Safe.sol:54"
+          }
+        ],
+        "types": {
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_struct(InitializableStorage)158_storage": {
+            "label": "struct Initializable.InitializableStorage",
+            "members": [
+              {
+                "label": "_initialized",
+                "type": "t_uint64",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "_initializing",
+                "type": "t_bool",
+                "offset": 8,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_uint64": {
+            "label": "uint64",
+            "numberOfBytes": "8"
+          },
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_array(t_struct(Deposit)5748_storage)dyn_storage": {
+            "label": "struct Deposit[]",
+            "numberOfBytes": "32"
+          },
+          "t_array(t_uint256)10_storage": {
+            "label": "uint256[10]",
+            "numberOfBytes": "320"
+          },
+          "t_bytes32": {
+            "label": "bytes32",
+            "numberOfBytes": "32"
+          },
+          "t_enum(DepositStatus)5734": {
+            "label": "enum DepositStatus",
+            "members": [
+              "None",
+              "Pending",
+              "InProgress",
+              "Executed",
+              "Rejected"
+            ],
+            "numberOfBytes": "1"
+          },
+          "t_mapping(t_address,t_bool)": {
+            "label": "mapping(address => bool)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_uint256)": {
+            "label": "mapping(address => uint256)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_uint256,t_array(t_struct(Deposit)5748_storage)dyn_storage)": {
+            "label": "mapping(uint256 => struct Deposit[])",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_uint256,t_struct(Batch)5764_storage)": {
+            "label": "mapping(uint256 => struct Batch)",
+            "numberOfBytes": "32"
+          },
+          "t_struct(Batch)5764_storage": {
+            "label": "struct Batch",
+            "members": [
+              {
+                "label": "nonce",
+                "type": "t_uint112",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "blockNumber",
+                "type": "t_uint64",
+                "offset": 14,
+                "slot": "0"
+              },
+              {
+                "label": "lastUpdatedBlockNumber",
+                "type": "t_uint64",
+                "offset": 22,
+                "slot": "0"
+              },
+              {
+                "label": "depositsCount",
+                "type": "t_uint16",
+                "offset": 30,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_struct(Deposit)5748_storage": {
+            "label": "struct Deposit",
+            "members": [
+              {
+                "label": "nonce",
+                "type": "t_uint112",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "tokenAddress",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "amount",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "2"
+              },
+              {
+                "label": "depositor",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "3"
+              },
+              {
+                "label": "recipient",
+                "type": "t_bytes32",
+                "offset": 0,
+                "slot": "4"
+              },
+              {
+                "label": "status",
+                "type": "t_enum(DepositStatus)5734",
+                "offset": 0,
+                "slot": "5"
+              }
+            ],
+            "numberOfBytes": "192"
+          },
+          "t_uint112": {
+            "label": "uint112",
+            "numberOfBytes": "14"
+          },
+          "t_uint16": {
+            "label": "uint16",
+            "numberOfBytes": "2"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          },
+          "t_uint8": {
+            "label": "uint8",
+            "numberOfBytes": "1"
+          }
+        },
+        "namespaces": {
+          "erc7201:openzeppelin.storage.Initializable": [
+            {
+              "contract": "Initializable",
+              "label": "_initialized",
+              "type": "t_uint64",
+              "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:69",
+              "offset": 0,
+              "slot": "0"
+            },
+            {
+              "contract": "Initializable",
+              "label": "_initializing",
+              "type": "t_bool",
+              "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:73",
+              "offset": 8,
+              "slot": "0"
+            }
+          ]
+        }
+      }
+    },
+    "eb5122261d1b60fe73f5f81dfdd9a2f090a7da9da93128d556c7e7f7112d6031": {
+      "address": "0x10530280f2751773e1909079604D2c806a02d105",
+      "layout": {
+        "solcVersion": "0.8.20",
+        "storage": [
+          {
+            "label": "_admin",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_address",
+            "contract": "AdminRole",
+            "src": "contracts/access/AdminRole.sol:20"
+          },
+          {
+            "label": "_relayers",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_struct(AddressSet)6547_storage",
+            "contract": "RelayerRole",
+            "src": "contracts/access/RelayerRole.sol:18"
+          },
+          {
+            "label": "_paused",
+            "offset": 0,
+            "slot": "3",
+            "type": "t_bool",
+            "contract": "Pausable",
+            "src": "contracts/lib/Pausable.sol:10"
+          },
+          {
+            "label": "batchSettleBlockCount",
+            "offset": 0,
+            "slot": "4",
+            "type": "t_uint256",
+            "contract": "Bridge",
+            "src": "contracts/Bridge.sol:36"
+          },
+          {
+            "label": "quorum",
+            "offset": 0,
+            "slot": "5",
+            "type": "t_uint256",
+            "contract": "Bridge",
+            "src": "contracts/Bridge.sol:38"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "6",
+            "type": "t_array(t_uint256)10_storage",
+            "contract": "Bridge",
+            "src": "contracts/Bridge.sol:40"
+          },
+          {
+            "label": "safe",
+            "offset": 0,
+            "slot": "16",
+            "type": "t_contract(ERC20Safe)5548",
+            "contract": "Bridge",
+            "src": "contracts/Bridge.sol:42"
+          },
+          {
+            "label": "executedBatches",
+            "offset": 0,
+            "slot": "17",
+            "type": "t_mapping(t_uint256,t_bool)",
+            "contract": "Bridge",
+            "src": "contracts/Bridge.sol:44"
+          },
+          {
+            "label": "crossTransferStatuses",
+            "offset": 0,
+            "slot": "18",
+            "type": "t_mapping(t_uint256,t_struct(CrossTransferStatus)5755_storage)",
+            "contract": "Bridge",
+            "src": "contracts/Bridge.sol:45"
+          }
+        ],
+        "types": {
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_struct(InitializableStorage)158_storage": {
+            "label": "struct Initializable.InitializableStorage",
+            "members": [
+              {
+                "label": "_initialized",
+                "type": "t_uint64",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "_initializing",
+                "type": "t_bool",
+                "offset": 8,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_uint64": {
+            "label": "uint64",
+            "numberOfBytes": "8"
+          },
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_array(t_address)dyn_storage": {
+            "label": "address[]",
+            "numberOfBytes": "32"
+          },
+          "t_array(t_enum(DepositStatus)5734)dyn_storage": {
+            "label": "enum DepositStatus[]",
+            "numberOfBytes": "32"
+          },
+          "t_array(t_uint256)10_storage": {
+            "label": "uint256[10]",
+            "numberOfBytes": "320"
+          },
+          "t_contract(ERC20Safe)5548": {
+            "label": "contract ERC20Safe",
+            "numberOfBytes": "20"
+          },
+          "t_enum(DepositStatus)5734": {
+            "label": "enum DepositStatus",
+            "members": [
+              "None",
+              "Pending",
+              "InProgress",
+              "Executed",
+              "Rejected"
+            ],
+            "numberOfBytes": "1"
+          },
+          "t_mapping(t_address,t_uint256)": {
+            "label": "mapping(address => uint256)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_uint256,t_bool)": {
+            "label": "mapping(uint256 => bool)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_uint256,t_struct(CrossTransferStatus)5755_storage)": {
+            "label": "mapping(uint256 => struct CrossTransferStatus)",
+            "numberOfBytes": "32"
+          },
+          "t_struct(AddressSet)6547_storage": {
+            "label": "struct EnumerableSet.AddressSet",
+            "members": [
+              {
+                "label": "_values",
+                "type": "t_array(t_address)dyn_storage",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "_indexes",
+                "type": "t_mapping(t_address,t_uint256)",
+                "offset": 0,
+                "slot": "1"
+              }
+            ],
+            "numberOfBytes": "64"
+          },
+          "t_struct(CrossTransferStatus)5755_storage": {
+            "label": "struct CrossTransferStatus",
+            "members": [
+              {
+                "label": "statuses",
+                "type": "t_array(t_enum(DepositStatus)5734)dyn_storage",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "createdBlockNumber",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "1"
+              }
+            ],
+            "numberOfBytes": "64"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          }
+        },
+        "namespaces": {
+          "erc7201:openzeppelin.storage.Initializable": [
+            {
+              "contract": "Initializable",
+              "label": "_initialized",
+              "type": "t_uint64",
+              "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:69",
+              "offset": 0,
+              "slot": "0"
+            },
+            {
+              "contract": "Initializable",
+              "label": "_initializing",
+              "type": "t_bool",
+              "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:73",
+              "offset": 8,
+              "slot": "0"
+            }
+          ]
+        }
+      }
+    },
+    "e93c905ef693d20e46f85583b4186d2808146c49a1eaef027c5a0cf133056b3d": {
+      "address": "0x1D914dDa18C072e7758f68AAD1320fE466f27831",
+      "txHash": "0x3ffa02f794dd49efa5e65ff30c929dc67cf7dbc024e3f49e37e977f77f342b80",
+      "layout": {
+        "solcVersion": "0.8.20",
+        "storage": [
+          {
+            "label": "_admin",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_address",
+            "contract": "AdminRole",
+            "src": "contracts/access/AdminRole.sol:20"
+          },
+          {
+            "label": "_bridge",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_address",
+            "contract": "BridgeRole",
+            "src": "contracts/access/BridgeRole.sol:37"
+          },
+          {
+            "label": "_paused",
+            "offset": 20,
+            "slot": "1",
+            "type": "t_bool",
+            "contract": "Pausable",
+            "src": "contracts/lib/Pausable.sol:10"
+          },
+          {
+            "label": "batchesCount",
+            "offset": 21,
+            "slot": "1",
+            "type": "t_uint64",
+            "contract": "ERC20Safe",
+            "src": "contracts/ERC20Safe.sol:35"
+          },
+          {
+            "label": "depositsCount",
+            "offset": 0,
+            "slot": "2",
+            "type": "t_uint64",
+            "contract": "ERC20Safe",
+            "src": "contracts/ERC20Safe.sol:36"
+          },
+          {
+            "label": "batchSize",
+            "offset": 8,
+            "slot": "2",
+            "type": "t_uint16",
+            "contract": "ERC20Safe",
+            "src": "contracts/ERC20Safe.sol:37"
+          },
+          {
+            "label": "batchBlockLimit",
+            "offset": 10,
+            "slot": "2",
+            "type": "t_uint8",
+            "contract": "ERC20Safe",
+            "src": "contracts/ERC20Safe.sol:39"
+          },
+          {
+            "label": "batchSettleLimit",
+            "offset": 11,
+            "slot": "2",
+            "type": "t_uint8",
+            "contract": "ERC20Safe",
+            "src": "contracts/ERC20Safe.sol:40"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "3",
+            "type": "t_array(t_uint256)10_storage",
+            "contract": "ERC20Safe",
+            "src": "contracts/ERC20Safe.sol:43"
+          },
+          {
+            "label": "batches",
+            "offset": 0,
+            "slot": "13",
+            "type": "t_mapping(t_uint256,t_struct(Batch)3596_storage)",
+            "contract": "ERC20Safe",
+            "src": "contracts/ERC20Safe.sol:45"
+          },
+          {
+            "label": "whitelistedTokens",
+            "offset": 0,
+            "slot": "14",
+            "type": "t_mapping(t_address,t_bool)",
+            "contract": "ERC20Safe",
+            "src": "contracts/ERC20Safe.sol:46"
+          },
+          {
+            "label": "mintBurnTokens",
+            "offset": 0,
+            "slot": "15",
+            "type": "t_mapping(t_address,t_bool)",
+            "contract": "ERC20Safe",
+            "src": "contracts/ERC20Safe.sol:47"
+          },
+          {
+            "label": "nativeTokens",
+            "offset": 0,
+            "slot": "16",
+            "type": "t_mapping(t_address,t_bool)",
+            "contract": "ERC20Safe",
+            "src": "contracts/ERC20Safe.sol:48"
+          },
+          {
+            "label": "tokenMinLimits",
+            "offset": 0,
+            "slot": "17",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "ERC20Safe",
+            "src": "contracts/ERC20Safe.sol:49"
+          },
+          {
+            "label": "tokenMaxLimits",
+            "offset": 0,
+            "slot": "18",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "ERC20Safe",
+            "src": "contracts/ERC20Safe.sol:50"
+          },
+          {
+            "label": "totalBalances",
+            "offset": 0,
+            "slot": "19",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "ERC20Safe",
+            "src": "contracts/ERC20Safe.sol:51"
+          },
+          {
+            "label": "mintBalances",
+            "offset": 0,
+            "slot": "20",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "ERC20Safe",
+            "src": "contracts/ERC20Safe.sol:52"
+          },
+          {
+            "label": "burnBalances",
+            "offset": 0,
+            "slot": "21",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "ERC20Safe",
+            "src": "contracts/ERC20Safe.sol:53"
+          },
+          {
+            "label": "batchDeposits",
+            "offset": 0,
+            "slot": "22",
+            "type": "t_mapping(t_uint256,t_array(t_struct(Deposit)3580_storage)dyn_storage)",
+            "contract": "ERC20Safe",
+            "src": "contracts/ERC20Safe.sol:54"
+          },
+          {
+            "label": "batchBlockLimitV2",
+            "offset": 0,
+            "slot": "23",
+            "type": "t_uint16",
+            "contract": "ERC20Safe",
+            "src": "contracts/ERC20Safe.sol:59"
+          },
+          {
+            "label": "batchSettleLimitV2",
+            "offset": 2,
+            "slot": "23",
+            "type": "t_uint16",
+            "contract": "ERC20Safe",
+            "src": "contracts/ERC20Safe.sol:60"
+          }
+        ],
+        "types": {
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_struct(InitializableStorage)7_storage": {
+            "label": "struct Initializable.InitializableStorage",
+            "members": [
+              {
+                "label": "_initialized",
+                "type": "t_uint64",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "_initializing",
+                "type": "t_bool",
+                "offset": 8,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_uint64": {
+            "label": "uint64",
+            "numberOfBytes": "8"
+          },
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_array(t_struct(Deposit)3580_storage)dyn_storage": {
+            "label": "struct Deposit[]",
+            "numberOfBytes": "32"
+          },
+          "t_array(t_uint256)10_storage": {
+            "label": "uint256[10]",
+            "numberOfBytes": "320"
+          },
+          "t_bytes32": {
+            "label": "bytes32",
+            "numberOfBytes": "32"
+          },
+          "t_enum(DepositStatus)3566": {
+            "label": "enum DepositStatus",
+            "members": [
+              "None",
+              "Pending",
+              "InProgress",
+              "Executed",
+              "Rejected"
+            ],
+            "numberOfBytes": "1"
+          },
+          "t_mapping(t_address,t_bool)": {
+            "label": "mapping(address => bool)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_uint256)": {
+            "label": "mapping(address => uint256)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_uint256,t_array(t_struct(Deposit)3580_storage)dyn_storage)": {
+            "label": "mapping(uint256 => struct Deposit[])",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_uint256,t_struct(Batch)3596_storage)": {
+            "label": "mapping(uint256 => struct Batch)",
+            "numberOfBytes": "32"
+          },
+          "t_struct(Batch)3596_storage": {
+            "label": "struct Batch",
+            "members": [
+              {
+                "label": "nonce",
+                "type": "t_uint112",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "blockNumber",
+                "type": "t_uint64",
+                "offset": 14,
+                "slot": "0"
+              },
+              {
+                "label": "lastUpdatedBlockNumber",
+                "type": "t_uint64",
+                "offset": 22,
+                "slot": "0"
+              },
+              {
+                "label": "depositsCount",
+                "type": "t_uint16",
+                "offset": 30,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_struct(Deposit)3580_storage": {
+            "label": "struct Deposit",
+            "members": [
+              {
+                "label": "nonce",
+                "type": "t_uint112",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "tokenAddress",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "amount",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "2"
+              },
+              {
+                "label": "depositor",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "3"
+              },
+              {
+                "label": "recipient",
+                "type": "t_bytes32",
+                "offset": 0,
+                "slot": "4"
+              },
+              {
+                "label": "status",
+                "type": "t_enum(DepositStatus)3566",
+                "offset": 0,
+                "slot": "5"
+              }
+            ],
+            "numberOfBytes": "192"
+          },
+          "t_uint112": {
+            "label": "uint112",
+            "numberOfBytes": "14"
+          },
+          "t_uint16": {
+            "label": "uint16",
+            "numberOfBytes": "2"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          },
+          "t_uint8": {
+            "label": "uint8",
+            "numberOfBytes": "1"
+          }
+        },
+        "namespaces": {
+          "erc7201:openzeppelin.storage.Initializable": [
+            {
+              "contract": "Initializable",
+              "label": "_initialized",
+              "type": "t_uint64",
+              "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:69",
+              "offset": 0,
+              "slot": "0"
+            },
+            {
+              "contract": "Initializable",
+              "label": "_initializing",
+              "type": "t_bool",
+              "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:73",
+              "offset": 8,
+              "slot": "0"
+            }
+          ]
+        }
+      }
+    }
+  }
+}
