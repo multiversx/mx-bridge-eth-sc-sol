@@ -6,3 +6,5 @@ import "./evil-erc";
 import "./mint-burn-tokens";
 import "./upgrade-safe"
 import "./approve-non-zero-tokens";
+import "./force-import-safe"
+import "./force-import-bridge"

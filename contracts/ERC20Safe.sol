@@ -56,6 +56,9 @@ contract ERC20Safe is Initializable, BridgeRole, Pausable {
     event ERC20Deposit(uint112 batchId, uint112 depositNonce);
     event ERC20SCDeposit(uint112 indexed batchId, uint112 depositNonce, bytes callData);
 
+    uint16 public batchBlockLimitV2;
+    uint16 public batchSettleLimitV2;
+
     function initialize() public initializer {
         __BridgeRole_init();
         __Pausable_init();
@@ -64,8 +67,8 @@ contract ERC20Safe is Initializable, BridgeRole, Pausable {
 
     function __ERC20Safe__init_unchained() internal onlyInitializing {
         batchSize = 10;
-        batchBlockLimit = 40;
-        batchSettleLimit = 40;
+        batchBlockLimitV2 = 40;
+        batchSettleLimitV2 = 40;
     }
 
     /**
@@ -123,22 +126,22 @@ contract ERC20Safe is Initializable, BridgeRole, Pausable {
      @notice Updates the block number limit used to check if a batch is finalized for processing
      @param newBatchBlockLimit New block number limit that will be set until a batch is considered final
     */
-    function setBatchBlockLimit(uint8 newBatchBlockLimit) external onlyAdmin {
-        require(newBatchBlockLimit <= batchSettleLimit, "Cannot increase batch block limit over settlement limit");
-        batchBlockLimit = newBatchBlockLimit;
+    function setBatchBlockLimit(uint16 newBatchBlockLimit) external onlyAdmin {
+        require(newBatchBlockLimit <= batchSettleLimitV2, "Cannot increase batch block limit over settlement limit");
+        batchBlockLimitV2 = newBatchBlockLimit;
     }
 
     /**
      @notice Updates the settle number limit used to determine if a batch is final
      @param newBatchSettleLimit New block settle limit that will be set until a batch is considered final
     */
-    function setBatchSettleLimit(uint8 newBatchSettleLimit) external onlyAdmin whenPaused {
+    function setBatchSettleLimit(uint16 newBatchSettleLimit) external onlyAdmin whenPaused {
         require(!isAnyBatchInProgress(), "Cannot change batchSettleLimit with pending batches");
         require(
-            newBatchSettleLimit >= batchBlockLimit,
+            newBatchSettleLimit >= batchBlockLimitV2,
             "Cannot decrease batchSettleLimit under the value of batch block limit"
         );
-        batchSettleLimit = newBatchSettleLimit;
+        batchSettleLimitV2 = newBatchSettleLimit;
     }
 
     /**
@@ -389,14 +392,14 @@ contract ERC20Safe is Initializable, BridgeRole, Pausable {
     }
 
     function _isBatchFinal(Batch memory batch) private view returns (bool) {
-        return (batch.lastUpdatedBlockNumber + batchSettleLimit) < block.number;
+        return (batch.lastUpdatedBlockNumber + batchSettleLimitV2) < block.number;
     }
 
     function _isBatchProgessOver(uint16 depCount, uint64 blockNumber) private view returns (bool) {
         if (depCount == 0) {
             return false;
         }
-        return (blockNumber + batchBlockLimit) < block.number;
+        return (blockNumber + batchBlockLimitV2) < block.number;
     }
 
     function _shouldCreateNewBatch() private view returns (bool) {

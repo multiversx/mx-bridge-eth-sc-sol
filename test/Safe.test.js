@@ -61,12 +61,12 @@ describe("ERC20Safe", function () {
   describe("ERC20Safe - setting batch block limit works as expected", async function () {
     it("is default correct", async function () {
       const tenMinutes = 40;
-      expect(await safe.batchBlockLimit()).to.eq(tenMinutes);
+      expect(await safe.batchBlockLimitV2()).to.eq(tenMinutes);
     });
     it("updates the batch time limit", async function () {
       const eight = 8;
       await safe.setBatchBlockLimit(eight);
-      expect(await safe.batchBlockLimit()).to.equal(eight);
+      expect(await safe.batchBlockLimitV2()).to.equal(eight);
     });
     it("reverts", async function () {
       await expect(safe.connect(otherWallet).setBatchBlockLimit(30)).to.be.revertedWith(
@@ -81,7 +81,7 @@ describe("ERC20Safe", function () {
   describe("ERC20Safe - setting batch settle limit works as expected", async function () {
     it("is default correct", async function () {
       const tenMinutes = 40;
-      expect(await safe.batchSettleLimit()).to.eq(tenMinutes);
+      expect(await safe.batchSettleLimitV2()).to.eq(tenMinutes);
     });
     it("reverts", async function () {
       await expect(safe.connect(adminWallet).setBatchSettleLimit(50)).to.be.revertedWith("Pausable: not paused");
@@ -147,7 +147,7 @@ describe("ERC20Safe", function () {
 
       const batchSettleLimit = 50;
       await safe.connect(adminWallet).setBatchSettleLimit(batchSettleLimit);
-      expect(await safe.batchSettleLimit()).to.equal(batchSettleLimit);
+      expect(await safe.batchSettleLimitV2()).to.equal(batchSettleLimit);
 
       await safe.unpause();
     });
@@ -308,7 +308,7 @@ describe("ERC20Safe", function () {
       });
 
       it("creates new batches as time passes", async function () {
-        const batchBlockLimit = parseInt((await safe.batchBlockLimit()).toString());
+        const batchBlockLimit = parseInt((await safe.batchBlockLimitV2()).toString());
         await safe.setBatchSize(2);
         expect(await safe.batchesCount()).to.be.eq(0);
 
@@ -452,7 +452,7 @@ describe("ERC20Safe", function () {
 
     it("returns batch only after final", async function () {
       await safe.setBatchSize(3);
-      const batchBlockLimit = parseInt((await safe.batchBlockLimit()).toString());
+      const batchBlockLimit = parseInt((await safe.batchBlockLimitV2()).toString());
 
       await safe.deposit(
         genericERC20.address,
